@@ -79,8 +79,8 @@ export default function AppLayout() {
             <BookMarked size={16} />
           </div>
           <div>
-            <div className={styles.logoText}>SME Digital</div>
-            <div className={styles.logoSub}>Repositório Pedagógico</div>
+            <div className={styles.logoText}>Questões</div>
+            <div className={styles.logoSub}>Concursos Públicos</div>
           </div>
         </div>
       </div>
@@ -140,7 +140,7 @@ export default function AppLayout() {
           >
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <div className={styles.mobileLogo}>RepedMunicipal</div>
+          <div className={styles.mobileLogo}>Questões de Concursos</div>
         </header>
 
         <main className={styles.content} id="main-content">
