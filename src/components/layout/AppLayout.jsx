@@ -3,16 +3,23 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   HelpCircle, ClipboardList, Layers, Heart,
-  LogOut, Menu, X, BookMarked, UserCircle
+  LogOut, Menu, X, BookMarked, BookOpen, BarChart2
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
 
 const NAV_ITEMS = [
   {
-    section: 'Questões',
+    section: 'Estudo',
     items: [
-      { to: '/questoes',  label: 'Banco de Questões', icon: HelpCircle    },
-      { to: '/favoritos', label: 'Favoritos',         icon: Heart         },
+      { to: '/estudo',        label: 'Resolver Questões', icon: BookOpen  },
+      { to: '/estatisticas',  label: 'Estatísticas',      icon: BarChart2 },
+    ]
+  },
+  {
+    section: 'Banco',
+    items: [
+      { to: '/questoes',  label: 'Banco de Questões', icon: HelpCircle },
+      { to: '/favoritos', label: 'Favoritos',         icon: Heart      },
     ]
   },
   {

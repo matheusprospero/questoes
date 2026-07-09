@@ -1,0 +1,406 @@
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSearchParams, useNavigate } from 'react-router-dom'
+import {
+  listarQuestoes, listarDisciplinas, listarAssuntos, listarBancas, gabaritoQuestao,
+} from '../../services/questoes'
+import { registrarResposta, listarRespostas, idsUltimaErrada } from '../../services/estudo'
+import {
+  Play, CheckCircle, XCircle, ChevronRight, RotateCcw, BarChart2, BookOpen,
+} from 'lucide-react'
+import toast from 'react-hot-toast'
+import styles from './Estudo.module.css'
+
+function embaralhar(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+// A questão tem gabarito definido? (sem gabarito não dá para corrigir)
+function temGabarito(q) {
+  if (q.tipo === 'certo_errado') return q.gabarito_certo !== null && q.gabarito_certo !== undefined
+  return (q.alternativas || []).some(a => a.correta)
+}
+
+export default function Estudo() {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
+
+  // fase: config | resolvendo | resultado
+  const [fase, setFase] = useState('config')
+  const [filtros, setFiltros] = useState({})
+  const [apenasErradas, setApenasErradas] = useState(searchParams.get('erradas') === '1')
+  const [quantidade, setQuantidade] = useState('')
+
+  // sessão
+  const [sessao, setSessao] = useState([])          // questões da sessão
+  const [indice, setIndice] = useState(0)
+  const [selecionada, setSelecionada] = useState(null) // letra ou 'C'/'E'
+  const [respondida, setRespondida] = useState(false)
+  const [historico, setHistorico] = useState([])    // { questao, resposta, acertou }
+
+  const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
+  const { data: assuntos = [] } = useQuery({
+    queryKey: ['assuntos', filtros.disciplina_id],
+    queryFn: () => listarAssuntos(filtros.disciplina_id),
+    enabled: !!filtros.disciplina_id,
+  })
+  const { data: bancas = [] } = useQuery({ queryKey: ['bancas'], queryFn: listarBancas })
+
+  function setFiltro(key, val) {
+    setFiltros(f => {
+      const n = { ...f }
+      if (val) n[key] = val; else delete n[key]
+      if (key === 'disciplina_id') delete n.assunto_id
+      return n
+    })
+  }
+
+  const [carregando, setCarregando] = useState(false)
+
+  async function comecar(questoesBase = null) {
+    setCarregando(true)
+    try {
+      let questoes = questoesBase
+      if (!questoes) {
+        questoes = await listarQuestoes(filtros)
+        questoes = questoes.filter(temGabarito)
+
+        if (apenasErradas) {
+          const respostas = await listarRespostas()
+          const erradas = idsUltimaErrada(respostas)
+          questoes = questoes.filter(q => erradas.has(q.id))
+        }
+
+        questoes = embaralhar(questoes)
+        const qtd = Number(quantidade)
+        if (qtd > 0) questoes = questoes.slice(0, qtd)
+      }
+
+      if (questoes.length === 0) {
+        toast.error(apenasErradas
+          ? 'Nenhuma questão errada encontrada com esses filtros.'
+          : 'Nenhuma questão com gabarito encontrada com esses filtros.')
+        return
+      }
+
+      setSessao(questoes)
+      setIndice(0)
+      setSelecionada(null)
+      setRespondida(false)
+      setHistorico([])
+      setFase('resolvendo')
+    } catch (err) {
+      toast.error('Erro ao montar a sessão: ' + err.message)
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  const questaoAtual = sessao[indice]
+
+  async function responder() {
+    if (selecionada === null) { toast.error('Escolha uma resposta'); return }
+    const gabarito = questaoAtual.tipo === 'certo_errado'
+      ? (questaoAtual.gabarito_certo ? 'C' : 'E')
+      : (questaoAtual.alternativas.find(a => a.correta)?.letra ?? null)
+
+    const acertou = selecionada === gabarito
+    setRespondida(true)
+    setHistorico(h => [...h, { questao: questaoAtual, resposta: selecionada, acertou }])
+
+    try {
+      await registrarResposta({
+        questao_id: questaoAtual.id,
+        resposta: selecionada,
+        acertou,
+      })
+      queryClient.invalidateQueries({ queryKey: ['respostas'] })
+    } catch (err) {
+      toast.error('Erro ao registrar resposta: ' + err.message)
+    }
+  }
+
+  function proxima() {
+    if (indice + 1 >= sessao.length) {
+      setFase('resultado')
+    } else {
+      setIndice(i => i + 1)
+      setSelecionada(null)
+      setRespondida(false)
+    }
+  }
+
+  function refazerErradasDaSessao() {
+    const erradas = historico.filter(h => !h.acertou).map(h => h.questao)
+    comecar(embaralhar(erradas))
+  }
+
+  const acertos = historico.filter(h => h.acertou).length
+
+  // ══════════════ FASE: CONFIG ══════════════
+  if (fase === 'config') {
+    return (
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <div>
+            <h1 className={styles.titulo}>Resolver Questões</h1>
+            <p className={styles.subtitulo}>Monte uma sessão de estudo com filtros e registre seu desempenho</p>
+          </div>
+          <button className={styles.btnGhost} onClick={() => navigate('/estatisticas')}>
+            <BarChart2 size={15} /> Ver estatísticas
+          </button>
+        </div>
+
+        <div className={styles.configCard}>
+          <p className={styles.secTitulo}>Filtros da sessão</p>
+          <div className={styles.filtrosGrid}>
+            <select className={styles.filtroSelect} value={filtros.disciplina_id ?? ''}
+              onChange={e => setFiltro('disciplina_id', e.target.value)}>
+              <option value="">Todas as disciplinas</option>
+              {disciplinas.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
+            </select>
+            <select className={styles.filtroSelect} value={filtros.assunto_id ?? ''}
+              onChange={e => setFiltro('assunto_id', e.target.value)}
+              disabled={!filtros.disciplina_id}>
+              <option value="">{filtros.disciplina_id ? 'Todos os assuntos' : 'Assunto (escolha a disciplina)'}</option>
+              {assuntos.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
+            </select>
+            <select className={styles.filtroSelect} value={filtros.banca_id ?? ''}
+              onChange={e => setFiltro('banca_id', e.target.value)}>
+              <option value="">Todas as bancas</option>
+              {bancas.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
+            </select>
+            <input className={styles.filtroSelect} type="number" placeholder="Ano (ex: 2023)"
+              value={filtros.ano ?? ''}
+              onChange={e => setFiltro('ano', e.target.value)}
+              min="1990" max="2100"
+            />
+            <select className={styles.filtroSelect} value={filtros.dificuldade ?? ''}
+              onChange={e => setFiltro('dificuldade', e.target.value)}>
+              <option value="">Qualquer dificuldade</option>
+              {[1,2,3,4,5].map(n => (
+                <option key={n} value={n}>
+                  {['','Muito fácil','Fácil','Média','Difícil','Muito difícil'][n]}
+                </option>
+              ))}
+            </select>
+            <select className={styles.filtroSelect} value={filtros.tipo ?? ''}
+              onChange={e => setFiltro('tipo', e.target.value)}>
+              <option value="">Todos os tipos</option>
+              <option value="multipla_escolha">Múltipla escolha</option>
+              <option value="certo_errado">Certo / Errado</option>
+            </select>
+          </div>
+
+          <div className={styles.configOpcoes}>
+            <label className={styles.checkRow}>
+              <input type="checkbox" checked={apenasErradas}
+                onChange={e => setApenasErradas(e.target.checked)} />
+              <span>
+                <strong>Refazer apenas questões que errei</strong>
+                <span className={styles.checkHint}>Questões cuja última resposta foi errada</span>
+              </span>
+            </label>
+
+            <div className={styles.qtdRow}>
+              <label className={styles.qtdLabel}>Quantidade de questões</label>
+              <input className={styles.filtroSelect} type="number" min="1"
+                placeholder="Todas"
+                value={quantidade}
+                onChange={e => setQuantidade(e.target.value)}
+                style={{ width: 110 }}
+              />
+            </div>
+          </div>
+
+          <button className={styles.btnComecar} onClick={() => comecar()} disabled={carregando}>
+            <Play size={16} /> {carregando ? 'Montando sessão...' : 'Começar a resolver'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ══════════════ FASE: RESULTADO ══════════════
+  if (fase === 'resultado') {
+    const erradasSessao = historico.filter(h => !h.acertou)
+    const pct = historico.length ? Math.round((acertos / historico.length) * 100) : 0
+    return (
+      <div className={styles.page}>
+        <div className={styles.resultadoCard}>
+          <h1 className={styles.resultadoTitulo}>Sessão concluída!</h1>
+          <div className={styles.resultadoPct} data-bom={pct >= 70}>
+            {pct}%
+          </div>
+          <p className={styles.resultadoResumo}>
+            Você acertou <strong>{acertos}</strong> de <strong>{historico.length}</strong> questão(ões)
+          </p>
+
+          <div className={styles.resultadoBotoes}>
+            {erradasSessao.length > 0 && (
+              <button className={styles.btnComecar} onClick={refazerErradasDaSessao}>
+                <RotateCcw size={15} /> Refazer as {erradasSessao.length} erradas
+              </button>
+            )}
+            <button className={styles.btnGhost} onClick={() => setFase('config')}>
+              <BookOpen size={15} /> Nova sessão
+            </button>
+            <button className={styles.btnGhost} onClick={() => navigate('/estatisticas')}>
+              <BarChart2 size={15} /> Ver estatísticas
+            </button>
+          </div>
+
+          {historico.length > 0 && (
+            <div className={styles.resultadoLista}>
+              {historico.map((h, i) => (
+                <div key={i} className={styles.resultadoItem}
+                  onClick={() => navigate(`/questoes/${h.questao.id}`)}>
+                  {h.acertou
+                    ? <CheckCircle size={15} className={styles.iconOk} />
+                    : <XCircle size={15} className={styles.iconErro} />}
+                  <span className={styles.resultadoItemTexto}>
+                    {i + 1}. {(h.questao.enunciado || '').replace(/<[^>]*>/g, ' ').slice(0, 90)}…
+                  </span>
+                  <span className={styles.resultadoItemResp}>
+                    Você: {h.resposta === 'C' ? 'Certo' : h.resposta === 'E' ? 'Errado' : h.resposta}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ══════════════ FASE: RESOLVENDO ══════════════
+  const q = questaoAtual
+  const gabarito = gabaritoQuestao(q)
+  const respostaCerta = q.tipo === 'certo_errado' ? (q.gabarito_certo ? 'C' : 'E')
+    : q.alternativas.find(a => a.correta)?.letra
+
+  return (
+    <div className={styles.page}>
+      {/* Progresso */}
+      <div className={styles.progressoBar}>
+        <div className={styles.progressoInfo}>
+          <span className={styles.progressoTexto}>
+            Questão <strong>{indice + 1}</strong> de {sessao.length}
+          </span>
+          <span className={styles.progressoPlacar}>
+            <CheckCircle size={13} className={styles.iconOk} /> {acertos}
+            <XCircle size={13} className={styles.iconErro} /> {historico.length - acertos}
+          </span>
+        </div>
+        <div className={styles.progressoTrack}>
+          <div className={styles.progressoFill}
+            style={{ width: `${((indice + (respondida ? 1 : 0)) / sessao.length) * 100}%` }} />
+        </div>
+      </div>
+
+      <div className={styles.questaoCard}>
+        {/* Origem */}
+        <div className={styles.qMeta}>
+          {q.bancas && <span className={styles.badge}>{q.bancas.nome}</span>}
+          {q.orgaos && <span className={styles.badge}>{q.orgaos.nome}</span>}
+          {q.ano && <span className={styles.badge}>{q.ano}</span>}
+          {q.disciplinas && <span className={styles.badge}>{q.disciplinas.nome}</span>}
+          {q.assuntos && <span className={styles.badge}>{q.assuntos.nome}</span>}
+        </div>
+
+        {/* Enunciado */}
+        <div className={styles.enunciado} dangerouslySetInnerHTML={{ __html: q.enunciado }} />
+
+        {/* Opções */}
+        {q.tipo === 'multipla_escolha' ? (
+          <div className={styles.opcoes}>
+            {q.alternativas.map(alt => {
+              let estado = ''
+              if (respondida) {
+                if (alt.letra === respostaCerta) estado = styles.opcaoCerta
+                else if (alt.letra === selecionada) estado = styles.opcaoErrada
+              } else if (alt.letra === selecionada) {
+                estado = styles.opcaoSelecionada
+              }
+              return (
+                <button key={alt.id}
+                  className={`${styles.opcao} ${estado}`}
+                  onClick={() => !respondida && setSelecionada(alt.letra)}
+                  disabled={respondida}>
+                  <span className={styles.opcaoLetra}>{alt.letra}</span>
+                  <span dangerouslySetInnerHTML={{ __html: alt.texto }} />
+                </button>
+              )
+            })}
+          </div>
+        ) : (
+          <div className={styles.opcoesCE}>
+            {[
+              { valor: 'C', label: 'Certo', Icon: CheckCircle },
+              { valor: 'E', label: 'Errado', Icon: XCircle },
+            ].map(({ valor, label, Icon }) => {
+              let estado = ''
+              if (respondida) {
+                if (valor === respostaCerta) estado = styles.opcaoCerta
+                else if (valor === selecionada) estado = styles.opcaoErrada
+              } else if (valor === selecionada) {
+                estado = styles.opcaoSelecionada
+              }
+              return (
+                <button key={valor}
+                  className={`${styles.opcaoCEBtn} ${estado}`}
+                  onClick={() => !respondida && setSelecionada(valor)}
+                  disabled={respondida}>
+                  <Icon size={17} /> {label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Feedback pós-resposta */}
+        {respondida && (
+          <div className={historico[historico.length - 1]?.acertou ? styles.feedbackOk : styles.feedbackErro}>
+            {historico[historico.length - 1]?.acertou
+              ? <><CheckCircle size={16} /> Você acertou! Gabarito: <strong>{gabarito}</strong></>
+              : <><XCircle size={16} /> Você errou. Gabarito: <strong>{gabarito}</strong></>}
+          </div>
+        )}
+
+        {respondida && q.comentario && (
+          <div className={styles.comentarioBox}>
+            <p className={styles.comentarioTitulo}>Comentário</p>
+            <div dangerouslySetInnerHTML={{ __html: q.comentario }} />
+          </div>
+        )}
+
+        {/* Ações */}
+        <div className={styles.acoesRow}>
+          <button className={styles.btnGhost} onClick={() => {
+            if (confirm('Encerrar a sessão? As respostas já dadas ficam registradas.'))
+              setFase(historico.length > 0 ? 'resultado' : 'config')
+          }}>
+            Encerrar
+          </button>
+          {!respondida ? (
+            <button className={styles.btnComecar}
+              onClick={responder}
+              disabled={selecionada === null}>
+              Responder
+            </button>
+          ) : (
+            <button className={styles.btnComecar} onClick={proxima}>
+              {indice + 1 >= sessao.length ? 'Ver resultado' : 'Próxima questão'} <ChevronRight size={15} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

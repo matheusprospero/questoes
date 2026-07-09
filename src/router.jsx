@@ -11,6 +11,8 @@ import SimuladoDetalhe from './pages/simulados/SimuladoDetalhe'
 import Cadernos from './pages/cadernos/Cadernos'
 import CadernoDetalhe from './pages/cadernos/CadernoDetalhe'
 import Favoritos from './pages/favoritos/Favoritos'
+import Estudo from './pages/estudo/Estudo'
+import Estatisticas from './pages/estudo/Estatisticas'
 import Perfil from './pages/perfil/Perfil'
 
 const base = import.meta.env.BASE_URL
@@ -33,6 +35,8 @@ const router = createBrowserRouter([
       { path: 'cadernos',             element: <Cadernos /> },
       { path: 'cadernos/:id',         element: <CadernoDetalhe /> },
       { path: 'favoritos',           element: <Favoritos /> },
+      { path: 'estudo',              element: <Estudo /> },
+      { path: 'estatisticas',        element: <Estatisticas /> },
       { path: 'perfil',              element: <Perfil /> },
     ],
   },

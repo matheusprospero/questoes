@@ -1,0 +1,107 @@
+.page { padding: 0; }
+.loading { text-align: center; padding: 64px; color: var(--text-tertiary); font-size: 13px; }
+
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
+.titulo { font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.subtitulo { font-size: 13px; color: var(--text-tertiary); }
+.headerBotoes { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btnPrimary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; background: var(--color-primary); color: white;
+  border: none; border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  cursor: pointer; white-space: nowrap;
+}
+.btnPrimary:hover { background: var(--color-primary-dark); }
+
+.btnGhost {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; background: var(--bg-surface); color: var(--text-secondary);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  cursor: pointer; white-space: nowrap;
+}
+.btnGhost:hover { background: var(--bg-subtle); }
+
+.vazio {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 12px; padding: 80px 24px;
+  color: var(--text-tertiary);
+}
+.vazio p { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+
+/* Cards de resumo */
+.cardsResumo {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px; margin-bottom: 16px;
+}
+.cardResumo {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 16px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.cardIcon { color: var(--text-tertiary); }
+.cardValor { font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+.cardLabel { font-size: 12px; color: var(--text-tertiary); }
+
+/* Grid de seções */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 12px; }
+.card {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 18px;
+}
+.cardWide { grid-column: 1 / -1; }
+.secTitulo {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+  color: var(--text-tertiary); margin-bottom: 14px;
+}
+.semDados { font-size: 13px; color: var(--text-tertiary); }
+
+/* Barras de desempenho */
+.barraRow { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.barraNome {
+  width: 150px; flex-shrink: 0; font-size: 12.5px; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.barraTrack { flex: 1; height: 8px; background: var(--bg-subtle); border-radius: var(--radius-full); overflow: hidden; }
+.barraFill { height: 100%; border-radius: var(--radius-full); }
+.barraPct { width: 40px; text-align: right; font-size: 12.5px; font-weight: 700; }
+.barraTotal { width: 48px; text-align: right; font-size: 11.5px; color: var(--text-tertiary); }
+
+/* Evolução mensal */
+.evolucao {
+  display: flex; align-items: flex-end; gap: 12px;
+  min-height: 150px; overflow-x: auto; padding-bottom: 4px;
+}
+.evoCol { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 44px; }
+.evoPct { font-size: 11px; font-weight: 700; }
+.evoTrack {
+  width: 26px; height: 90px; background: var(--bg-subtle);
+  border-radius: var(--radius-sm); display: flex; align-items: flex-end; overflow: hidden;
+}
+.evoFill { width: 100%; border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.evoLabel { font-size: 11px; color: var(--text-secondary); }
+.evoTotal { font-size: 10px; color: var(--text-tertiary); }
+
+/* Questões mais erradas */
+.erradasLista { display: flex; flex-direction: column; gap: 6px; }
+.erradaItem {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); cursor: pointer; background: var(--bg-surface);
+}
+.erradaItem:hover { background: var(--bg-subtle); }
+.erradaBadge {
+  flex-shrink: 0; font-size: 11px; font-weight: 700;
+  padding: 3px 8px; border-radius: var(--radius-full);
+  background: var(--color-danger-bg); color: var(--color-danger);
+}
+.erradaTexto { flex: 1; font-size: 13px; color: var(--text-primary); }
+.erradaMeta { flex-shrink: 0; font-size: 11.5px; color: var(--text-tertiary); white-space: nowrap; }
+
+@media (max-width: 700px) {
+  .barraNome { width: 110px; }
+  .erradaMeta { display: none; }
+}
