@@ -6,7 +6,8 @@ import {
 import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simulados'
 import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos'
 import { useAuth } from '../../contexts/AuthContext'
-import { ChevronLeft, Pencil, Heart, CheckCircle, XCircle, Trash2 } from 'lucide-react'
+import VideoYouTube from '../../components/VideoYouTube'
+import { ChevronLeft, Pencil, Heart, CheckCircle, XCircle, Trash2, Youtube } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import styles from './QuestaoDetalhe.module.css'
@@ -193,6 +194,17 @@ export default function QuestaoDetalhe() {
               <p className={styles.secTitulo}>Comentário / justificativa</p>
               <div className={styles.gabarito}
                 dangerouslySetInnerHTML={{ __html: questao.comentario }} />
+            </div>
+          )}
+
+          {/* Resolução em vídeo */}
+          {questao.video_url && (
+            <div className={styles.card}>
+              <p className={styles.secTitulo}>
+                <Youtube size={13} style={{ verticalAlign: '-2px', marginRight: 6 }} />
+                Resolução em vídeo
+              </p>
+              <VideoYouTube url={questao.video_url} />
             </div>
           )}
         </div>

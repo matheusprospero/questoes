@@ -7,7 +7,8 @@ import {
   criarAssunto, criarBanca, criarOrgao,
 } from '../../services/questoes'
 import RichEditor from '../../components/RichEditor'
-import { Plus, Trash2, ChevronLeft, Save, CheckCircle, XCircle } from 'lucide-react'
+import VideoYouTube, { extrairIdYouTube } from '../../components/VideoYouTube'
+import { Plus, Trash2, ChevronLeft, Save, CheckCircle, XCircle, Youtube } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './QuestaoForm.module.css'
 
@@ -25,7 +26,7 @@ export default function QuestaoForm() {
   const isEdicao = !!id
 
   const [form, setForm] = useState({
-    tipo: 'multipla_escolha', enunciado: '', comentario: '',
+    tipo: 'multipla_escolha', enunciado: '', comentario: '', video_url: '',
     disciplina_id: '', assunto_id: '', banca_id: '', orgao_id: '',
     ano: '', cargo: '', nivel: '', dificuldade: 3, gabarito_certo: null,
   })
@@ -44,6 +45,7 @@ export default function QuestaoForm() {
         tipo: questaoExistente.tipo,
         enunciado: questaoExistente.enunciado,
         comentario: questaoExistente.comentario || '',
+        video_url: questaoExistente.video_url || '',
         disciplina_id: questaoExistente.disciplina_id || '',
         assunto_id: questaoExistente.assunto_id || '',
         banca_id: questaoExistente.banca_id || '',
@@ -135,6 +137,7 @@ export default function QuestaoForm() {
         tipo: form.tipo,
         enunciado: form.enunciado,
         comentario: form.comentario || null,
+        video_url: form.video_url.trim() || null,
         disciplina_id: form.disciplina_id || null,
         assunto_id: form.assunto_id || null,
         banca_id: form.banca_id || null,
@@ -288,6 +291,32 @@ export default function QuestaoForm() {
               value={form.comentario}
               onChange={(html) => setForm(f => ({...f, comentario: html}))}
             />
+          </div>
+
+          {/* Resolução em vídeo */}
+          <div className={styles.card}>
+            <label className={styles.label}>
+              <Youtube size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+              Resolução em vídeo (YouTube)
+            </label>
+            <p className={styles.hint}>
+              Cole o link do vídeo (recomendado: vídeo "não listado"). O aluno vê o player após responder a questão.
+            </p>
+            <input className={styles.input}
+              placeholder="https://youtu.be/... ou https://www.youtube.com/watch?v=..."
+              value={form.video_url}
+              onChange={e => setForm(f => ({...f, video_url: e.target.value}))}
+            />
+            {form.video_url.trim() && !extrairIdYouTube(form.video_url) && (
+              <p className={styles.hint} style={{ color: '#dc2626', marginTop: 6 }}>
+                Não reconheci esse link como um vídeo do YouTube.
+              </p>
+            )}
+            {extrairIdYouTube(form.video_url) && (
+              <div style={{ marginTop: 10 }}>
+                <VideoYouTube url={form.video_url} />
+              </div>
+            )}
           </div>
         </div>
 

@@ -5,8 +5,9 @@ import {
   listarQuestoes, listarDisciplinas, listarAssuntos, listarBancas, gabaritoQuestao,
 } from '../../services/questoes'
 import { registrarResposta, listarRespostas, idsUltimaErrada } from '../../services/estudo'
+import VideoYouTube from '../../components/VideoYouTube'
 import {
-  Play, CheckCircle, XCircle, ChevronRight, RotateCcw, BarChart2, BookOpen,
+  Play, CheckCircle, XCircle, ChevronRight, RotateCcw, BarChart2, BookOpen, Youtube,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Estudo.module.css'
@@ -377,6 +378,16 @@ export default function Estudo() {
           <div className={styles.comentarioBox}>
             <p className={styles.comentarioTitulo}>Comentário</p>
             <div dangerouslySetInnerHTML={{ __html: q.comentario }} />
+          </div>
+        )}
+
+        {respondida && q.video_url && (
+          <div className={styles.comentarioBox}>
+            <p className={styles.comentarioTitulo}>
+              <Youtube size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+              Resolução em vídeo
+            </p>
+            <VideoYouTube url={q.video_url} />
           </div>
         )}
 
