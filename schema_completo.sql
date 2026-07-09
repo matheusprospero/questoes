@@ -1,335 +1,266 @@
--- ============================================================
--- REPOSITÓRIO PEDAGÓGICO MUNICIPAL — Schema Completo
--- Atualizado com todas as alterações aplicadas durante o projeto
--- ============================================================
+-- ============================================================================
+-- BANCO DE QUESTÕES DE CONCURSOS PÚBLICOS — Schema completo (Supabase)
+-- Uso pessoal (usuário único). RLS libera tudo para usuário autenticado.
+--
+-- COMO USAR:
+--   1. Crie um projeto novo no Supabase
+--   2. Abra SQL Editor → New query
+--   3. Cole este arquivo inteiro e clique em RUN
+--   4. Em Authentication → Users, crie seu usuário (e-mail + senha)
+-- ============================================================================
 
--- ── Extensões ────────────────────────────────────────────────
-create extension if not exists "uuid-ossp";
+-- O script pode ser re-executado do zero: remove tudo antes de recriar
+drop table if exists respostas          cascade;
+drop table if exists favoritos          cascade;
+drop table if exists simulado_questoes  cascade;
+drop table if exists simulados          cascade;
+drop table if exists caderno_questoes   cascade;
+drop table if exists cadernos           cascade;
+drop table if exists questao_alternativas cascade;
+drop table if exists questoes           cascade;
+drop table if exists assuntos           cascade;
+drop table if exists bancas             cascade;
+drop table if exists orgaos             cascade;
+drop table if exists disciplinas        cascade;
 
--- ── Disciplinas ──────────────────────────────────────────────
-create table if not exists public.disciplinas (
-  id          uuid primary key default uuid_generate_v4(),
-  nome        text not null,
-  codigo      text,
-  ativo       boolean default true,
-  criado_em   timestamptz default now()
+-- ============================================================================
+-- TABELAS DE CLASSIFICAÇÃO
+-- ============================================================================
+
+create table disciplinas (
+  id        uuid primary key default gen_random_uuid(),
+  nome      text not null unique,
+  cor       text not null default '#6366f1',
+  ordem     int  not null default 0,
+  ativo     boolean not null default true,
+  criado_em timestamptz not null default now()
 );
 
--- ── Habilidades (Matriz Curricular) ──────────────────────────
-create table if not exists public.habilidades (
-  id            uuid primary key default uuid_generate_v4(),
-  disciplina_id uuid references public.disciplinas(id) on delete cascade,
-  codigo        text not null,
-  descricao     text not null,
-  ano_escolar   text,
-  ativo         boolean default true,
-  criado_em     timestamptz default now()
+-- Assuntos (tópicos) de cada disciplina — substituem as habilidades BNCC
+create table assuntos (
+  id            uuid primary key default gen_random_uuid(),
+  disciplina_id uuid not null references disciplinas(id) on delete cascade,
+  nome          text not null,
+  ordem         int  not null default 0,
+  ativo         boolean not null default true,
+  criado_em     timestamptz not null default now(),
+  unique (disciplina_id, nome)
 );
 
--- ── Escolas ──────────────────────────────────────────────────
-create table if not exists public.escolas (
-  id        uuid primary key default uuid_generate_v4(),
-  nome      text not null,
-  codigo    text,
-  regiao    text,
-  ativo     boolean default true,
-  criado_em timestamptz default now()
+create table bancas (
+  id        uuid primary key default gen_random_uuid(),
+  nome      text not null unique,
+  criado_em timestamptz not null default now()
 );
 
--- ── Perfis de usuário ────────────────────────────────────────
-create table if not exists public.perfis (
-  id               uuid primary key references auth.users(id) on delete cascade,
-  nome             text not null,
-  email            text,
-  papel            text not null default 'professor'
-                     check (papel in ('professor','formador','administrador')),
-  escola_id        uuid references public.escolas(id),
-  escola_nome      text,
-  ativo            boolean default true,
-  disciplinas_ids  uuid[] default '{}',
-  avatar_url       text,
-  criado_em        timestamptz default now(),
-  atualizado_em    timestamptz default now()
+create table orgaos (
+  id        uuid primary key default gen_random_uuid(),
+  nome      text not null unique,
+  criado_em timestamptz not null default now()
 );
 
-create index if not exists idx_perfis_disciplinas on public.perfis using gin(disciplinas_ids);
+-- ============================================================================
+-- QUESTÕES
+-- ============================================================================
 
--- ── Convites ─────────────────────────────────────────────────
-create table if not exists public.convites (
-  id          uuid primary key default uuid_generate_v4(),
-  email       text not null,
-  nome        text,
-  papel       text default 'professor',
-  token       text unique not null,
-  usado       boolean default false,
-  criado_por  uuid references public.perfis(id),
-  criado_em   timestamptz default now(),
-  expira_em   timestamptz default (now() + interval '7 days')
+create table questoes (
+  id             uuid primary key default gen_random_uuid(),
+  tipo           text not null default 'multipla_escolha'
+                 check (tipo in ('multipla_escolha', 'certo_errado')),
+  enunciado      text not null,           -- HTML do editor rico
+  comentario     text,                    -- justificativa/comentário do gabarito (HTML)
+  disciplina_id  uuid references disciplinas(id) on delete set null,
+  assunto_id     uuid references assuntos(id)    on delete set null,
+  banca_id       uuid references bancas(id)      on delete set null,
+  orgao_id       uuid references orgaos(id)      on delete set null,
+  ano            int check (ano between 1990 and 2100),
+  cargo          text,
+  nivel          text check (nivel in ('fundamental', 'medio', 'superior')),
+  dificuldade    int not null default 3 check (dificuldade between 1 and 5),
+  gabarito_certo boolean,                 -- só para certo_errado: true = Certo, false = Errado
+  criado_em      timestamptz not null default now(),
+  atualizado_em  timestamptz not null default now()
 );
 
--- ── Questões ─────────────────────────────────────────────────
-create table if not exists public.questoes (
-  id                 uuid primary key default uuid_generate_v4(),
-  titulo             text not null,
-  enunciado          text,
-  tipo               text not null default 'multipla_escolha'
-                       check (tipo in ('multipla_escolha','dissertativa')),
-  disciplina_id      uuid references public.disciplinas(id),
-  ano_escolar        text,
-  nivel_dificuldade  int check (nivel_dificuldade between 1 and 5),
-  fonte              text,
-  status             text not null default 'rascunho'
-                       check (status in ('rascunho','em_revisao','publicado','arquivado')),
-  autor_id           uuid references public.perfis(id),
-  criado_em          timestamptz default now(),
-  atualizado_em      timestamptz default now()
-);
+create index idx_questoes_disciplina on questoes(disciplina_id);
+create index idx_questoes_assunto    on questoes(assunto_id);
+create index idx_questoes_banca      on questoes(banca_id);
+create index idx_questoes_ano        on questoes(ano);
 
--- ── Alternativas das questões ────────────────────────────────
-create table if not exists public.questao_alternativas (
-  id         uuid primary key default uuid_generate_v4(),
-  questao_id uuid references public.questoes(id) on delete cascade,
+-- Alternativas (apenas para tipo multipla_escolha)
+create table questao_alternativas (
+  id         uuid primary key default gen_random_uuid(),
+  questao_id uuid not null references questoes(id) on delete cascade,
   letra      text not null,
-  texto      text,
-  correta    boolean default false,
-  ordem      int default 0
+  texto      text not null,               -- HTML
+  correta    boolean not null default false,
+  ordem      int not null default 0
 );
 
--- ── Gabaritos (dissertativas) ────────────────────────────────
-create table if not exists public.questao_gabaritos (
-  id         uuid primary key default uuid_generate_v4(),
-  questao_id uuid references public.questoes(id) on delete cascade,
-  texto      text,
-  criterios  text
-);
+create index idx_alternativas_questao on questao_alternativas(questao_id);
 
--- ── Habilidades vinculadas às questões ──────────────────────
-create table if not exists public.questao_habilidades (
-  questao_id    uuid references public.questoes(id) on delete cascade,
-  habilidade_id uuid references public.habilidades(id) on delete cascade,
-  primary key (questao_id, habilidade_id)
-);
-
--- ── Versões de questões ──────────────────────────────────────
-create table if not exists public.questao_versoes (
-  id         uuid primary key default uuid_generate_v4(),
-  questao_id uuid references public.questoes(id) on delete cascade,
-  versao     int not null,
-  dados      jsonb,
-  autor_id   uuid references public.perfis(id),
-  criado_em  timestamptz default now()
-);
-
--- ── Aprovações de questões ───────────────────────────────────
-create table if not exists public.aprovacoes (
-  id              uuid primary key default uuid_generate_v4(),
-  questao_id      uuid references public.questoes(id) on delete cascade,
-  status_anterior text,
-  status_novo     text,
-  justificativa   text,
-  autor_id        uuid references public.perfis(id),
-  criado_em       timestamptz default now()
-);
-
--- ── Avaliações de questões ───────────────────────────────────
-create table if not exists public.avaliacoes (
-  id         uuid primary key default uuid_generate_v4(),
-  questao_id uuid references public.questoes(id) on delete cascade,
-  nota       int check (nota between 1 and 5),
-  autor_id   uuid references public.perfis(id),
-  criado_em  timestamptz default now(),
-  unique(questao_id, autor_id)
-);
-
--- ── Favoritos ────────────────────────────────────────────────
-create table if not exists public.favoritos (
-  id         uuid primary key default uuid_generate_v4(),
-  questao_id uuid references public.questoes(id) on delete cascade,
-  usuario_id uuid references public.perfis(id) on delete cascade,
-  criado_em  timestamptz default now(),
-  unique(questao_id, usuario_id)
-);
-
--- ── Provas ───────────────────────────────────────────────────
-create table if not exists public.provas (
-  id              uuid primary key default uuid_generate_v4(),
-  titulo          text not null,
-  descricao       text,
-  disciplina_id   uuid references public.disciplinas(id),
-  disciplinas_ids uuid[] default '{}',
-  tipo_prova      text not null default 'disciplina'
-                    check (tipo_prova in ('disciplina','simulado')),
-  ano_escolar     text,
-  instrucoes      text,
-  cabecalho       text default '',
-  cfg_impressao   jsonb default '{}',
-  visibilidade    text not null default 'pessoal'
-                    check (visibilidade in ('pessoal','rede')),
-  status_revisao  text not null default 'rascunho'
-                    check (status_revisao in ('rascunho','em_revisao','publicado')),
-  autor_id        uuid references public.perfis(id),
-  criado_em       timestamptz default now(),
-  atualizado_em   timestamptz default now()
-);
-
--- ── Questões de uma prova ────────────────────────────────────
-create table if not exists public.prova_questoes (
-  id         uuid primary key default uuid_generate_v4(),
-  prova_id   uuid references public.provas(id) on delete cascade,
-  questao_id uuid references public.questoes(id) on delete cascade,
-  ordem      int default 0,
-  pontuacao  numeric(5,2) default 1.0,
-  unique(prova_id, questao_id)
-);
-
--- ── Histórico de uso ─────────────────────────────────────────
-create table if not exists public.historico_uso (
-  id         uuid primary key default uuid_generate_v4(),
-  questao_id uuid references public.questoes(id) on delete cascade,
-  prova_id   uuid references public.provas(id) on delete set null,
-  usuario_id uuid references public.perfis(id),
-  tipo       text,
-  observacao text,
-  criado_em  timestamptz default now()
-);
-
--- ── Planos de aula ───────────────────────────────────────────
-create table if not exists public.planos_aula (
-  id            uuid primary key default uuid_generate_v4(),
-  titulo        text not null,
-  descricao     text,
-  disciplina_id uuid references public.disciplinas(id),
-  ano_escolar   text,
-  duracao_aulas int,
-  objetivos     text,
-  conteudo      text,
-  metodologia   text,
-  recursos      text,
-  avaliacao     text,
-  status        text default 'rascunho',
-  autor_id      uuid references public.perfis(id),
-  criado_em     timestamptz default now(),
-  atualizado_em timestamptz default now()
-);
-
--- ── Materiais pedagógicos ────────────────────────────────────
-create table if not exists public.materiais (
-  id            uuid primary key default uuid_generate_v4(),
-  titulo        text not null,
-  descricao     text,
-  tipo          text,
-  url           text,
-  disciplina_id uuid references public.disciplinas(id),
-  ano_escolar   text,
-  tags          text[],
-  autor_id      uuid references public.perfis(id),
-  criado_em     timestamptz default now()
-);
-
--- ── Coleções ─────────────────────────────────────────────────
-create table if not exists public.colecoes (
-  id         uuid primary key default uuid_generate_v4(),
-  nome       text not null,
-  descricao  text,
-  publica    boolean default false,
-  autor_id   uuid references public.perfis(id),
-  criado_em  timestamptz default now()
-);
-
-create table if not exists public.colecao_questoes (
-  colecao_id uuid references public.colecoes(id) on delete cascade,
-  questao_id uuid references public.questoes(id) on delete cascade,
-  ordem      int default 0,
-  primary key (colecao_id, questao_id)
-);
-
--- ── Notificações ─────────────────────────────────────────────
-create table if not exists public.notificacoes (
-  id         uuid primary key default uuid_generate_v4(),
-  usuario_id uuid references public.perfis(id) on delete cascade,
-  tipo       text,
-  titulo     text,
-  mensagem   text,
-  lida       boolean default false,
-  dados      jsonb default '{}',
-  criado_em  timestamptz default now()
-);
-
--- ============================================================
--- PERMISSÕES
--- ============================================================
-grant usage on schema public to public;
-grant select, insert, update, delete on all tables in schema public to public;
-grant select, insert, update, delete on all tables in schema public to authenticated;
-grant select on all tables in schema public to anon;
-
-alter table public.disciplinas          disable row level security;
-alter table public.habilidades          disable row level security;
-alter table public.escolas              disable row level security;
-alter table public.perfis               disable row level security;
-alter table public.convites             disable row level security;
-alter table public.questoes             disable row level security;
-alter table public.questao_alternativas disable row level security;
-alter table public.questao_gabaritos    disable row level security;
-alter table public.questao_habilidades  disable row level security;
-alter table public.questao_versoes      disable row level security;
-alter table public.aprovacoes           disable row level security;
-alter table public.avaliacoes           disable row level security;
-alter table public.favoritos            disable row level security;
-alter table public.provas               disable row level security;
-alter table public.prova_questoes       disable row level security;
-alter table public.historico_uso        disable row level security;
-alter table public.planos_aula          disable row level security;
-alter table public.materiais            disable row level security;
-alter table public.colecoes             disable row level security;
-alter table public.colecao_questoes     disable row level security;
-alter table public.notificacoes         disable row level security;
-
--- ============================================================
--- TRIGGER — criar perfil ao registrar usuário
--- ============================================================
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer as $$
+-- Mantém atualizado_em em dia
+create or replace function set_atualizado_em()
+returns trigger language plpgsql as $$
 begin
-  insert into public.perfis (id, nome, email, papel)
-  values (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'nome', split_part(new.email, '@', 1)),
-    new.email,
-    coalesce(new.raw_user_meta_data->>'papel', 'professor')
-  )
-  on conflict (id) do nothing;
+  new.atualizado_em = now();
   return new;
 end;
 $$;
 
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+create trigger trg_questoes_atualizado
+  before update on questoes
+  for each row execute function set_atualizado_em();
 
--- ============================================================
--- STORAGE — bucket midia
--- ============================================================
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values (
-  'midia', 'midia', true, 5242880,
-  array['image/jpeg','image/png','image/gif','image/webp','image/svg+xml']
-)
-on conflict (id) do update set public = true;
+-- ============================================================================
+-- CADERNOS (agrupamentos de questões para estudo)
+-- ============================================================================
 
-drop policy if exists "Upload autenticado" on storage.objects;
-drop policy if exists "Leitura pública"    on storage.objects;
-drop policy if exists "Deletar próprio"    on storage.objects;
+create table cadernos (
+  id        uuid primary key default gen_random_uuid(),
+  nome      text not null,
+  descricao text,
+  criado_em timestamptz not null default now()
+);
 
-create policy "Upload autenticado" on storage.objects
-  for insert to authenticated
-  with check (bucket_id = 'midia');
+create table caderno_questoes (
+  caderno_id uuid not null references cadernos(id) on delete cascade,
+  questao_id uuid not null references questoes(id) on delete cascade,
+  ordem      int not null default 0,
+  primary key (caderno_id, questao_id)
+);
 
-create policy "Leitura pública" on storage.objects
-  for select to public
-  using (bucket_id = 'midia');
+-- ============================================================================
+-- SIMULADOS (com exportação para Word/impressão)
+-- ============================================================================
 
-create policy "Deletar próprio" on storage.objects
-  for delete to authenticated
-  using (bucket_id = 'midia');
+create table simulados (
+  id            uuid primary key default gen_random_uuid(),
+  titulo        text not null,
+  descricao     text,
+  instrucoes    text,
+  cabecalho     text,                       -- HTML do cabeçalho de impressão
+  cfg_impressao jsonb not null default '{}',
+  criado_em     timestamptz not null default now()
+);
+
+create table simulado_questoes (
+  simulado_id uuid not null references simulados(id) on delete cascade,
+  questao_id  uuid not null references questoes(id)  on delete cascade,
+  ordem       int not null default 0,
+  primary key (simulado_id, questao_id)
+);
+
+-- ============================================================================
+-- FAVORITOS
+-- ============================================================================
+
+create table favoritos (
+  id         uuid primary key default gen_random_uuid(),
+  questao_id uuid not null references questoes(id) on delete cascade unique,
+  criado_em  timestamptz not null default now()
+);
+
+-- ============================================================================
+-- RESPOSTAS (módulo de resolução/estudo)
+-- ============================================================================
+
+create table respostas (
+  id            uuid primary key default gen_random_uuid(),
+  questao_id    uuid not null references questoes(id) on delete cascade,
+  resposta      text not null,             -- letra (A-E) ou 'C'/'E' no certo_errado
+  acertou       boolean not null,
+  origem        text not null default 'estudo' check (origem in ('estudo', 'simulado')),
+  respondido_em timestamptz not null default now()
+);
+
+create index idx_respostas_questao on respostas(questao_id);
+create index idx_respostas_data    on respostas(respondido_em);
+
+-- ============================================================================
+-- RLS — acesso total para usuário autenticado (uso pessoal, usuário único)
+-- ============================================================================
+
+alter table disciplinas          enable row level security;
+alter table assuntos             enable row level security;
+alter table bancas               enable row level security;
+alter table orgaos               enable row level security;
+alter table questoes             enable row level security;
+alter table questao_alternativas enable row level security;
+alter table cadernos             enable row level security;
+alter table caderno_questoes     enable row level security;
+alter table simulados            enable row level security;
+alter table simulado_questoes    enable row level security;
+alter table favoritos            enable row level security;
+alter table respostas            enable row level security;
+
+create policy "autenticado_total" on disciplinas          for all to authenticated using (true) with check (true);
+create policy "autenticado_total" on assuntos             for all to authenticated using (true) with check (true);
+create policy "autenticado_total" on bancas               for all to authenticated using (true) with check (true);
+create policy "autenticado_total" on orgaos               for all to authenticated using (true) with check (true);
+create policy "autenticado_total" on questoes             for all to authenticated using (true) with check (true);
+create policy "autenticado_total" on questao_alternativas for all to authenticated using (true) with check (true);
+create policy "autenticado_total" on cadernos             for all to authenticated using (true) with check (true);
+create policy "autenticado_total" on caderno_questoes     for all to authenticated using (true) with check (true);
+create policy "autenticado_total" on simulados            for all to authenticated using (true) with check (true);
+create policy "autenticado_total" on simulado_questoes    for all to authenticated using (true) with check (true);
+create policy "autenticado_total" on favoritos            for all to authenticated using (true) with check (true);
+create policy "autenticado_total" on respostas            for all to authenticated using (true) with check (true);
+
+-- ============================================================================
+-- STORAGE — bucket "midia" para imagens do editor (enunciados/alternativas)
+-- ============================================================================
+
+insert into storage.buckets (id, name, public)
+values ('midia', 'midia', true)
+on conflict (id) do nothing;
+
+drop policy if exists "midia_leitura_publica" on storage.objects;
+drop policy if exists "midia_escrita_autenticado" on storage.objects;
+drop policy if exists "midia_update_autenticado" on storage.objects;
+drop policy if exists "midia_delete_autenticado" on storage.objects;
+
+create policy "midia_leitura_publica" on storage.objects
+  for select using (bucket_id = 'midia');
+create policy "midia_escrita_autenticado" on storage.objects
+  for insert to authenticated with check (bucket_id = 'midia');
+create policy "midia_update_autenticado" on storage.objects
+  for update to authenticated using (bucket_id = 'midia');
+create policy "midia_delete_autenticado" on storage.objects
+  for delete to authenticated using (bucket_id = 'midia');
+
+-- ============================================================================
+-- SEEDS — disciplinas e bancas comuns em concursos (edite à vontade)
+-- ============================================================================
+
+insert into disciplinas (nome, cor, ordem) values
+  ('Língua Portuguesa',            '#ef4444', 1),
+  ('Raciocínio Lógico-Matemático', '#f59e0b', 2),
+  ('Matemática',                   '#eab308', 3),
+  ('Informática',                  '#06b6d4', 4),
+  ('Direito Constitucional',       '#3b82f6', 5),
+  ('Direito Administrativo',       '#6366f1', 6),
+  ('Direito Penal',                '#8b5cf6', 7),
+  ('Direito Processual Penal',     '#a855f7', 8),
+  ('Direito Civil',                '#ec4899', 9),
+  ('Direito Processual Civil',     '#f43f5e', 10),
+  ('Administração Pública',        '#10b981', 11),
+  ('Administração Financeira e Orçamentária', '#14b8a6', 12),
+  ('Contabilidade',                '#22c55e', 13),
+  ('Ética no Serviço Público',     '#84cc16', 14),
+  ('Atualidades',                  '#f97316', 15),
+  ('Legislação Específica',        '#64748b', 16);
+
+insert into bancas (nome) values
+  ('Cebraspe'),
+  ('FGV'),
+  ('FCC'),
+  ('Vunesp'),
+  ('Cesgranrio'),
+  ('IBFC'),
+  ('AOCP'),
+  ('Quadrix'),
+  ('IDECAN'),
+  ('Instituto Consulplan'),
+  ('IADES'),
+  ('FUNDATEC');
