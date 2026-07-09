@@ -4,3 +4,10 @@ dist
 .DS_Store
 *.local
 *.msi
+
+# Importador: conteúdo de provas (direitos autorais) + service_role key — nunca versionar
+importador/conteudo/
+
+# Python
+__pycache__/
+*.pyc
