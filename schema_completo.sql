@@ -1,12 +1,20 @@
 -- ============================================================================
--- BANCO DE QUESTÕES DE CONCURSOS PÚBLICOS — Schema completo (Supabase)
--- Uso pessoal (usuário único). RLS libera tudo para usuário autenticado.
+-- BANCO DE QUESTÕES DE CONCURSOS — Schema completo (Supabase)
+--
+-- Modelo multiusuário para venda de acesso:
+--   • ADMIN (você): cria e edita questões, disciplinas, bancas etc.
+--   • ALUNO: lê o banco, resolve questões e tem cadernos/simulados/
+--     favoritos/respostas PRÓPRIOS (isolados por RLS).
 --
 -- COMO USAR:
 --   1. Crie um projeto novo no Supabase
---   2. Abra SQL Editor → New query
---   3. Cole este arquivo inteiro e clique em RUN
---   4. Em Authentication → Users, crie seu usuário (e-mail + senha)
+--   2. Abra SQL Editor → New query, cole este arquivo inteiro e clique RUN
+--   3. Em Authentication → Users → Add user, crie o SEU usuário
+--   4. Rode no SQL Editor (com seu e-mail) para virar admin:
+--        update perfis set papel = 'admin'
+--        where id = (select id from auth.users where email = 'SEU@EMAIL.com');
+--   5. Para cada aluno que pagar: Authentication → Users → Add user.
+--      Para cortar o acesso: delete (ou banir) o usuário no mesmo painel.
 -- ============================================================================
 
 -- O script pode ser re-executado do zero: remove tudo antes de recriar
@@ -22,9 +30,44 @@ drop table if exists assuntos           cascade;
 drop table if exists bancas             cascade;
 drop table if exists orgaos             cascade;
 drop table if exists disciplinas        cascade;
+drop table if exists perfis             cascade;
+drop function if exists is_admin();
+drop function if exists handle_new_user() cascade;
 
 -- ============================================================================
--- TABELAS DE CLASSIFICAÇÃO
+-- PERFIS — papel de cada usuário (admin = professor, aluno = pagante)
+-- ============================================================================
+
+create table perfis (
+  id        uuid primary key references auth.users(id) on delete cascade,
+  nome      text,
+  papel     text not null default 'aluno' check (papel in ('admin', 'aluno')),
+  criado_em timestamptz not null default now()
+);
+
+-- Cria o perfil automaticamente quando um usuário é criado no painel
+create function handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into perfis (id, nome)
+  values (new.id, coalesce(new.raw_user_meta_data->>'nome', split_part(new.email, '@', 1)))
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function handle_new_user();
+
+-- security definer: evita recursão de RLS ao usar dentro de policies
+create function is_admin()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from perfis where id = auth.uid() and papel = 'admin');
+$$;
+
+-- ============================================================================
+-- TABELAS DE CLASSIFICAÇÃO (conteúdo gerido pelo admin)
 -- ============================================================================
 
 create table disciplinas (
@@ -36,7 +79,7 @@ create table disciplinas (
   criado_em timestamptz not null default now()
 );
 
--- Assuntos (tópicos) de cada disciplina — substituem as habilidades BNCC
+-- Assuntos (tópicos) de cada disciplina
 create table assuntos (
   id            uuid primary key default gen_random_uuid(),
   disciplina_id uuid not null references disciplinas(id) on delete cascade,
@@ -60,7 +103,7 @@ create table orgaos (
 );
 
 -- ============================================================================
--- QUESTÕES
+-- QUESTÕES (conteúdo gerido pelo admin)
 -- ============================================================================
 
 create table questoes (
@@ -69,6 +112,7 @@ create table questoes (
                  check (tipo in ('multipla_escolha', 'certo_errado')),
   enunciado      text not null,           -- HTML do editor rico
   comentario     text,                    -- justificativa/comentário do gabarito (HTML)
+  video_url      text,                    -- resolução em vídeo (YouTube não listado)
   disciplina_id  uuid references disciplinas(id) on delete set null,
   assunto_id     uuid references assuntos(id)    on delete set null,
   banca_id       uuid references bancas(id)      on delete set null,
@@ -113,15 +157,19 @@ create trigger trg_questoes_atualizado
   for each row execute function set_atualizado_em();
 
 -- ============================================================================
--- CADERNOS (agrupamentos de questões para estudo)
+-- DADOS POR USUÁRIO (cada aluno tem os seus, isolados por RLS)
+-- usuario_id preenche sozinho com o usuário logado (default auth.uid())
 -- ============================================================================
 
 create table cadernos (
-  id        uuid primary key default gen_random_uuid(),
-  nome      text not null,
-  descricao text,
-  criado_em timestamptz not null default now()
+  id         uuid primary key default gen_random_uuid(),
+  usuario_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  nome       text not null,
+  descricao  text,
+  criado_em  timestamptz not null default now()
 );
+
+create index idx_cadernos_usuario on cadernos(usuario_id);
 
 create table caderno_questoes (
   caderno_id uuid not null references cadernos(id) on delete cascade,
@@ -130,12 +178,9 @@ create table caderno_questoes (
   primary key (caderno_id, questao_id)
 );
 
--- ============================================================================
--- SIMULADOS (com exportação para Word/impressão)
--- ============================================================================
-
 create table simulados (
   id            uuid primary key default gen_random_uuid(),
+  usuario_id    uuid not null default auth.uid() references auth.users(id) on delete cascade,
   titulo        text not null,
   descricao     text,
   instrucoes    text,
@@ -144,6 +189,8 @@ create table simulados (
   criado_em     timestamptz not null default now()
 );
 
+create index idx_simulados_usuario on simulados(usuario_id);
+
 create table simulado_questoes (
   simulado_id uuid not null references simulados(id) on delete cascade,
   questao_id  uuid not null references questoes(id)  on delete cascade,
@@ -151,22 +198,17 @@ create table simulado_questoes (
   primary key (simulado_id, questao_id)
 );
 
--- ============================================================================
--- FAVORITOS
--- ============================================================================
-
 create table favoritos (
   id         uuid primary key default gen_random_uuid(),
-  questao_id uuid not null references questoes(id) on delete cascade unique,
-  criado_em  timestamptz not null default now()
+  usuario_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  questao_id uuid not null references questoes(id) on delete cascade,
+  criado_em  timestamptz not null default now(),
+  unique (usuario_id, questao_id)
 );
-
--- ============================================================================
--- RESPOSTAS (módulo de resolução/estudo)
--- ============================================================================
 
 create table respostas (
   id            uuid primary key default gen_random_uuid(),
+  usuario_id    uuid not null default auth.uid() references auth.users(id) on delete cascade,
   questao_id    uuid not null references questoes(id) on delete cascade,
   resposta      text not null,             -- letra (A-E) ou 'C'/'E' no certo_errado
   acertou       boolean not null,
@@ -174,13 +216,15 @@ create table respostas (
   respondido_em timestamptz not null default now()
 );
 
+create index idx_respostas_usuario on respostas(usuario_id);
 create index idx_respostas_questao on respostas(questao_id);
 create index idx_respostas_data    on respostas(respondido_em);
 
 -- ============================================================================
--- RLS — acesso total para usuário autenticado (uso pessoal, usuário único)
+-- RLS
 -- ============================================================================
 
+alter table perfis               enable row level security;
 alter table disciplinas          enable row level security;
 alter table assuntos             enable row level security;
 alter table bancas               enable row level security;
@@ -194,21 +238,66 @@ alter table simulado_questoes    enable row level security;
 alter table favoritos            enable row level security;
 alter table respostas            enable row level security;
 
-create policy "autenticado_total" on disciplinas          for all to authenticated using (true) with check (true);
-create policy "autenticado_total" on assuntos             for all to authenticated using (true) with check (true);
-create policy "autenticado_total" on bancas               for all to authenticated using (true) with check (true);
-create policy "autenticado_total" on orgaos               for all to authenticated using (true) with check (true);
-create policy "autenticado_total" on questoes             for all to authenticated using (true) with check (true);
-create policy "autenticado_total" on questao_alternativas for all to authenticated using (true) with check (true);
-create policy "autenticado_total" on cadernos             for all to authenticated using (true) with check (true);
-create policy "autenticado_total" on caderno_questoes     for all to authenticated using (true) with check (true);
-create policy "autenticado_total" on simulados            for all to authenticated using (true) with check (true);
-create policy "autenticado_total" on simulado_questoes    for all to authenticated using (true) with check (true);
-create policy "autenticado_total" on favoritos            for all to authenticated using (true) with check (true);
-create policy "autenticado_total" on respostas            for all to authenticated using (true) with check (true);
+-- Perfis: cada um lê o próprio; admin lê todos; só admin altera papel
+create policy "perfil_proprio_select" on perfis for select to authenticated
+  using (id = auth.uid() or is_admin());
+create policy "perfil_proprio_update" on perfis for update to authenticated
+  using (id = auth.uid() or is_admin())
+  with check (
+    -- aluno pode editar o próprio nome, mas não se promover
+    is_admin() or (id = auth.uid() and papel = 'aluno')
+  );
+
+-- Conteúdo (questões e classificação): todos leem, só admin escreve
+create policy "conteudo_select" on disciplinas          for select to authenticated using (true);
+create policy "conteudo_select" on assuntos             for select to authenticated using (true);
+create policy "conteudo_select" on bancas               for select to authenticated using (true);
+create policy "conteudo_select" on orgaos               for select to authenticated using (true);
+create policy "conteudo_select" on questoes             for select to authenticated using (true);
+create policy "conteudo_select" on questao_alternativas for select to authenticated using (true);
+
+create policy "conteudo_admin_insert" on disciplinas          for insert to authenticated with check (is_admin());
+create policy "conteudo_admin_insert" on assuntos             for insert to authenticated with check (is_admin());
+create policy "conteudo_admin_insert" on bancas               for insert to authenticated with check (is_admin());
+create policy "conteudo_admin_insert" on orgaos               for insert to authenticated with check (is_admin());
+create policy "conteudo_admin_insert" on questoes             for insert to authenticated with check (is_admin());
+create policy "conteudo_admin_insert" on questao_alternativas for insert to authenticated with check (is_admin());
+
+create policy "conteudo_admin_update" on disciplinas          for update to authenticated using (is_admin());
+create policy "conteudo_admin_update" on assuntos             for update to authenticated using (is_admin());
+create policy "conteudo_admin_update" on bancas               for update to authenticated using (is_admin());
+create policy "conteudo_admin_update" on orgaos               for update to authenticated using (is_admin());
+create policy "conteudo_admin_update" on questoes             for update to authenticated using (is_admin());
+create policy "conteudo_admin_update" on questao_alternativas for update to authenticated using (is_admin());
+
+create policy "conteudo_admin_delete" on disciplinas          for delete to authenticated using (is_admin());
+create policy "conteudo_admin_delete" on assuntos             for delete to authenticated using (is_admin());
+create policy "conteudo_admin_delete" on bancas               for delete to authenticated using (is_admin());
+create policy "conteudo_admin_delete" on orgaos               for delete to authenticated using (is_admin());
+create policy "conteudo_admin_delete" on questoes             for delete to authenticated using (is_admin());
+create policy "conteudo_admin_delete" on questao_alternativas for delete to authenticated using (is_admin());
+
+-- Dados por usuário: cada um só enxerga e mexe nos próprios
+create policy "dono_total" on cadernos  for all to authenticated
+  using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
+create policy "dono_total" on simulados for all to authenticated
+  using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
+create policy "dono_total" on favoritos for all to authenticated
+  using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
+create policy "dono_total" on respostas for all to authenticated
+  using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
+
+-- Itens de caderno/simulado: acesso via dono do pai
+create policy "dono_via_caderno" on caderno_questoes for all to authenticated
+  using (exists (select 1 from cadernos c where c.id = caderno_id and c.usuario_id = auth.uid()))
+  with check (exists (select 1 from cadernos c where c.id = caderno_id and c.usuario_id = auth.uid()));
+
+create policy "dono_via_simulado" on simulado_questoes for all to authenticated
+  using (exists (select 1 from simulados s where s.id = simulado_id and s.usuario_id = auth.uid()))
+  with check (exists (select 1 from simulados s where s.id = simulado_id and s.usuario_id = auth.uid()));
 
 -- ============================================================================
--- STORAGE — bucket "midia" para imagens do editor (enunciados/alternativas)
+-- STORAGE — bucket "midia" para imagens do editor (só admin envia)
 -- ============================================================================
 
 insert into storage.buckets (id, name, public)
@@ -219,15 +308,18 @@ drop policy if exists "midia_leitura_publica" on storage.objects;
 drop policy if exists "midia_escrita_autenticado" on storage.objects;
 drop policy if exists "midia_update_autenticado" on storage.objects;
 drop policy if exists "midia_delete_autenticado" on storage.objects;
+drop policy if exists "midia_escrita_admin" on storage.objects;
+drop policy if exists "midia_update_admin" on storage.objects;
+drop policy if exists "midia_delete_admin" on storage.objects;
 
 create policy "midia_leitura_publica" on storage.objects
   for select using (bucket_id = 'midia');
-create policy "midia_escrita_autenticado" on storage.objects
-  for insert to authenticated with check (bucket_id = 'midia');
-create policy "midia_update_autenticado" on storage.objects
-  for update to authenticated using (bucket_id = 'midia');
-create policy "midia_delete_autenticado" on storage.objects
-  for delete to authenticated using (bucket_id = 'midia');
+create policy "midia_escrita_admin" on storage.objects
+  for insert to authenticated with check (bucket_id = 'midia' and is_admin());
+create policy "midia_update_admin" on storage.objects
+  for update to authenticated using (bucket_id = 'midia' and is_admin());
+create policy "midia_delete_admin" on storage.objects
+  for delete to authenticated using (bucket_id = 'midia' and is_admin());
 
 -- ============================================================================
 -- SEEDS — disciplinas e bancas comuns em concursos (edite à vontade)
