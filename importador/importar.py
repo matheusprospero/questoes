@@ -130,15 +130,20 @@ def main():
     banca = garantir("bancas", {"nome": lote["banca"]}, {"nome": lote["banca"]}) if lote.get("banca") else None
     orgao = garantir("orgaos", {"nome": lote["orgao"]}, {"nome": lote["orgao"]}) if lote.get("orgao") else None
 
-    # Limpeza opcional (evita duplicar em reimportações)
+    # Escopo do lote: órgão + ano + cargo (permite vários cargos no mesmo concurso)
+    cargo = lote.get("cargo")
+    filtro = f"orgao_id=eq.{orgao}&ano=eq.{lote['ano']}"
+    if cargo:
+        filtro += "&cargo=eq." + urllib.parse.quote(cargo)
+
+    # Limpeza opcional (evita duplicar em reimportações do MESMO cargo)
     if "--limpar" in flags and orgao:
-        filtro = f"orgao_id=eq.{orgao}&ano=eq.{lote['ano']}"
         api("DELETE", f"/rest/v1/questoes?{filtro}")
-        print(f"  (limpeza) questões anteriores de {lote['orgao']} {lote['ano']} removidas")
+        print(f"  (limpeza) questões anteriores de {lote['orgao']} {lote['ano']} · {cargo or 'todos os cargos'} removidas")
     else:
-        existentes = rest_get("questoes", f"select=id&orgao_id=eq.{orgao}&ano=eq.{lote['ano']}&limit=1") if orgao else []
+        existentes = rest_get("questoes", filtro + "&select=id&limit=1") if orgao else []
         if existentes:
-            sys.exit("ATENÇÃO: já existem questões desse órgão/ano no banco.\n"
+            sys.exit("ATENÇÃO: já existem questões desse órgão/ano/cargo no banco.\n"
                      "  → rode de novo com --limpar para substituí-las, ou remova a duplicidade manualmente.")
 
     # cache de assuntos por (disciplina, nome)
