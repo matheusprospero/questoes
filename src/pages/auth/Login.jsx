@@ -38,7 +38,7 @@ export default function Login() {
             <BookMarked size={24} />
           </div>
           <h1 className={styles.logoTitle}>Questões de Concursos</h1>
-          <p className={styles.logoSub}>Banco pessoal de questões para estudo</p>
+          <p className={styles.logoSub}>Questões comentadas com resolução em vídeo</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form} noValidate>
