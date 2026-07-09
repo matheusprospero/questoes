@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { listarQuestoesFavoritas, toggleFavorito, resumoEnunciado, rotuloQuestao } from '../../services/questoes'
+import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 import { Search, Eye, Pencil, Heart, ChevronDown, ChevronUp, CheckCircle, XCircle } from 'lucide-react'
 import styles from './Favoritos.module.css'
@@ -9,6 +10,7 @@ import styles from './Favoritos.module.css'
 export default function Favoritos() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { isAdmin } = useAuth()
 
   const [buscaTexto, setBuscaTexto] = useState('')
   const [expandidas, setExpandidas] = useState(new Set())
@@ -110,9 +112,11 @@ export default function Favoritos() {
                       title="Remover dos favoritos">
                       <Heart size={15} fill="currentColor" />
                     </button>
-                    <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}/editar`)} title="Editar">
-                      <Pencil size={15} />
-                    </button>
+                    {isAdmin && (
+                      <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}/editar`)} title="Editar">
+                        <Pencil size={15} />
+                      </button>
+                    )}
                     <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}`)} title="Ver">
                       <Eye size={15} />
                     </button>

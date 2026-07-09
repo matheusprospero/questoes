@@ -94,7 +94,7 @@ export default function Login() {
         </form>
 
         <p className={styles.ajuda}>
-          Uso pessoal. Crie o usuário no painel do Supabase (Authentication → Users).
+          Acesso restrito a alunos cadastrados. Fale com o professor para obter seu acesso.
         </p>
       </div>
     </div>

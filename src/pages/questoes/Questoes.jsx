@@ -7,6 +7,7 @@ import {
 } from '../../services/questoes'
 import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simulados'
 import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos'
+import { useAuth } from '../../contexts/AuthContext'
 import { Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronUp, CheckCircle, XCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Questoes.module.css'
@@ -16,6 +17,7 @@ const NIVEIS = { fundamental: 'Fundamental', medio: 'Médio', superior: 'Superio
 export default function Questoes() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { isAdmin } = useAuth()
 
   const [filtros, setFiltros] = useState({})
   const [buscaTexto, setBuscaTexto] = useState('')
@@ -120,9 +122,11 @@ export default function Questoes() {
           <h1 className={styles.titulo}>Banco de Questões</h1>
           <p className={styles.subtitulo}>{questoesFiltradas.length} questão(ões)</p>
         </div>
-        <button className={styles.btnPrimary} onClick={() => navigate('/questoes/nova')}>
-          <Plus size={15} /> Nova questão
-        </button>
+        {isAdmin && (
+          <button className={styles.btnPrimary} onClick={() => navigate('/questoes/nova')}>
+            <Plus size={15} /> Nova questão
+          </button>
+        )}
       </div>
 
       <div className={styles.searchBar}>
@@ -233,20 +237,24 @@ export default function Questoes() {
                     </div>
                   </div>
                   <div className={styles.cardAcoes}>
-                    <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}/editar`)} title="Editar">
-                      <Pencil size={15} />
-                    </button>
+                    {isAdmin && (
+                      <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}/editar`)} title="Editar">
+                        <Pencil size={15} />
+                      </button>
+                    )}
                     <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}`)} title="Ver">
                       <Eye size={15} />
                     </button>
-                    <button className={styles.iconBtn}
-                      onClick={() => {
-                        if (confirm('Excluir esta questão? As respostas registradas também serão apagadas.'))
-                          excluir.mutate(q.id)
-                      }}
-                      title="Excluir">
-                      <Trash2 size={15} />
-                    </button>
+                    {isAdmin && (
+                      <button className={styles.iconBtn}
+                        onClick={() => {
+                          if (confirm('Excluir esta questão? As respostas registradas também serão apagadas.'))
+                            excluir.mutate(q.id)
+                        }}
+                        title="Excluir">
+                        <Trash2 size={15} />
+                      </button>
+                    )}
                   </div>
                 </div>
 

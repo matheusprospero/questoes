@@ -28,15 +28,24 @@ function LoadingScreen() {
   )
 }
 
-// Protege rotas que exigem autenticação (usuário único, sem papéis)
-export default function RotaProtegida({ children }) {
-  const { autenticado, carregando } = useAuth()
+/**
+ * Protege rotas que exigem autenticação.
+ * somenteAdmin: restringe a rota ao professor (admin).
+ */
+export default function RotaProtegida({ children, somenteAdmin = false }) {
+  const { autenticado, carregando, perfil, isAdmin } = useAuth()
   const location = useLocation()
 
   if (carregando) return <LoadingScreen />
 
   if (!autenticado) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  // Aguarda o perfil carregar antes de decidir sobre rotas de admin
+  if (somenteAdmin && !perfil) return <LoadingScreen />
+  if (somenteAdmin && !isAdmin) {
+    return <Navigate to="/estudo" replace />
   }
 
   return children

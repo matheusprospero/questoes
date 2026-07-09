@@ -46,11 +46,14 @@ function NavItem({ to, label, Icon }) {
 }
 
 export default function AppLayout() {
-  const { usuario, signOut } = useAuth()
+  const { usuario, perfil, isAdmin, signOut } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const iniciais = usuario?.email?.slice(0, 2).toUpperCase() ?? '?'
+  const nome = perfil?.nome || usuario?.email
+  const iniciais = nome
+    ? nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+    : '?'
 
   async function handleSignOut() {
     await signOut()
@@ -86,8 +89,8 @@ export default function AppLayout() {
         <NavLink to="/perfil" className={styles.userChip}>
           <div className={styles.avatar}>{iniciais}</div>
           <div className={styles.userInfo}>
-            <div className={styles.userName}>{usuario?.email ?? 'Carregando...'}</div>
-            <div className={styles.userRole}>Concurseiro</div>
+            <div className={styles.userName}>{nome ?? 'Carregando...'}</div>
+            <div className={styles.userRole}>{isAdmin ? 'Professor' : 'Aluno'}</div>
           </div>
         </NavLink>
         <button

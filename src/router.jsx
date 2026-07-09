@@ -25,9 +25,9 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/questoes" replace /> },
       { path: 'questoes',            element: <Questoes /> },
-      { path: 'questoes/nova',       element: <QuestaoForm /> },
+      { path: 'questoes/nova',       element: <RotaProtegida somenteAdmin><QuestaoForm /></RotaProtegida> },
       { path: 'questoes/:id',        element: <QuestaoDetalhe /> },
-      { path: 'questoes/:id/editar', element: <QuestaoForm /> },
+      { path: 'questoes/:id/editar', element: <RotaProtegida somenteAdmin><QuestaoForm /></RotaProtegida> },
       { path: 'simulados',            element: <Simulados /> },
       { path: 'simulados/novo',       element: <SimuladoForm /> },
       { path: 'simulados/:id',        element: <SimuladoDetalhe /> },

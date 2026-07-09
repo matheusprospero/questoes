@@ -5,6 +5,7 @@ import {
 } from '../../services/questoes'
 import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simulados'
 import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos'
+import { useAuth } from '../../contexts/AuthContext'
 import { ChevronLeft, Pencil, Heart, CheckCircle, XCircle, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -16,6 +17,7 @@ export default function QuestaoDetalhe() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { isAdmin } = useAuth()
   const [favoritoId, setFavoritoId] = useState(null)
   const [modalSimulado, setModalSimulado] = useState(false)
   const [simuladoSelecionado, setSimuladoSelecionado] = useState(null)
@@ -108,16 +110,20 @@ export default function QuestaoDetalhe() {
           <button className={styles.btnSecondary} onClick={() => setModalCaderno(true)}>
             + Caderno
           </button>
-          <button className={styles.btnSecondary} onClick={() => navigate(`/questoes/${id}/editar`)}>
-            <Pencil size={14} /> Editar
-          </button>
-          <button className={styles.btnSecondary}
-            onClick={() => {
-              if (confirm('Excluir esta questão? As respostas registradas também serão apagadas.'))
-                excluir.mutate()
-            }}>
-            <Trash2 size={14} /> Excluir
-          </button>
+          {isAdmin && (
+            <>
+              <button className={styles.btnSecondary} onClick={() => navigate(`/questoes/${id}/editar`)}>
+                <Pencil size={14} /> Editar
+              </button>
+              <button className={styles.btnSecondary}
+                onClick={() => {
+                  if (confirm('Excluir esta questão? As respostas registradas também serão apagadas.'))
+                    excluir.mutate()
+                }}>
+                <Trash2 size={14} /> Excluir
+              </button>
+            </>
+          )}
         </div>
       </div>
 
