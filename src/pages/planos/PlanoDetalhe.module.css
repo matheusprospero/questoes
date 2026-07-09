@@ -1,0 +1,100 @@
+.page { padding: 0; }
+
+.loading { text-align: center; padding: 64px; color: var(--text-tertiary); font-size: 13px; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.btnBack {
+  display: flex; align-items: center; gap: 4px;
+  padding: 7px 12px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnBack:hover { background: var(--bg-subtle); }
+
+.topbarAcoes { display: flex; gap: 6px; }
+.btnIcon {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnIcon:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.btnIconDanger:hover { background: var(--color-danger-bg); color: #e11d48; border-color: #fecdd3; }
+
+.cabecalho { margin-bottom: 24px; }
+
+.metaTags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle); color: var(--text-secondary);
+}
+.discBadge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; padding: 4px 10px; border-radius: var(--radius-full); font-weight: 500;
+}
+
+.status_rascunho { background: #f1f5f9; color: #475569; }
+.status_publicado { background: #ecfdf5; color: #047857; }
+.status_arquivado { background: #f8fafc; color: #94a3b8; }
+
+.titulo { font-size: 22px; font-weight: 700; color: var(--text-primary); margin: 0 0 8px; line-height: 1.3; }
+.descricao { font-size: 14px; color: var(--text-secondary); margin: 0 0 12px; line-height: 1.6; }
+
+.autorInfo { display: flex; gap: 16px; font-size: 12px; color: var(--text-tertiary); }
+
+.secoes { display: flex; flex-direction: column; gap: 12px; }
+
+.secao {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 20px;
+}
+.secaoTitulo {
+  font-size: 12px; font-weight: 700; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin: 0 0 12px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.secaoTexto { font-size: 13px; color: var(--text-primary); line-height: 1.7; }
+.secaoTexto p { margin: 0 0 6px; }
+.secaoTexto p:last-child { margin: 0; }
+
+/* Confirm dialog */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; padding: 24px;
+}
+.confirmBox {
+  background: var(--bg-surface); border-radius: var(--radius-lg);
+  padding: 24px; max-width: 380px; width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+.confirmTitulo { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 0 0 8px; }
+.confirmDesc { font-size: 13px; color: var(--text-secondary); margin: 0 0 20px; }
+.confirmBotoes { display: flex; gap: 8px; justify-content: flex-end; }
+.btnCancel {
+  padding: 8px 16px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnCancel:hover { background: var(--bg-subtle); }
+.btnDanger {
+  padding: 8px 16px; font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  background: #e11d48; color: white;
+  border: none; border-radius: var(--radius-md); cursor: pointer;
+}
+.btnDanger:hover:not(:disabled) { background: #be123c; }
+.btnDanger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+@media print {
+  .topbar { display: none; }
+  .overlay { display: none; }
+  .page { padding: 0; }
+  .secao { border: none; padding: 0; margin-bottom: 20px; }
+  .secoes { gap: 20px; }
+}

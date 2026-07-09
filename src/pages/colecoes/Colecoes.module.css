@@ -1,0 +1,152 @@
+/* Colecoes.module.css */
+.page { padding: 0; }
+
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 16px; }
+.titulo { font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.subtitulo { font-size: 13px; color: var(--text-tertiary); }
+
+.btnPrimary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; background: var(--color-primary); color: white;
+  border: none; border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  cursor: pointer; white-space: nowrap;
+}
+.btnPrimary:hover { background: var(--color-primary-dark); }
+
+/* Abas */
+.abas { display: flex; gap: 0; border-bottom: 1px solid var(--border-subtle); margin-bottom: 8px; }
+.aba {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px; font-size: 13px; font-weight: 500;
+  font-family: var(--font-sans); border: none;
+  background: transparent; color: var(--text-secondary);
+  cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: all 0.15s;
+}
+.aba:hover { color: var(--text-primary); }
+.abaAtiva { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.abaBadge {
+  font-size: 11px; font-weight: 600;
+  background: var(--bg-subtle); color: var(--text-tertiary);
+  padding: 1px 6px; border-radius: var(--radius-full);
+}
+.abaAtiva .abaBadge { background: var(--color-primary-light); color: var(--color-primary); }
+.abaDesc { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; }
+
+/* Busca */
+.searchBar { display: flex; gap: 8px; margin-bottom: 16px; }
+.searchWrap { position: relative; flex: 1; }
+.searchIcon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
+.searchInput {
+  width: 100%; padding: 9px 12px 9px 32px;
+  font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary); outline: none;
+}
+.searchInput:focus { border-color: var(--color-primary); }
+
+.loading { text-align: center; padding: 64px; color: var(--text-tertiary); font-size: 13px; }
+
+.vazio {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 12px; padding: 80px 24px;
+  color: var(--text-tertiary);
+}
+.vazio p { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+
+/* Grid de cards */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  display: flex; flex-direction: column; justify-content: space-between;
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 16px 18px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.card:hover { border-color: var(--border-default); box-shadow: var(--shadow-sm); }
+
+.cardTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.cardInfo { flex: 1; min-width: 0; }
+.cardTituloRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.cardTitulo { font-size: 14px; font-weight: 500; color: var(--text-primary); margin: 0; cursor: pointer; }
+.cardTitulo:hover { color: var(--color-primary); }
+.cardDesc { font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+
+.cardAcoes { display: flex; gap: 4px; flex-shrink: 0; }
+.iconBtn {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-tertiary); cursor: pointer;
+}
+.iconBtn:hover { background: var(--bg-subtle); color: var(--text-primary); }
+
+.tipoBadge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 500; padding: 2px 8px;
+  border-radius: var(--radius-full); white-space: nowrap;
+}
+.tipoRede { background: #EEF2FF; color: #4338CA; }
+.tipoPessoal { background: var(--bg-subtle); color: var(--text-tertiary); }
+
+.cardFooter {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding-top: 10px; border-top: 1px solid var(--border-subtle);
+  font-size: 11px; color: var(--text-tertiary);
+}
+.autor { flex: 1; }
+.badgeQuestoes {
+  font-size: 11px; font-weight: 500; padding: 3px 8px;
+  border-radius: var(--radius-full); background: var(--color-info-bg); color: var(--color-info);
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; z-index: 100;
+}
+.modal {
+  background: var(--bg-surface); border-radius: var(--radius-lg);
+  padding: 24px; width: 100%; max-width: 440px;
+  box-shadow: var(--shadow-lg);
+}
+.modalTitulo { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 18px; }
+
+.formGroup { margin-bottom: 14px; }
+.label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+.input, .textarea {
+  width: 100%; padding: 9px 12px;
+  font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary); outline: none;
+  resize: vertical;
+}
+.input:focus, .textarea:focus { border-color: var(--color-primary); }
+
+.checkboxRow {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 0 4px; cursor: pointer; font-size: 13px;
+}
+.checkboxRow input { margin-top: 3px; }
+.checkboxRow span { display: flex; flex-direction: column; gap: 2px; color: var(--text-primary); }
+.checkboxHint { font-size: 11px; color: var(--text-tertiary); font-weight: 400; }
+
+.modalBotoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+.btnCancel {
+  padding: 8px 16px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnCancel:hover { background: var(--bg-subtle); }
+.btnConfirm {
+  padding: 8px 16px; font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  border: none; border-radius: var(--radius-md);
+  background: var(--color-primary); color: white; cursor: pointer;
+}
+.btnConfirm:hover { background: var(--color-primary-dark); }
+.btnConfirm:disabled { opacity: 0.5; cursor: not-allowed; }

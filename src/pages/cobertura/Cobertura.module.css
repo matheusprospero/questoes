@@ -1,0 +1,95 @@
+.page { padding: 0; }
+
+.loading { text-align: center; padding: 64px; color: var(--text-tertiary); font-size: 13px; }
+
+.header { margin-bottom: 20px; }
+.titulo { font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 0 0 2px; }
+.subtitulo { font-size: 13px; color: var(--text-tertiary); margin: 0; }
+
+/* Resumo */
+.statsGrid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.statCard {
+  position: relative; overflow: hidden;
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 16px 16px 16px 18px;
+}
+.statBarra { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+.statValor { font-size: 24px; font-weight: 700; line-height: 1.1; }
+.statLabel { font-size: 12px; color: var(--text-secondary); font-weight: 500; margin-top: 2px; }
+.statSub { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+
+/* Filtros */
+.filtros { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filtroSelect {
+  padding: 8px 10px; font-size: 12px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary); outline: none; cursor: pointer;
+}
+.checkLacunas {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-secondary); cursor: pointer; margin-left: 4px;
+}
+.checkLacunas input { width: 15px; height: 15px; cursor: pointer; }
+
+.vazio {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 12px; padding: 80px 24px; color: var(--text-tertiary);
+}
+.vazio p { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+
+/* Grupos por disciplina */
+.grupos { display: flex; flex-direction: column; gap: 10px; }
+.grupo {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); overflow: hidden;
+}
+.grupoHeader {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 14px; border: none; background: transparent;
+  cursor: pointer; color: var(--text-primary); text-align: left;
+}
+.grupoHeader:hover { background: var(--bg-subtle); }
+.grupoCor { width: 10px; height: 10px; border-radius: var(--radius-full); flex-shrink: 0; }
+.grupoNome { font-size: 14px; font-weight: 600; }
+.grupoContagem { font-size: 12px; color: var(--text-tertiary); margin-left: auto; white-space: nowrap; }
+.grupoBarra {
+  width: 120px; height: 8px; flex-shrink: 0;
+  background: var(--bg-subtle); border-radius: var(--radius-full); overflow: hidden;
+}
+.grupoBarraFill { height: 100%; border-radius: var(--radius-full); transition: width 0.3s ease; }
+.grupoPercent { font-size: 13px; font-weight: 700; width: 42px; text-align: right; flex-shrink: 0; }
+
+/* Lista de habilidades */
+.habLista { border-top: 1px solid var(--border-subtle); }
+.habItem {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border-subtle);
+}
+.habItem:last-child { border-bottom: none; }
+.habIcone { flex-shrink: 0; margin-top: 2px; }
+.habInfo { flex: 1; min-width: 0; }
+.habTopo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.habCodigo { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+.habAno { font-size: 11px; padding: 2px 7px; border-radius: var(--radius-full); background: var(--bg-subtle); color: var(--text-secondary); }
+.habStatus { font-size: 11px; font-weight: 600; }
+.habDescricao { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0; }
+
+.habNums { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+.habNumPub { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.habNumTotal { font-size: 11px; color: var(--text-tertiary); }
+
+.btnCriar {
+  width: 30px; height: 30px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--color-primary-mid); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--color-primary); cursor: pointer;
+}
+.btnCriar:hover { background: var(--color-primary-light); }
+
+@media (max-width: 640px) {
+  .grupoBarra { display: none; }
+  .habNums { display: none; }
+}

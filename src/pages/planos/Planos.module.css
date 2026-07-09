@@ -1,0 +1,150 @@
+.page { padding: 0; }
+
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 16px; }
+.titulo { font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.subtitulo { font-size: 13px; color: var(--text-tertiary); }
+
+.btnPrimary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; background: var(--color-primary); color: white;
+  border: none; border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  cursor: pointer; white-space: nowrap;
+}
+.btnPrimary:hover { background: var(--color-primary-dark); }
+
+.searchBar { display: flex; gap: 8px; margin-bottom: 10px; }
+.searchWrap { position: relative; flex: 1; }
+.searchIcon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
+.searchInput {
+  width: 100%; padding: 9px 12px 9px 32px;
+  font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary); outline: none;
+}
+.searchInput:focus { border-color: var(--color-primary); }
+
+.btnFiltro {
+  display: flex; align-items: center; gap: 5px;
+  padding: 8px 12px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+}
+.btnFiltro:hover { background: var(--bg-subtle); }
+.btnFiltroAtivo { background: var(--color-primary-light); color: var(--color-primary-dark); border-color: var(--color-primary-mid); }
+
+.filtrosPanel {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 14px; background: var(--bg-surface);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+}
+.filtroSelect {
+  padding: 7px 10px; font-size: 12px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary); outline: none; cursor: pointer;
+}
+.btnLimpar {
+  padding: 7px 12px; font-size: 12px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnLimpar:hover { background: var(--bg-subtle); }
+
+.abas {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 16px;
+}
+.aba {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px; font-size: 13px; font-weight: 600;
+  font-family: var(--font-sans); border: none; background: transparent;
+  color: var(--text-secondary); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.aba:hover { color: var(--text-primary); }
+.abaAtiva { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.abaBadge {
+  font-size: 11px; font-weight: 700;
+  background: var(--bg-subtle); color: var(--text-tertiary);
+  padding: 1px 6px; border-radius: var(--radius-full);
+}
+.abaAtiva .abaBadge { background: var(--color-primary-light); color: var(--color-primary); }
+
+.loading { text-align: center; padding: 64px; color: var(--text-tertiary); font-size: 13px; }
+
+.vazio {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 12px; padding: 80px 24px;
+  color: var(--text-tertiary);
+}
+.vazio p { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 16px;
+  cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.card:hover { border-color: var(--color-primary-mid); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+.cardTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.cardMeta { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+
+.badge { font-size: 11px; padding: 3px 8px; border-radius: var(--radius-full); background: var(--bg-subtle); color: var(--text-secondary); }
+.discBadge { font-size: 11px; padding: 3px 8px; border-radius: var(--radius-full); font-weight: 500; }
+
+.status_rascunho { background: #f1f5f9; color: #475569; }
+.status_publicado { background: #ecfdf5; color: #047857; }
+.status_arquivado { background: #f8fafc; color: #94a3b8; }
+
+.cardAcoes { display: flex; gap: 4px; flex-shrink: 0; }
+.iconBtn {
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-tertiary); cursor: pointer;
+}
+.iconBtn:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.btnDangerIcon:hover { background: var(--color-danger-bg); color: #e11d48; border-color: #fecdd3; }
+
+.cardTitulo { font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0; line-height: 1.4; }
+.cardDesc { font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+.cardFooter { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+.footerItem { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-tertiary); }
+
+/* Confirm dialog */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; padding: 24px;
+}
+.confirmBox {
+  background: var(--bg-surface); border-radius: var(--radius-lg);
+  padding: 24px; max-width: 380px; width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+.confirmTitulo { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 0 0 8px; }
+.confirmDesc { font-size: 13px; color: var(--text-secondary); margin: 0 0 20px; }
+.confirmBotoes { display: flex; gap: 8px; justify-content: flex-end; }
+.btnCancel {
+  padding: 8px 16px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnCancel:hover { background: var(--bg-subtle); }
+.btnDanger {
+  padding: 8px 16px; font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  background: #e11d48; color: white;
+  border: none; border-radius: var(--radius-md); cursor: pointer;
+}
+.btnDanger:hover:not(:disabled) { background: #be123c; }
+.btnDanger:disabled { opacity: 0.6; cursor: not-allowed; }

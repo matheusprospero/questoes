@@ -1,0 +1,91 @@
+.wrap { display: flex; flex-direction: column; gap: 8px; }
+
+.preview {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  min-height: 60px;
+  background: #fff;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.toggleRow { display: flex; align-items: center; gap: 8px; }
+
+.toggleBtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; font-family: var(--font-sans);
+  color: var(--color-primary);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 6px 14px; cursor: pointer; transition: all 0.15s;
+}
+.toggleBtn:hover { background: var(--color-primary-light); }
+
+.resetBtn {
+  font-size: 11px; font-weight: 700; font-family: var(--font-sans);
+  color: var(--text-tertiary);
+  background: none; border: none; cursor: pointer;
+  text-decoration: underline;
+}
+.resetBtn:hover { color: var(--color-danger); }
+
+/* Editor */
+.editorWrap {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #fff;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 8px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.toolBtn {
+  min-width: 28px; height: 28px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer; font-size: 13px; font-family: var(--font-sans);
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 4px; padding: 0 6px;
+  transition: all 0.12s;
+}
+.toolBtn:hover { background: var(--bg-surface); border-color: var(--border-default); color: var(--text-primary); }
+.toolBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.toolBtnImg { padding: 0 8px; font-size: 12px; font-weight: 700; gap: 5px; }
+
+.sep { width: 1px; height: 20px; background: var(--border-default); margin: 0 3px; }
+
+.toolLabel { font-size: 11px; color: var(--text-tertiary); font-weight: 700; margin-left: 3px; }
+
+.toolSelect {
+  height: 26px; font-size: 12px; border-radius: 6px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  padding: 0 4px; cursor: pointer; color: var(--text-primary);
+}
+
+.toolColor {
+  width: 26px; height: 26px; border-radius: 6px;
+  border: 1px solid var(--border-default);
+  cursor: pointer; padding: 1px;
+}
+
+.editor {
+  min-height: 100px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  outline: none;
+  color: var(--text-primary);
+}

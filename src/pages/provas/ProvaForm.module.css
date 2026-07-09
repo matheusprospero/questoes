@@ -1,0 +1,160 @@
+/* ProvaForm.module.css */
+.page { padding: 0; }
+
+.topbar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.btnBack {
+  display: flex; align-items: center; gap: 4px;
+  padding: 7px 12px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnBack:hover { background: var(--bg-subtle); }
+
+.titulo { font-size: 18px; font-weight: 600; color: var(--text-primary); flex: 1; }
+
+.btnPrimary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  background: var(--color-primary); color: white;
+  border: none; border-radius: var(--radius-md); cursor: pointer;
+}
+.btnPrimary:hover:not(:disabled) { background: var(--color-primary-dark); }
+.btnPrimary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.colMain { display: flex; flex-direction: column; gap: 14px; }
+.colSide { display: flex; flex-direction: column; gap: 14px; }
+
+.card {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 18px 20px;
+}
+.cardTitulo { font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 0 0 14px; }
+
+.label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; }
+.hint { font-size: 11px; color: var(--text-tertiary); }
+
+.input, .select {
+  width: 100%; padding: 9px 12px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary); outline: none;
+}
+.input:focus, .select:focus { border-color: var(--color-primary); }
+
+.textarea {
+  width: 100%; padding: 10px 12px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary); outline: none;
+  resize: vertical; line-height: 1.5;
+}
+.textarea:focus { border-color: var(--color-primary); }
+
+/* Questões */
+.vazioQuestoes { font-size: 12px; color: var(--text-tertiary); margin: 0; }
+
+.questoesList { display: flex; flex-direction: column; gap: 6px; }
+.questaoItem {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; background: var(--bg-subtle); border-radius: var(--radius-md);
+  font-size: 12px; cursor: grab; border: 1px solid var(--border-subtle);
+}
+.questaoItem:active { cursor: grabbing; }
+.dragHandle { color: var(--text-tertiary); }
+.qNum { font-weight: 600; color: var(--text-secondary); width: 20px; }
+.qTitulo { color: var(--text-primary); flex: 1; }
+.removeBtn {
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border: none; background: transparent;
+  color: var(--text-tertiary); cursor: pointer; border-radius: 4px;
+}
+.removeBtn:hover { background: var(--color-danger-bg); color: var(--color-danger); }
+
+.questoesDisponiveis {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 300px; overflow-y: auto;
+}
+.btnAddQuestao {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 10px; font-size: 11px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+  text-align: left; width: 100%;
+}
+.btnAddQuestao:hover { background: var(--bg-surface); color: var(--text-primary); border-color: var(--color-primary); }
+
+/* Visibilidade */
+.visibGroup { display: flex; flex-direction: column; gap: 8px; }
+.visibBtn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; width: 100%; text-align: left;
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-subtle); color: var(--text-secondary);
+  cursor: pointer; transition: all 0.15s; font-family: var(--font-sans);
+}
+.visibBtn:hover { background: var(--bg-surface); border-color: var(--border-default); }
+.visibOn { background: var(--color-primary-light) !important; border-color: var(--color-primary) !important; color: var(--color-primary-dark) !important; }
+.visibTitulo { display: block; font-size: 13px; font-weight: 500; }
+.visibDesc { display: block; font-size: 11px; opacity: 0.75; margin-top: 1px; }
+
+/* Disciplinas múltiplas (simulado) */
+.disciplinasMulti { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 2px; }
+.disciplinaChip {
+  padding: 6px 13px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  font-size: 13px; font-weight: 600;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer; transition: all 0.15s;
+}
+.disciplinaChip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.disciplinaChipOn {
+  background: var(--color-primary) !important;
+  color: white !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* Configurações de impressão */
+.cfgGrid { display: flex; flex-direction: column; gap: 14px; }
+.cfgFonteRow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.cfgFonteBtn {
+  padding: 5px 11px; border-radius: var(--radius-full);
+  border: 1px solid var(--border-default); background: var(--bg-surface);
+  font-size: 12px; font-weight: 700; font-family: var(--font-sans);
+  color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+}
+.cfgFonteBtn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.cfgFonteBtnOn {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+  border-color: var(--color-primary) !important;
+}
+.cfgOpcoes { display: flex; flex-direction: column; gap: 8px; }
+.cfgCheck {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-secondary); cursor: pointer;
+}
+.cfgCheck input { accent-color: var(--color-primary); width: 15px; height: 15px; cursor: pointer; }
+
+.cfgHint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+  display: block;
+}
+.cfgHint code {
+  background: var(--bg-subtle);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--color-primary);
+}

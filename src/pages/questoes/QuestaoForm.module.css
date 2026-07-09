@@ -1,0 +1,149 @@
+/* QuestaoForm.module.css */
+.page { padding: 0; }
+
+.topbar {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 24px; flex-wrap: wrap;
+}
+.btnBack {
+  display: flex; align-items: center; gap: 4px;
+  padding: 7px 12px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnBack:hover { background: var(--bg-subtle); }
+
+.titulo { font-size: 18px; font-weight: 600; color: var(--text-primary); flex: 1; }
+
+.topbarAcoes { display: flex; gap: 8px; margin-left: auto; }
+
+.btnSecondary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnSecondary:hover { background: var(--bg-subtle); }
+.btnSecondary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btnPrimary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  background: var(--color-primary); color: white;
+  border: none; border-radius: var(--radius-md); cursor: pointer;
+}
+.btnPrimary:hover:not(:disabled) { background: var(--color-primary-dark); }
+.btnPrimary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.colMain { display: flex; flex-direction: column; gap: 14px; }
+.colSide { display: flex; flex-direction: column; gap: 14px; }
+
+.card {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 18px 20px;
+}
+.cardTitulo { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; }
+
+.label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; }
+.hint  { font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; }
+
+.input, .select {
+  width: 100%; padding: 9px 12px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary); outline: none;
+}
+.input:focus, .select:focus { border-color: var(--color-primary); }
+
+.textarea {
+  width: 100%; padding: 10px 12px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary); outline: none;
+  resize: vertical; line-height: 1.5;
+}
+.textarea:focus { border-color: var(--color-primary); }
+
+.field { margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+
+/* Tipo switch */
+.tipoSwitch { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+.switchGroup { display: flex; border: 1px solid var(--border-default); border-radius: var(--radius-md); overflow: hidden; }
+.switchBtn {
+  padding: 7px 14px; font-size: 12px; font-family: var(--font-sans);
+  border: none; background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.switchBtnOn { background: var(--color-primary); color: white; }
+
+/* Alternativas */
+.alternativas { display: flex; flex-direction: column; gap: 8px; }
+.altRow { display: flex; align-items: center; gap: 8px; }
+.altRadio {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--border-default); background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.altRadioOn { border-color: var(--color-primary); background: var(--color-primary); }
+.altRadioDot { width: 8px; height: 8px; border-radius: 50%; background: white; }
+.altLetra { font-size: 13px; font-weight: 600; color: var(--text-secondary); width: 16px; flex-shrink: 0; }
+.altInput {
+  flex: 1; padding: 8px 10px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary); outline: none;
+}
+.altInput:focus { border-color: var(--color-primary); }
+.altRemove {
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; color: var(--text-tertiary); cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.altRemove:hover { color: var(--color-danger); background: var(--color-danger-bg); }
+.btnAddAlt {
+  display: flex; align-items: center; gap: 5px; margin-top: 4px;
+  padding: 6px 12px; font-size: 12px; font-family: var(--font-sans);
+  border: 1px dashed var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-tertiary); cursor: pointer;
+  width: fit-content;
+}
+.btnAddAlt:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+/* Dificuldade */
+.dificuldadeRow { display: flex; align-items: center; gap: 4px; }
+.difBtn {
+  width: 32px; height: 32px; border-radius: var(--radius-md);
+  border: 1px solid var(--border-default); background: transparent;
+  font-size: 12px; font-weight: 500; font-family: var(--font-sans);
+  cursor: pointer; color: var(--text-secondary);
+}
+.difBtnOn { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+.difLabel { font-size: 11px; color: var(--text-tertiary); margin-left: 4px; }
+
+/* Habilidades */
+.habilidadesList {
+  max-height: 260px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.habilidadeItem {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 8px; border-radius: var(--radius-md);
+  cursor: pointer; font-size: 12px;
+}
+.habilidadeItem:hover { background: var(--bg-subtle); }
+.habilidadeItem input { margin-top: 2px; flex-shrink: 0; accent-color: var(--color-primary); }
+.habilidadeCodigo { font-weight: 600; color: var(--color-primary-dark); flex-shrink: 0; min-width: 72px; }
+.habilidadeDesc { color: var(--text-secondary); line-height: 1.4; }
+
+/* Editor nas alternativas */
+.altRow { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.altEditorWrap { flex: 1; }

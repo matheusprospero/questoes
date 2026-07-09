@@ -1,0 +1,104 @@
+.container { display: flex; flex-direction: column; gap: 0; margin-bottom: 4px; }
+
+.label { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+
+/* Barra de formatação */
+.formatBar {
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+  padding: 8px 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-default);
+  border-bottom: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.fmtBtn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 9px; font-size: 12px; font-weight: 500;
+  font-family: var(--font-sans); border: 1px solid var(--border-default);
+  border-radius: var(--radius-md); background: var(--bg-surface);
+  color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+  transition: all 0.1s;
+}
+.fmtBtn:hover { background: var(--color-primary-light); color: var(--color-primary-dark); }
+.fmtBtn.ativo { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+.fmtBtnSymbols { font-size: 13px; }
+.fmtBtnDisabled { opacity: 0.6; cursor: not-allowed; }
+
+.sep { width: 1px; height: 20px; background: var(--border-subtle); margin: 0 4px; }
+
+/* Painel de símbolos */
+.symbolsPanel {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-bottom: none;
+  max-height: 240px; overflow-y: auto;
+}
+
+.symbolCat { display: flex; flex-direction: column; gap: 6px; }
+.catNome { font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; }
+.catItens { display: flex; gap: 5px; flex-wrap: wrap; }
+
+.symbolBtn {
+  min-width: 36px; height: 32px;
+  padding: 0 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: 14px; font-weight: 500;
+  color: var(--text-primary); cursor: pointer;
+  transition: all 0.1s;
+  display: flex; align-items: center; justify-content: center;
+}
+.symbolBtn:hover {
+  background: var(--color-primary); color: white;
+  border-color: var(--color-primary);
+  transform: scale(1.08);
+}
+.symbolBtn:active { transform: scale(0.96); }
+
+/* Editor principal */
+.editor {
+  min-height: 180px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 14px; font-family: var(--font-sans);
+  line-height: 1.7; outline: none;
+  overflow-y: auto;
+}
+.editor:focus { border-color: var(--color-primary); }
+.editor img { max-width: 100%; height: auto; border-radius: 6px; margin: 6px 0; display: block; }
+.editor ul, .editor ol { padding-left: 22px; margin: 4px 0; }
+
+/* Placeholder */
+.editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-tertiary);
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* Modo compacto (alternativas) */
+.containerCompact { margin-bottom: 0; }
+
+.formatBarCompact {
+  padding: 5px 8px;
+  gap: 4px;
+}
+
+.symbolsPanelCompact {
+  max-height: 200px;
+  padding: 10px;
+}
+
+.editorCompact {
+  min-height: 48px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
