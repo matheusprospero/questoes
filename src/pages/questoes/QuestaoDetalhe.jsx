@@ -2,8 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { listarProvas } from '../../services/provas'
 import { adicionarQuestaoProva } from '../../services/questoes'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { buscarQuestao, mudarStatus, avaliarQuestao, toggleFavorito, listarFavoritos, registrarVisualizacao } from '../../services/questoes'
-import { adicionarComentario, arquivarComentario } from '../../services/comentarios'
+import { buscarQuestao, avaliarQuestao, toggleFavorito, listarFavoritos, registrarVisualizacao } from '../../services/questoes'
 import { useAuth } from '../../contexts/AuthContext'
 import { ChevronLeft, Pencil, Star, Heart, CheckCircle, XCircle, Clock, Archive, MessageSquare, Send, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -29,9 +28,6 @@ export default function QuestaoDetalhe() {
   const [favoritoId, setFavoritoId] = useState(null)
   const [modalProva, setModalProva] = useState(false)
   const [provaSelecionada, setProvaSelecionada] = useState(null)
-  const [novoComentario, setNovoComentario] = useState('')
-  const [respondendo, setRespondendo] = useState(null)   // id do comentário sendo respondido
-  const [respostaTexto, setRespostaTexto] = useState('')
 
   const { data: questao, isLoading } = useQuery({
     queryKey: ['questao', id],
@@ -80,15 +76,6 @@ export default function QuestaoDetalhe() {
     setFavoritoId(fav?.id ?? null)
   }, [favoritos, id])
 
-  const mutarStatus = useMutation({
-    mutationFn: ({ status, justificativa }) => mudarStatus(id, status, justificativa),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['questao', id])
-      toast.success('Status atualizado!')
-    },
-    onError: () => toast.error('Erro ao atualizar status'),
-  })
-
   const mutarAvaliacao = useMutation({
     mutationFn: (nota) => avaliarQuestao(id, nota),
     onSuccess: (_, nota) => {
@@ -107,55 +94,10 @@ export default function QuestaoDetalhe() {
     },
   })
 
-  const comentar = useMutation({
-    mutationFn: () => adicionarComentario({ questao_id: id, texto: novoComentario }),
-    onSuccess: () => {
-      setNovoComentario('')
-      queryClient.invalidateQueries(['questao', id])
-      toast.success('Comentário publicado!')
-    },
-    onError: (err) => toast.error(err.message),
-  })
-
-  const removerComentario = useMutation({
-    mutationFn: (comentarioId) => arquivarComentario(comentarioId),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['questao', id])
-      toast.success('Comentário removido.')
-    },
-    onError: (err) => toast.error('Erro: ' + err.message),
-  })
-
-  const responder = useMutation({
-    mutationFn: () => adicionarComentario({ questao_id: id, pai_id: respondendo, texto: respostaTexto }),
-    onSuccess: () => {
-      setRespondendo(null)
-      setRespostaTexto('')
-      queryClient.invalidateQueries(['questao', id])
-      toast.success('Resposta publicada!')
-    },
-    onError: (err) => toast.error(err.message),
-  })
-
   if (isLoading) return <div className={styles.loading}>Carregando questão...</div>
   if (!questao) return <div className={styles.loading}>Questão não encontrada.</div>
 
   const StatusIcon = STATUS_CONFIG[questao.status]?.icon ?? Clock
-
-  // Monta a árvore de comentários: nível de topo + respostas agrupadas por pai
-  const todosComentarios = questao.comentarios ?? []
-  const comentariosTopo = todosComentarios
-    .filter(c => !c.pai_id)
-    .sort((a, b) => new Date(a.criado_em) - new Date(b.criado_em))
-  const respostasPorPai = {}
-  todosComentarios
-    .filter(c => c.pai_id)
-    .sort((a, b) => new Date(a.criado_em) - new Date(b.criado_em))
-    .forEach(c => { (respostasPorPai[c.pai_id] ||= []).push(c) })
-
-  function podeRemoverComentario(c) {
-    return c.autor_id === usuario?.id || isFormador || isAdmin
-  }
 
   return (
     <div className={styles.page}>
@@ -263,180 +205,10 @@ export default function QuestaoDetalhe() {
             </div>
           )}
 
-          {/* Comentários dos professores */}
-          <div className={styles.card}>
-            <p className={styles.secTitulo}>
-              <MessageSquare size={13} style={{ verticalAlign: '-2px', marginRight: 6 }} />
-              Comentários {questao.comentarios?.length > 0 && `(${questao.comentarios.length})`}
-            </p>
-
-            <div className={styles.comentForm}>
-              <textarea
-                className={styles.comentInput}
-                rows={2}
-                placeholder="Deixe um comentário para o autor e os colegas..."
-                value={novoComentario}
-                onChange={e => setNovoComentario(e.target.value)}
-              />
-              <button
-                className={styles.comentEnviar}
-                onClick={() => comentar.mutate()}
-                disabled={comentar.isPending || !novoComentario.trim()}
-                title="Publicar comentário"
-              >
-                <Send size={14} /> {comentar.isPending ? 'Enviando...' : 'Comentar'}
-              </button>
-            </div>
-
-            {comentariosTopo.length > 0 ? (
-              <div className={styles.comentLista}>
-                {comentariosTopo.map(c => (
-                  <div key={c.id} className={styles.comentItem}>
-                    <div className={styles.comentTopo}>
-                      <span className={styles.comentAutor}>{c.perfis?.nome ?? 'Professor'}</span>
-                      <span className={styles.comentData}>
-                        {new Date(c.criado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </span>
-                      {podeRemoverComentario(c) && (
-                        <button className={styles.comentRemover}
-                          onClick={() => removerComentario.mutate(c.id)}
-                          disabled={removerComentario.isPending}
-                          title="Remover comentário">
-                          <Trash2 size={13} />
-                        </button>
-                      )}
-                    </div>
-                    <p className={styles.comentTexto}>{c.texto}</p>
-
-                    {/* Respostas */}
-                    {respostasPorPai[c.id]?.length > 0 && (
-                      <div className={styles.respostaLista}>
-                        {respostasPorPai[c.id].map(r => (
-                          <div key={r.id} className={styles.respostaItem}>
-                            <div className={styles.comentTopo}>
-                              <span className={styles.comentAutor}>{r.perfis?.nome ?? 'Professor'}</span>
-                              <span className={styles.comentData}>
-                                {new Date(r.criado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                              </span>
-                              {podeRemoverComentario(r) && (
-                                <button className={styles.comentRemover}
-                                  onClick={() => removerComentario.mutate(r.id)}
-                                  disabled={removerComentario.isPending}
-                                  title="Remover resposta">
-                                  <Trash2 size={13} />
-                                </button>
-                              )}
-                            </div>
-                            <p className={styles.comentTexto}>{r.texto}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Form de resposta */}
-                    {respondendo === c.id ? (
-                      <div className={styles.respostaForm}>
-                        <textarea className={styles.comentInput} rows={2}
-                          placeholder={`Respondendo a ${c.perfis?.nome ?? 'professor'}...`}
-                          value={respostaTexto}
-                          onChange={e => setRespostaTexto(e.target.value)}
-                          autoFocus />
-                        <div className={styles.respostaAcoes}>
-                          <button className={styles.comentCancelar}
-                            onClick={() => { setRespondendo(null); setRespostaTexto('') }}>
-                            Cancelar
-                          </button>
-                          <button className={styles.comentEnviar}
-                            onClick={() => responder.mutate()}
-                            disabled={responder.isPending || !respostaTexto.trim()}>
-                            <Send size={13} /> {responder.isPending ? 'Enviando...' : 'Responder'}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button className={styles.btnResponder}
-                        onClick={() => { setRespondendo(c.id); setRespostaTexto('') }}>
-                        Responder
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className={styles.comentVazio}>Nenhum comentário ainda. Seja o primeiro a comentar.</p>
-            )}
-          </div>
         </div>
 
         {/* Lateral */}
         <div className={styles.colSide}>
-
-          {/* Ações de aprovação — professor vê status e pode enviar para revisão */}
-          {(podeAprovar || questao.autor_id === usuario?.id) && (
-            <div className={styles.card}>
-              <p className={styles.secTitulo}>Fluxo de aprovação</p>
-
-              {/* Professor: só pode enviar para revisão ou ver status */}
-              {questao.autor_id === usuario?.id && !podeAprovar && (
-                <div className={styles.aprovacaoAcoes}>
-                  {questao.status === 'rascunho' && (
-                    <>
-                      <p className={styles.aprovacaoInfo}>
-                        Esta questão está como rascunho. Envie para revisão para que um formador possa publicá-la no banco da rede.
-                      </p>
-                      <button className={styles.btnAprovar}
-                        onClick={() => mutarStatus.mutate({ status: 'em_revisao' })}>
-                        <Clock size={14} /> Enviar para revisão
-                      </button>
-                    </>
-                  )}
-                  {questao.status === 'em_revisao' && (
-                    <p className={styles.aprovacaoInfo} style={{color:'#92400e',background:'#fffbeb',border:'1px solid #fde68a',borderRadius:10,padding:'10px 12px'}}>
-                      🔍 Aguardando revisão de um formador.
-                    </p>
-                  )}
-                  {questao.status === 'publicado' && (
-                    <p className={styles.aprovacaoInfo} style={{color:'#047857',background:'#ecfdf5',border:'1px solid #bbf7d0',borderRadius:10,padding:'10px 12px'}}>
-                      ✅ Publicada no banco da rede! Disponível para todos os professores.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Formador/Admin: controle completo */}
-              {podeAprovar && (
-                <div className={styles.aprovacaoAcoes}>
-                  {questao.status === 'em_revisao' && (
-                    <>
-                      <button className={styles.btnAprovar}
-                        onClick={() => mutarStatus.mutate({ status: 'publicado' })}>
-                        <CheckCircle size={14} /> Publicar no banco da rede
-                      </button>
-                      <button className={styles.btnRejeitar}
-                        onClick={() => {
-                          const motivo = window.prompt('Motivo da rejeição:')
-                          if (motivo) mutarStatus.mutate({ status: 'rascunho', justificativa: motivo })
-                        }}>
-                        <XCircle size={14} /> Rejeitar (devolver ao professor)
-                      </button>
-                    </>
-                  )}
-                  {questao.status === 'publicado' && (
-                    <button className={styles.btnSecondary}
-                      onClick={() => mutarStatus.mutate({ status: 'arquivado' })}>
-                      <Archive size={14} /> Arquivar
-                    </button>
-                  )}
-                  {(questao.status === 'rascunho' || questao.status === 'arquivado') && (
-                    <button className={styles.btnAprovar}
-                      onClick={() => mutarStatus.mutate({ status: 'publicado' })}>
-                      <CheckCircle size={14} /> Publicar diretamente
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Avaliação */}
           <div className={styles.card}>

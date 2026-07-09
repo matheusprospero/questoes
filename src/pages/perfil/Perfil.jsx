@@ -1,50 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { atualizarPerfil } from '../../services/usuarios'
 import { supabase } from '../../services/supabase'
-import { User, Mail, Shield, Save, KeyRound } from 'lucide-react'
+import { User, Mail, KeyRound } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Perfil.module.css'
 
-const PAPEL_LABEL = {
-  professor: 'Professor',
-  formador: 'Formador',
-  administrador: 'Administrador',
-}
-
 export default function Perfil() {
-  const { usuario, perfil, recarregarPerfil } = useAuth()
-  const [nome, setNome] = useState('')
-  const [salvando, setSalvando] = useState(false)
+  const { usuario } = useAuth()
 
-  // Senha
-  const [senhaAtual, setSenhaAtual] = useState('')
   const [novaSenha, setNovaSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [salvandoSenha, setSalvandoSenha] = useState(false)
 
-  useEffect(() => {
-    if (perfil) setNome(perfil.nome || '')
-  }, [perfil])
-
-  const iniciais = perfil?.nome
-    ? perfil.nome.split(' ').slice(0,2).map(n => n[0]).join('').toUpperCase()
-    : '?'
-
-  async function handleSalvarPerfil(e) {
-    e.preventDefault()
-    if (!nome.trim()) { toast.error('Nome não pode ser vazio'); return }
-    setSalvando(true)
-    try {
-      await atualizarPerfil(usuario.id, { nome: nome.trim() })
-      await recarregarPerfil()
-      toast.success('Perfil atualizado!')
-    } catch {
-      toast.error('Erro ao salvar perfil')
-    } finally {
-      setSalvando(false)
-    }
-  }
+  const iniciais = usuario?.email?.slice(0, 2).toUpperCase() ?? '?'
 
   async function handleAlterarSenha(e) {
     e.preventDefault()
@@ -55,7 +23,6 @@ export default function Perfil() {
       const { error } = await supabase.auth.updateUser({ password: novaSenha })
       if (error) throw error
       toast.success('Senha alterada com sucesso!')
-      setSenhaAtual('')
       setNovaSenha('')
       setConfirmarSenha('')
     } catch (err) {
@@ -70,34 +37,21 @@ export default function Perfil() {
       <h1 className={styles.titulo}>Meu perfil</h1>
 
       <div className={styles.grid}>
-        {/* Card — dados pessoais */}
+        {/* Card — conta */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <User size={16} aria-hidden />
-            Dados pessoais
+            Conta
           </div>
 
           <div className={styles.avatarArea}>
             <div className={styles.avatarGrande}>{iniciais}</div>
             <div>
-              <div className={styles.nomeAtual}>{perfil?.nome || '—'}</div>
-              <span className={`${styles.papelBadge} ${styles['papel_' + perfil?.papel]}`}>
-                {PAPEL_LABEL[perfil?.papel] ?? perfil?.papel}
-              </span>
+              <div className={styles.nomeAtual}>{usuario?.email}</div>
             </div>
           </div>
 
-          <form onSubmit={handleSalvarPerfil} className={styles.form}>
-            <div className={styles.field}>
-              <label className={styles.label}>Nome completo</label>
-              <input
-                className={styles.input}
-                value={nome}
-                onChange={e => setNome(e.target.value)}
-                placeholder="Seu nome completo"
-              />
-            </div>
-
+          <div className={styles.form}>
             <div className={styles.field}>
               <label className={styles.label}>E-mail</label>
               <div className={styles.inputReadonly}>
@@ -105,20 +59,7 @@ export default function Perfil() {
                 {usuario?.email}
               </div>
             </div>
-
-            <div className={styles.field}>
-              <label className={styles.label}>Perfil de acesso</label>
-              <div className={styles.inputReadonly}>
-                <Shield size={14} aria-hidden />
-                {PAPEL_LABEL[perfil?.papel] ?? '—'}
-              </div>
-            </div>
-
-            <button type="submit" className={styles.btnPrimary} disabled={salvando}>
-              <Save size={14} aria-hidden />
-              {salvando ? 'Salvando...' : 'Salvar alterações'}
-            </button>
-          </form>
+          </div>
         </div>
 
         {/* Card — alterar senha */}

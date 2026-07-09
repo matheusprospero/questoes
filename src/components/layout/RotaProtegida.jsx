@@ -28,22 +28,15 @@ function LoadingScreen() {
   )
 }
 
-/**
- * Protege rotas que exigem autenticação.
- * papeis: array de papéis permitidos. Se vazio, qualquer usuário autenticado passa.
- */
-export default function RotaProtegida({ children, papeis = [] }) {
-  const { autenticado, carregando, papel } = useAuth()
+// Protege rotas que exigem autenticação (usuário único, sem papéis)
+export default function RotaProtegida({ children }) {
+  const { autenticado, carregando } = useAuth()
   const location = useLocation()
 
   if (carregando) return <LoadingScreen />
 
   if (!autenticado) {
     return <Navigate to="/login" state={{ from: location }} replace />
-  }
-
-  if (papeis.length > 0 && !papeis.includes(papel)) {
-    return <Navigate to="/sem-permissao" replace />
   }
 
   return children

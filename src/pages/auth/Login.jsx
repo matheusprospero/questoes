@@ -37,20 +37,20 @@ export default function Login() {
           <div className={styles.logoIcon}>
             <BookMarked size={24} />
           </div>
-          <h1 className={styles.logoTitle}>RepedMunicipal</h1>
-          <p className={styles.logoSub}>Repositório Pedagógico Municipal</p>
+          <h1 className={styles.logoTitle}>Questões de Concursos</h1>
+          <p className={styles.logoSub}>Banco pessoal de questões para estudo</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form} noValidate>
           <div className={styles.field}>
-            <label htmlFor="email" className={styles.label}>E-mail institucional</label>
+            <label htmlFor="email" className={styles.label}>E-mail</label>
             <div className={styles.inputWrap}>
               <Mail size={15} className={styles.inputIcon} aria-hidden />
               <input
                 id="email"
                 type="email"
                 className={styles.input}
-                placeholder="professor@sme.edu.br"
+                placeholder="seu@email.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -94,7 +94,7 @@ export default function Login() {
         </form>
 
         <p className={styles.ajuda}>
-          Problemas para acessar? Entre em contato com a coordenação pedagógica.
+          Uso pessoal. Crie o usuário no painel do Supabase (Authentication → Users).
         </p>
       </div>
     </div>

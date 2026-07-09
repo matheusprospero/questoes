@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { listarProvas, listarDisciplinas, criarProva } from '../../services/provas'
-import { buscarDisciplinasFormador } from '../../services/usuarios'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../contexts/AuthContext'
 import { Plus, Search, Eye, Pencil, FileText, ChevronDown, Users, Lock, Copy } from 'lucide-react'
@@ -51,26 +50,8 @@ export default function Provas() {
     queryFn: () => listarProvas({ ...filtros, visibilidade: 'pessoal', autor_id: usuario?.id }),
   })
 
-  // Disciplinas vinculadas ao formador logado
-  const { data: minhasDisciplinas = [] } = useQuery({
-    queryKey: ['formador-disciplinas', usuario?.id],
-    queryFn: () => buscarDisciplinasFormador(usuario?.id),
-    enabled: !!usuario?.id && podeEditar,
-  })
-
-  // Provas em revisão (para formadores/admin) — filtradas pela disciplina do formador
-  const { data: todasProvasRevisao = [], isLoading: loadingRevisao } = useQuery({
-    queryKey: ['provas', 'revisao'],
-    queryFn: () => listarProvas({ status_revisao: 'em_revisao' }),
-    enabled: podeEditar,
-  })
-
-  const provasRevisao = minhasDisciplinas.length > 0
-    ? todasProvasRevisao.filter(p =>
-        p.disciplina_id && minhasDisciplinas.includes(p.disciplina_id) ||
-        (p.disciplinas_ids || []).some(d => minhasDisciplinas.includes(d))
-      )
-    : todasProvasRevisao
+  const provasRevisao = []
+  const loadingRevisao = false
 
   // Provas da rede (todas com visibilidade=rede)
   const { data: provasRede = [], isLoading: loadingRede } = useQuery({
