@@ -13,6 +13,7 @@ import CadernoDetalhe from './pages/cadernos/CadernoDetalhe'
 import Favoritos from './pages/favoritos/Favoritos'
 import Estudo from './pages/estudo/Estudo'
 import Estatisticas from './pages/estudo/Estatisticas'
+import Alunos from './pages/alunos/Alunos'
 import Perfil from './pages/perfil/Perfil'
 
 const base = import.meta.env.BASE_URL
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
       { path: 'favoritos',           element: <Favoritos /> },
       { path: 'estudo',              element: <Estudo /> },
       { path: 'estatisticas',        element: <Estatisticas /> },
+      { path: 'alunos',              element: <RotaProtegida somenteAdmin><Alunos /></RotaProtegida> },
       { path: 'perfil',              element: <Perfil /> },
     ],
   },

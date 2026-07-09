@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   HelpCircle, ClipboardList, Layers, Heart,
-  LogOut, Menu, X, BookMarked, BookOpen, BarChart2
+  LogOut, Menu, X, BookMarked, BookOpen, BarChart2, Users
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
 
@@ -83,6 +83,12 @@ export default function AppLayout() {
             ))}
           </div>
         ))}
+        {isAdmin && (
+          <div>
+            <div className={styles.navSection}>Gestão</div>
+            <NavItem to="/alunos" label="Alunos" Icon={Users} />
+          </div>
+        )}
       </nav>
 
       <div className={styles.sidebarFooter}>

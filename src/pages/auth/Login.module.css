@@ -161,3 +161,55 @@
   line-height: 1.5;
   font-weight: 600;
 }
+
+.btnGoogle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 18px;
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+.btnGoogle:hover:not(:disabled) {
+  background: #f8fafc;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.1);
+}
+.btnGoogle:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.googleHint {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+  font-weight: 600;
+}
+
+.toggleProfessor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 18px auto 0;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+.toggleProfessor:hover { color: #475569; }
+.chevronOpen { transform: rotate(180deg); }
+
+.form { margin-top: 12px; }

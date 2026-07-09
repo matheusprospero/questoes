@@ -41,17 +41,27 @@ drop function if exists handle_new_user() cascade;
 create table perfis (
   id        uuid primary key references auth.users(id) on delete cascade,
   nome      text,
+  email     text,
   papel     text not null default 'aluno' check (papel in ('admin', 'aluno')),
   criado_em timestamptz not null default now()
 );
 
--- Cria o perfil automaticamente quando um usuário é criado no painel
+-- Cria o perfil automaticamente quando um usuário é criado (painel ou login Google)
 create function handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into perfis (id, nome)
-  values (new.id, coalesce(new.raw_user_meta_data->>'nome', split_part(new.email, '@', 1)))
-  on conflict (id) do nothing;
+  insert into perfis (id, nome, email)
+  values (
+    new.id,
+    coalesce(
+      new.raw_user_meta_data->>'name',
+      new.raw_user_meta_data->>'full_name',
+      new.raw_user_meta_data->>'nome',
+      split_part(new.email, '@', 1)
+    ),
+    new.email
+  )
+  on conflict (id) do update set email = excluded.email;
   return new;
 end;
 $$;

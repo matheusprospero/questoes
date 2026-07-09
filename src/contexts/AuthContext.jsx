@@ -36,6 +36,14 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }
 
+  async function signInGoogle() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + import.meta.env.BASE_URL },
+    })
+    if (error) throw error
+  }
+
   async function signOut() {
     await supabase.auth.signOut()
   }
@@ -51,6 +59,7 @@ export function AuthProvider({ children }) {
     papel: perfil?.papel ?? null,
     isAdmin: perfil?.papel === 'admin',
     signIn,
+    signInGoogle,
     signOut,
     recarregarPerfil: () => session && carregarPerfil(session.user.id),
   }
