@@ -2,7 +2,7 @@ import {
   Document, Packer, Paragraph, TextRun, ImageRun,
   AlignmentType, BorderStyle, WidthType,
 } from 'docx'
-import { CABECALHO_PADRAO } from '../components/ProvaHeader'
+import { CABECALHO_PADRAO } from '../components/SimuladoHeader'
 
 // Busca imagem e retorna { data: Uint8Array, type: 'png'|'jpg'|'gif' }
 async function fetchImagem(url) {
@@ -165,7 +165,7 @@ async function cabecalhoParaParagrafos(html) {
     : [new Paragraph({ children: [new TextRun('')] })]
 }
 
-export async function gerarWordProva(prova) {
+export async function gerarWordSimulado(prova) {
   const cfg = prova.cfg_impressao || {}
   const fontSize = (cfg.tamanhoFonte || 11) * 2  // half-points
   const separador = cfg.separadorQuestoes !== false
@@ -214,16 +214,15 @@ export async function gerarWordProva(prova) {
       }))
     }
 
-    // Número + dificuldade
-    const dif = q.nivel_dificuldade
-      ? ' ' + '●'.repeat(q.nivel_dificuldade) + '○'.repeat(5 - q.nivel_dificuldade)
-      : ''
+    // Número + origem (banca · órgão · ano)
+    const origem = [q.bancas?.nome, q.orgaos?.nome, q.ano].filter(Boolean).join(' · ')
 
     parsQuestoes.push(new Paragraph({
       spacing: { before: separador && idx > 0 ? 60 : 140, after: 60 },
       keepNext: semQuebra,
       children: [
-        new TextRun({ text: `Questão ${idx + 1}${dif}`, bold: true, size: fontSize + 2 }),
+        new TextRun({ text: `Questão ${idx + 1}`, bold: true, size: fontSize + 2 }),
+        ...(origem ? [new TextRun({ text: `  (${origem})`, size: fontSize - 2, color: '666666' })] : []),
       ],
     }))
 
@@ -254,27 +253,29 @@ export async function gerarWordProva(prova) {
       }
     }
 
-    // Linhas de resposta dissertativa
-    if (q.tipo === 'dissertativa') {
-      for (let i = 0; i < 4; i++) {
-        parsQuestoes.push(new Paragraph({
-          spacing: { before: 40, after: 40 },
-          keepNext: semQuebra && i < 3,
-          border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: '888888', space: 2 } },
-          children: [new TextRun({ text: ' '.repeat(80), size: fontSize })],
-        }))
-      }
+    // Opções Certo/Errado (estilo Cebraspe)
+    if (q.tipo === 'certo_errado') {
+      parsQuestoes.push(new Paragraph({
+        spacing: { before: 40, after: 40 },
+        indent: { left: 360 },
+        children: [
+          new TextRun({ text: '(     ) Certo        (     ) Errado', size: fontSize }),
+        ],
+      }))
     }
   }
 
   // ── Rodapé ─────────────────────────────────────────────────
+  const rodapeEsq = (cfg.rodapeEsquerda ?? 'Total: {total} questões')
+    .replace('{total}', String(prova.questoes?.length || 0))
+  const rodapeDir = cfg.rodapeDireita ?? ''
   const parRodape = new Paragraph({
     spacing: { before: 200 },
     border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 4 } },
     tabStops: [{ type: 'right', position: 8640 }],
     children: [
-      new TextRun({ text: `Total: ${prova.questoes?.length || 0} questões`, size: 18 }),
-      new TextRun({ text: '\tAssinatura: ___________________________', size: 18 }),
+      new TextRun({ text: rodapeEsq, size: 18 }),
+      new TextRun({ text: `\t${rodapeDir}`, size: 18 }),
     ],
   })
 

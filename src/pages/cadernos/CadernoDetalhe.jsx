@@ -2,62 +2,53 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  buscarColecao, adicionarQuestaoColecao, removerQuestaoColecao,
-} from '../../services/colecoes'
-import { listarQuestoes } from '../../services/questoes'
-import { useAuth } from '../../contexts/AuthContext'
+  buscarCaderno, adicionarQuestaoCaderno, removerQuestaoCaderno,
+} from '../../services/cadernos'
+import { listarQuestoes, resumoEnunciado, rotuloQuestao } from '../../services/questoes'
 import toast from 'react-hot-toast'
 import {
   ChevronLeft, ChevronDown, ChevronUp, Plus, Search, Trash2,
-  Layers, Globe, Lock, CheckCircle, X,
+  Layers, CheckCircle, XCircle, X,
 } from 'lucide-react'
-import styles from './ColecaoDetalhe.module.css'
+import styles from './CadernoDetalhe.module.css'
 
-export default function ColecaoDetalhe() {
+export default function CadernoDetalhe() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { usuario, isAdmin } = useAuth()
   const queryClient = useQueryClient()
 
   const [expandidas, setExpandidas] = useState(new Set())
   const [pickerAberto, setPickerAberto] = useState(false)
   const [buscaPicker, setBuscaPicker] = useState('')
 
-  const { data: colecao, isLoading } = useQuery({
-    queryKey: ['colecao', id],
-    queryFn: () => buscarColecao(id),
+  const { data: caderno, isLoading } = useQuery({
+    queryKey: ['caderno', id],
+    queryFn: () => buscarCaderno(id),
   })
-
-  const podeEditar = !!colecao && (colecao.autor_id === usuario?.id || isAdmin)
 
   // Candidatas para o seletor (carregadas só quando o picker abre)
-  const { data: publicadas = [] } = useQuery({
-    queryKey: ['questoes', 'publicadas'],
-    queryFn: () => listarQuestoes({ status: 'publicado' }),
+  const { data: todasQuestoes = [] } = useQuery({
+    queryKey: ['questoes', {}],
+    queryFn: () => listarQuestoes(),
     enabled: pickerAberto,
-  })
-  const { data: minhas = [] } = useQuery({
-    queryKey: ['questoes', 'proprias', usuario?.id],
-    queryFn: () => listarQuestoes({ autor_id: usuario?.id }),
-    enabled: pickerAberto && !!usuario?.id,
   })
 
   const adicionar = useMutation({
-    mutationFn: (questaoId) => adicionarQuestaoColecao(id, questaoId),
+    mutationFn: (questaoId) => adicionarQuestaoCaderno(id, questaoId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['colecao', id] })
-      queryClient.invalidateQueries({ queryKey: ['colecoes'] })
+      queryClient.invalidateQueries({ queryKey: ['caderno', id] })
+      queryClient.invalidateQueries({ queryKey: ['cadernos'] })
       toast.success('Questão adicionada!')
     },
     onError: (err) => toast.error('Erro: ' + err.message),
   })
 
   const remover = useMutation({
-    mutationFn: (questaoId) => removerQuestaoColecao(id, questaoId),
+    mutationFn: (questaoId) => removerQuestaoCaderno(id, questaoId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['colecao', id] })
-      queryClient.invalidateQueries({ queryKey: ['colecoes'] })
-      toast.success('Questão removida da coleção.')
+      queryClient.invalidateQueries({ queryKey: ['caderno', id] })
+      queryClient.invalidateQueries({ queryKey: ['cadernos'] })
+      toast.success('Questão removida do caderno.')
     },
     onError: (err) => toast.error('Erro: ' + err.message),
   })
@@ -70,19 +61,18 @@ export default function ColecaoDetalhe() {
     })
   }
 
-  if (isLoading) return <div className={styles.loading}>Carregando coleção...</div>
-  if (!colecao) return <div className={styles.loading}>Coleção não encontrada.</div>
+  if (isLoading) return <div className={styles.loading}>Carregando caderno...</div>
+  if (!caderno) return <div className={styles.loading}>Caderno não encontrado.</div>
 
-  const idsNaColecao = new Set((colecao.questoes || []).map(q => q.id))
+  const idsNoCaderno = new Set((caderno.questoes || []).map(q => q.id))
 
-  // Mescla próprias + publicadas, remove duplicadas e as já presentes na coleção
-  const candidatas = [...minhas, ...publicadas]
-    .filter((q, i, arr) => arr.findIndex(x => x.id === q.id) === i)
-    .filter(q => !idsNaColecao.has(q.id))
+  const candidatas = todasQuestoes
+    .filter(q => !idsNoCaderno.has(q.id))
     .filter(q => {
       const t = buscaPicker.toLowerCase()
       return !buscaPicker || [
-        q.titulo, q.disciplinas?.nome, q.ano_escolar,
+        q.disciplinas?.nome, q.assuntos?.nome, q.bancas?.nome, q.orgaos?.nome,
+        q.cargo, String(q.ano ?? ''),
         q.enunciado?.replace(/<[^>]*>/g, ''),
       ].some(c => c?.toLowerCase().includes(t))
     })
@@ -91,42 +81,34 @@ export default function ColecaoDetalhe() {
     <div className={styles.page}>
       {/* Topbar */}
       <div className={styles.topbar}>
-        <button className={styles.btnBack} onClick={() => navigate('/colecoes')}>
+        <button className={styles.btnBack} onClick={() => navigate('/cadernos')}>
           <ChevronLeft size={16} /> Voltar
         </button>
         <div className={styles.topbarInfo}>
-          <span className={styles.topbarTitulo}>{colecao.nome}</span>
+          <span className={styles.topbarTitulo}>{caderno.nome}</span>
           <span className={styles.topbarMeta}>
-            {colecao.questoes?.length || 0} questões
-            {colecao.autor_id !== usuario?.id && colecao.perfis?.nome && ` · por ${colecao.perfis.nome}`}
+            {caderno.questoes?.length || 0} questões
           </span>
         </div>
-        <span className={`${styles.tipoBadge} ${colecao.publica ? styles.tipoRede : styles.tipoPessoal}`}>
-          {colecao.publica ? <><Globe size={12} /> Pública</> : <><Lock size={12} /> Privada</>}
-        </span>
-        {podeEditar && (
-          <button className={styles.btnPrimary} onClick={() => { setPickerAberto(true); setBuscaPicker('') }}>
-            <Plus size={15} /> Adicionar questões
-          </button>
-        )}
+        <button className={styles.btnPrimary} onClick={() => { setPickerAberto(true); setBuscaPicker('') }}>
+          <Plus size={15} /> Adicionar questões
+        </button>
       </div>
 
-      {colecao.descricao && <p className={styles.descricao}>{colecao.descricao}</p>}
+      {caderno.descricao && <p className={styles.descricao}>{caderno.descricao}</p>}
 
-      {/* Questões da coleção */}
-      {(!colecao.questoes || colecao.questoes.length === 0) ? (
+      {/* Questões do caderno */}
+      {(!caderno.questoes || caderno.questoes.length === 0) ? (
         <div className={styles.vazio}>
           <Layers size={36} strokeWidth={1.5} />
-          <p>Esta coleção ainda não tem questões</p>
-          {podeEditar && (
-            <button className={styles.btnPrimary} onClick={() => setPickerAberto(true)}>
-              <Plus size={14} /> Adicionar questões
-            </button>
-          )}
+          <p>Este caderno ainda não tem questões</p>
+          <button className={styles.btnPrimary} onClick={() => setPickerAberto(true)}>
+            <Plus size={14} /> Adicionar questões
+          </button>
         </div>
       ) : (
         <div className={styles.lista}>
-          {colecao.questoes.map((q, idx) => {
+          {caderno.questoes.map((q, idx) => {
             const expandida = expandidas.has(q.id)
             return (
               <div key={q.id} className={styles.questaoCard}>
@@ -136,23 +118,23 @@ export default function ColecaoDetalhe() {
                     {expandida ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </button>
                   <div className={styles.cardInfo} onClick={() => navigate(`/questoes/${q.id}`)}>
-                    <h3 className={styles.cardTitulo}>{q.titulo}</h3>
+                    <h3 className={styles.cardTitulo}>{resumoEnunciado(q.enunciado, 120) || rotuloQuestao(q)}</h3>
                     <div className={styles.cardMeta}>
+                      {q.bancas && <span className={styles.badge}>{q.bancas.nome}</span>}
+                      {q.ano && <span className={styles.badge}>{q.ano}</span>}
                       {q.disciplinas && <span className={styles.badge}>{q.disciplinas.nome}</span>}
-                      {q.ano_escolar && <span className={styles.badge}>{q.ano_escolar}</span>}
+                      {q.assuntos && <span className={styles.badge}>{q.assuntos.nome}</span>}
                       <span className={styles.badge}>
-                        {q.tipo === 'multipla_escolha' ? 'Múltipla escolha' : 'Dissertativa'}
+                        {q.tipo === 'multipla_escolha' ? 'Múltipla escolha' : 'Certo/Errado'}
                       </span>
                     </div>
                   </div>
-                  {podeEditar && (
-                    <button className={styles.iconBtnDanger}
-                      onClick={() => remover.mutate(q.id)}
-                      disabled={remover.isPending}
-                      title="Remover da coleção">
-                      <Trash2 size={15} />
-                    </button>
-                  )}
+                  <button className={styles.iconBtnDanger}
+                    onClick={() => remover.mutate(q.id)}
+                    disabled={remover.isPending}
+                    title="Remover do caderno">
+                    <Trash2 size={15} />
+                  </button>
                 </div>
 
                 {expandida && (
@@ -167,6 +149,16 @@ export default function ColecaoDetalhe() {
                             {alt.correta && <CheckCircle size={14} className={styles.checkIcon} />}
                           </div>
                         ))}
+                      </div>
+                    )}
+                    {q.tipo === 'certo_errado' && (
+                      <div className={styles.alternativas}>
+                        <div className={styles.altItem} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          Gabarito:&nbsp;
+                          {q.gabarito_certo
+                            ? <><CheckCircle size={14} style={{ color: '#059669' }} /> Certo</>
+                            : <><XCircle size={14} style={{ color: '#dc2626' }} /> Errado</>}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -192,7 +184,7 @@ export default function ColecaoDetalhe() {
               <Search size={15} className={styles.searchIcon} />
               <input
                 className={styles.searchInput}
-                placeholder="Buscar questões pelo título, disciplina, enunciado..."
+                placeholder="Buscar por enunciado, banca, disciplina, assunto..."
                 value={buscaPicker}
                 autoFocus
                 onChange={e => setBuscaPicker(e.target.value)}
@@ -208,11 +200,11 @@ export default function ColecaoDetalhe() {
                     onClick={() => adicionar.mutate(q.id)}
                     disabled={adicionar.isPending}>
                     <div className={styles.candidataInfo}>
-                      <span className={styles.candidataTitulo}>{q.titulo}</span>
+                      <span className={styles.candidataTitulo}>{resumoEnunciado(q.enunciado, 90) || rotuloQuestao(q)}</span>
                       <span className={styles.candidataMeta}>
-                        {q.disciplinas?.nome ?? '—'}
-                        {q.ano_escolar ? ` · ${q.ano_escolar}` : ''}
-                        {q.tipo === 'multipla_escolha' ? ' · Múltipla escolha' : ' · Dissertativa'}
+                        {rotuloQuestao(q)}
+                        {q.disciplinas?.nome ? ` · ${q.disciplinas.nome}` : ''}
+                        {q.tipo === 'multipla_escolha' ? ' · Múltipla escolha' : ' · Certo/Errado'}
                       </span>
                     </div>
                     <Plus size={16} className={styles.candidataPlus} />

@@ -18,8 +18,8 @@ const NAV_ITEMS = [
   {
     section: 'Organização',
     items: [
-      { to: '/colecoes', label: 'Cadernos',  icon: Layers        },
-      { to: '/provas',   label: 'Simulados', icon: ClipboardList },
+      { to: '/cadernos',  label: 'Cadernos',  icon: Layers        },
+      { to: '/simulados', label: 'Simulados', icon: ClipboardList },
     ]
   },
 ]

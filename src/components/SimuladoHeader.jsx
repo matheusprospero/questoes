@@ -2,19 +2,18 @@ import { useRef, useEffect } from 'react'
 import { uploadImagem } from '../services/upload'
 import { ChevronDown, ChevronUp, Image } from 'lucide-react'
 import toast from 'react-hot-toast'
-import styles from './ProvaHeader.module.css'
+import styles from './SimuladoHeader.module.css'
 
 export const CABECALHO_PADRAO = `<div style="text-align:center;padding:10px 0 6px">
-  <p style="font-size:13pt;font-weight:800;margin:0">PREFEITURA MUNICIPAL DE RIBEIRÃO PRETO</p>
-  <p style="font-size:11pt;margin:4px 0 0">SECRETARIA MUNICIPAL DE EDUCAÇÃO</p>
+  <p style="font-size:13pt;font-weight:800;margin:0">SIMULADO — CONCURSO PÚBLICO</p>
   <hr style="margin:8px 0;border:none;border-top:1px solid #999"/>
-  <p style="font-size:10pt;margin:4px 0 0">Professor(a): ________________________________&nbsp;&nbsp;&nbsp;Data: ___/___/_____</p>
-  <p style="font-size:10pt;margin:4px 0 0">Aluno(a): ____________________________________&nbsp;&nbsp;&nbsp;Turma: ________&nbsp;&nbsp;&nbsp;Nota: ______</p>
+  <p style="font-size:10pt;margin:4px 0 0">Candidato(a): ________________________________&nbsp;&nbsp;&nbsp;Data: ___/___/_____</p>
+  <p style="font-size:10pt;margin:4px 0 0">Cargo: ____________________________________&nbsp;&nbsp;&nbsp;Tempo: ________&nbsp;&nbsp;&nbsp;Nota: ______</p>
 </div>`
 
 // O componente é UNCONTROLLED internamente: o contentEditable é a fonte da verdade.
 // O pai controla só via prop value (para carregar) e onChange (para salvar).
-export default function ProvaHeader({ value, onChange, aberto, setAberto }) {
+export default function SimuladoHeader({ value, onChange, aberto, setAberto }) {
   const fileRef = useRef(null)
   const editorRef = useRef(null)
   const initialized = useRef(false)

@@ -5,11 +5,11 @@ import Login from './pages/auth/Login'
 import Questoes from './pages/questoes/Questoes'
 import QuestaoForm from './pages/questoes/QuestaoForm'
 import QuestaoDetalhe from './pages/questoes/QuestaoDetalhe'
-import Provas from './pages/provas/Provas'
-import ProvaForm from './pages/provas/ProvaForm'
-import ProvaDetalhe from './pages/provas/ProvaDetalhe'
-import Colecoes from './pages/colecoes/Colecoes'
-import ColecaoDetalhe from './pages/colecoes/ColecaoDetalhe'
+import Simulados from './pages/simulados/Simulados'
+import SimuladoForm from './pages/simulados/SimuladoForm'
+import SimuladoDetalhe from './pages/simulados/SimuladoDetalhe'
+import Cadernos from './pages/cadernos/Cadernos'
+import CadernoDetalhe from './pages/cadernos/CadernoDetalhe'
 import Favoritos from './pages/favoritos/Favoritos'
 import Perfil from './pages/perfil/Perfil'
 
@@ -26,12 +26,12 @@ const router = createBrowserRouter([
       { path: 'questoes/nova',       element: <QuestaoForm /> },
       { path: 'questoes/:id',        element: <QuestaoDetalhe /> },
       { path: 'questoes/:id/editar', element: <QuestaoForm /> },
-      { path: 'provas',              element: <Provas /> },
-      { path: 'provas/nova',         element: <ProvaForm /> },
-      { path: 'provas/:id',          element: <ProvaDetalhe /> },
-      { path: 'provas/:id/editar',   element: <ProvaForm /> },
-      { path: 'colecoes',            element: <Colecoes /> },
-      { path: 'colecoes/:id',        element: <ColecaoDetalhe /> },
+      { path: 'simulados',            element: <Simulados /> },
+      { path: 'simulados/novo',       element: <SimuladoForm /> },
+      { path: 'simulados/:id',        element: <SimuladoDetalhe /> },
+      { path: 'simulados/:id/editar', element: <SimuladoForm /> },
+      { path: 'cadernos',             element: <Cadernos /> },
+      { path: 'cadernos/:id',         element: <CadernoDetalhe /> },
       { path: 'favoritos',           element: <Favoritos /> },
       { path: 'perfil',              element: <Perfil /> },
     ],
