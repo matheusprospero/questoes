@@ -63,4 +63,6 @@ A URL do projeto é lida automaticamente do `.env` da raiz (`VITE_SUPABASE_URL`)
 - Para questões **certo/errado**, use `"tipo": "certo_errado"`, `"gabarito_certo": true|false`
   e omita `alternativas`.
 - Para resolução em vídeo, adicione `"video_url": "https://youtu.be/..."`.
+- Cada questão pode ter sua própria `"disciplina"` (sobrepõe a do lote) — útil para provas
+  que misturam matérias. Disciplinas, bancas, órgãos e assuntos são criados se não existirem.
 ```

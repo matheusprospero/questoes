@@ -119,9 +119,14 @@ def main():
     slug = lote["slug"]
 
     print(f"Projeto: {URL}")
-    disc = id_por_nome("disciplinas", lote["disciplina"])
-    if not disc:
-        sys.exit(f"ERRO: disciplina '{lote['disciplina']}' não existe no banco.")
+    # Disciplina pode ser definida por questão; a do lote é o padrão. Criada se não existir.
+    disc_cache = {}
+    def get_disc(nome):
+        if nome not in disc_cache:
+            disc_cache[nome] = garantir("disciplinas", {"nome": nome},
+                {"nome": nome, "cor": "#64748b", "ordem": 99})
+        return disc_cache[nome]
+
     banca = garantir("bancas", {"nome": lote["banca"]}, {"nome": lote["banca"]}) if lote.get("banca") else None
     orgao = garantir("orgaos", {"nome": lote["orgao"]}, {"nome": lote["orgao"]}) if lote.get("orgao") else None
 
@@ -136,14 +141,15 @@ def main():
             sys.exit("ATENÇÃO: já existem questões desse órgão/ano no banco.\n"
                      "  → rode de novo com --limpar para substituí-las, ou remova a duplicidade manualmente.")
 
-    # cache de assuntos por nome
+    # cache de assuntos por (disciplina, nome)
     assunto_id = {}
-    def get_assunto(nome):
-        if nome not in assunto_id:
-            assunto_id[nome] = garantir("assuntos",
-                {"disciplina_id": disc, "nome": nome},
-                {"disciplina_id": disc, "nome": nome})
-        return assunto_id[nome]
+    def get_assunto(disc_id, nome):
+        chave = (disc_id, nome)
+        if chave not in assunto_id:
+            assunto_id[chave] = garantir("assuntos",
+                {"disciplina_id": disc_id, "nome": nome},
+                {"disciplina_id": disc_id, "nome": nome})
+        return assunto_id[chave]
 
     # cache de upload de imagem
     url_imagem = {}
@@ -167,13 +173,14 @@ def main():
             arq = enun[ini + 6:fim]
             enun = enun[:ini] + IMG_HTML.format(url=get_img_url(arq)) + enun[fim + 2:]
 
+        disc = get_disc(q.get("disciplina") or lote["disciplina"])
         questao = {
             "tipo": q.get("tipo", "multipla_escolha"),
             "enunciado": enun,
             "comentario": q.get("comentario"),
             "video_url": q.get("video_url"),
             "disciplina_id": disc,
-            "assunto_id": get_assunto(q["assunto"]) if q.get("assunto") else None,
+            "assunto_id": get_assunto(disc, q["assunto"]) if q.get("assunto") else None,
             "banca_id": banca,
             "orgao_id": orgao,
             "ano": lote.get("ano"),
