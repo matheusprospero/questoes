@@ -1,109 +1,93 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { listarQuestoes, listarDisciplinas, adicionarQuestaoProva } from '../../services/questoes'
-import { listarProvas } from '../../services/provas'
-import { listarColecoes, adicionarQuestaoColecao } from '../../services/colecoes'
-import { useAuth } from '../../contexts/AuthContext'
-import { Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react'
+import {
+  listarQuestoes, excluirQuestao, listarDisciplinas, listarAssuntos,
+  listarBancas, listarOrgaos, resumoEnunciado, rotuloQuestao, gabaritoQuestao,
+} from '../../services/questoes'
+import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simulados'
+import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos'
+import { Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronUp, CheckCircle, XCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Questoes.module.css'
 
-const ANOS = ['1º ano','2º ano','3º ano','4º ano','5º ano','6º ano','7º ano','8º ano','9º ano']
+const NIVEIS = { fundamental: 'Fundamental', medio: 'Médio', superior: 'Superior' }
 
 export default function Questoes() {
   const navigate = useNavigate()
-  const { usuario, isFormador, isAdmin } = useAuth()
-  const isProfessor = !isFormador && !isAdmin
-  const podeEditar = isFormador || isAdmin
   const queryClient = useQueryClient()
 
   const [filtros, setFiltros] = useState({})
   const [buscaTexto, setBuscaTexto] = useState('')
   const [mostrarFiltros, setMostrarFiltros] = useState(false)
   const [expandidas, setExpandidas] = useState(new Set())
-  const [questaoParaProva, setQuestaoParaProva] = useState(null)
-  const [provaSelected, setProvaSelected] = useState(null)
-  const [questaoParaColecao, setQuestaoParaColecao] = useState(null)
-  const [colecaoSelected, setColecaoSelected] = useState(null)
+  const [questaoParaSimulado, setQuestaoParaSimulado] = useState(null)
+  const [simuladoSelected, setSimuladoSelected] = useState(null)
+  const [questaoParaCaderno, setQuestaoParaCaderno] = useState(null)
+  const [cadernoSelected, setCadernoSelected] = useState(null)
 
-  // Professor vê: suas próprias questões + questões publicadas de outros
-  // Formador/Admin: veem tudo
-  const { data: questoesProprias = [], isLoading: loadProprias } = useQuery({
-    queryKey: ['questoes', 'proprias', filtros, usuario?.id],
-    queryFn: () => listarQuestoes({ ...filtros, autor_id: usuario?.id }),
-    enabled: !!usuario,
+  const { data: questoes = [], isLoading } = useQuery({
+    queryKey: ['questoes', filtros],
+    queryFn: () => listarQuestoes(filtros),
   })
 
-  const { data: questoesPublicadas = [], isLoading: loadPublicadas } = useQuery({
-    queryKey: ['questoes', 'publicadas', filtros],
-    queryFn: () => listarQuestoes({ ...filtros, status: 'publicado' }),
-    enabled: !!usuario,
+  const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
+  const { data: assuntos = [] } = useQuery({
+    queryKey: ['assuntos', filtros.disciplina_id],
+    queryFn: () => listarAssuntos(filtros.disciplina_id),
+    enabled: !!filtros.disciplina_id,
+  })
+  const { data: bancas = [] } = useQuery({ queryKey: ['bancas'], queryFn: listarBancas })
+  const { data: orgaos = [] } = useQuery({ queryKey: ['orgaos'], queryFn: listarOrgaos })
+
+  const { data: simulados = [] } = useQuery({ queryKey: ['simulados'], queryFn: listarSimulados })
+  const { data: cadernos = [] } = useQuery({ queryKey: ['cadernos'], queryFn: listarCadernos })
+
+  const excluir = useMutation({
+    mutationFn: (id) => excluirQuestao(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['questoes'] })
+      toast.success('Questão excluída.')
+    },
+    onError: (err) => toast.error('Erro ao excluir: ' + err.message),
   })
 
-  // Mescla e deduplica: proprias + publicadas de outros
-  const questoes = isProfessor
-    ? [
-        ...questoesProprias,
-        ...questoesPublicadas.filter(q => q.autor_id !== usuario?.id),
-      ]
-    : questoesProprias.concat(questoesPublicadas).filter((q, i, arr) =>
-        arr.findIndex(x => x.id === q.id) === i
-      )
-
-  const isLoading = loadProprias || loadPublicadas
-
-  const { data: disciplinas = [] } = useQuery({
-    queryKey: ['disciplinas'],
-    queryFn: listarDisciplinas,
-  })
-
-  // Modal de adicionar à prova: só mostra as provas do próprio professor
-  const { data: provas = [] } = useQuery({
-    queryKey: ['provas', 'minhas', usuario?.id],
-    queryFn: () => listarProvas({ autor_id: usuario?.id }),
-    enabled: !!usuario,
-  })
-
-  const addProva = useMutation({
+  const addSimulado = useMutation({
     mutationFn: async () => {
-      if (!provaSelected) throw new Error('Selecione uma prova')
-      await adicionarQuestaoProva(provaSelected, questaoParaProva.id)
+      if (!simuladoSelected) throw new Error('Selecione um simulado')
+      await adicionarQuestaoSimulado(simuladoSelected, questaoParaSimulado.id)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['provas'])
-      setQuestaoParaProva(null)
-      setProvaSelected(null)
-      toast.success('Questão adicionada à prova!')
+      queryClient.invalidateQueries({ queryKey: ['simulados'] })
+      setQuestaoParaSimulado(null)
+      setSimuladoSelected(null)
+      toast.success('Questão adicionada ao simulado!')
     },
     onError: (err) => toast.error(err.message),
   })
 
-  // Modal de adicionar à coleção: coleções do próprio usuário
-  const { data: colecoes = [] } = useQuery({
-    queryKey: ['colecoes', 'minhas', usuario?.id],
-    queryFn: () => listarColecoes({ autor_id: usuario?.id }),
-    enabled: !!usuario,
-  })
-
-  const addColecao = useMutation({
+  const addCaderno = useMutation({
     mutationFn: async () => {
-      if (!colecaoSelected) throw new Error('Selecione uma coleção')
-      await adicionarQuestaoColecao(colecaoSelected, questaoParaColecao.id)
+      if (!cadernoSelected) throw new Error('Selecione um caderno')
+      await adicionarQuestaoCaderno(cadernoSelected, questaoParaCaderno.id)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['colecoes'] })
-      setQuestaoParaColecao(null)
-      setColecaoSelected(null)
-      toast.success('Questão adicionada à coleção!')
+      queryClient.invalidateQueries({ queryKey: ['cadernos'] })
+      setQuestaoParaCaderno(null)
+      setCadernoSelected(null)
+      toast.success('Questão adicionada ao caderno!')
     },
     onError: (err) => toast.error(err.message),
   })
-
-  const [aba, setAba] = useState('banco')  // 'banco' | 'minhas'
 
   function setFiltro(key, val) {
-    setFiltros(f => { const n = {...f}; if (val) n[key] = val; else delete n[key]; return n })
+    setFiltros(f => {
+      const n = { ...f }
+      if (val) n[key] = val; else delete n[key]
+      // Trocar de disciplina invalida o assunto selecionado
+      if (key === 'disciplina_id') delete n.assunto_id
+      return n
+    })
   }
 
   function toggleExpandir(id) {
@@ -114,78 +98,39 @@ export default function Questoes() {
   }
 
   const questoesFiltradas = questoes.filter(q => {
+    if (!buscaTexto) return true
     const termo = buscaTexto.toLowerCase()
-    const textoOk = !buscaTexto || [
-      q.titulo,
+    return [
+      q.enunciado?.replace(/<[^>]*>/g, ''),
+      q.comentario?.replace(/<[^>]*>/g, ''),
       q.disciplinas?.nome,
-      q.ano_escolar,
-      q.tipo === 'multipla_escolha' ? 'múltipla escolha multipla' : 'dissertativa',
-      q.fonte,
-      q.status,
-      q.perfis?.nome,                                     // autor
-      q.enunciado?.replace(/<[^>]*>/g, ''),               // texto do enunciado sem HTML
-      ...(q.alternativas || []).map(a =>                  // texto das alternativas
-        a.texto?.replace(/<[^>]*>/g, '')
-      ),
-      ...(q.habilidades || []).map(h =>                   // códigos de habilidades
-        `${h.codigo} ${h.descricao}`
-      ),
+      q.assuntos?.nome,
+      q.bancas?.nome,
+      q.orgaos?.nome,
+      q.cargo,
+      String(q.ano ?? ''),
+      ...(q.alternativas || []).map(a => a.texto?.replace(/<[^>]*>/g, '')),
     ].some(campo => campo?.toLowerCase().includes(termo))
-    if (isProfessor) {
-      if (aba === 'minhas') return textoOk && q.autor_id === usuario?.id
-      return textoOk && q.status === 'publicado' && q.autor_id !== usuario?.id
-    }
-    return textoOk
   })
-
-  function listarDisciplinas() {
-    // Esta função não é usada - já importada acima
-  }
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
           <h1 className={styles.titulo}>Banco de Questões</h1>
-          <p className={styles.subtitulo}>{questoes.length} questão(ões)</p>
+          <p className={styles.subtitulo}>{questoesFiltradas.length} questão(ões)</p>
         </div>
         <button className={styles.btnPrimary} onClick={() => navigate('/questoes/nova')}>
           <Plus size={15} /> Nova questão
         </button>
       </div>
 
-      {isProfessor && (
-        <>
-          <div className={styles.abas}>
-            <button
-              className={`${styles.aba} ${aba === 'banco' ? styles.abaAtiva : ''}`}
-              onClick={() => setAba('banco')}>
-              Banco da rede
-              <span className={styles.abaBadge}>
-                {questoesPublicadas.filter(q => q.autor_id !== usuario?.id).length}
-              </span>
-            </button>
-            <button
-              className={`${styles.aba} ${aba === 'minhas' ? styles.abaAtiva : ''}`}
-              onClick={() => setAba('minhas')}>
-              Minhas questões
-              <span className={styles.abaBadge}>{questoesProprias.length}</span>
-            </button>
-          </div>
-          <p className={styles.abaDesc}>
-            {aba === 'banco'
-              ? 'Questões validadas por formadores — disponíveis para todos.'
-              : 'Suas questões. Envie para revisão para que um formador possa publicá-las no banco.'}
-          </p>
-        </>
-      )}
-
       <div className={styles.searchBar}>
         <div className={styles.searchWrap}>
           <Search size={15} className={styles.searchIcon} />
           <input
             className={styles.searchInput}
-            placeholder="Buscar por título, disciplina, enunciado, alternativas, autor..."
+            placeholder="Buscar por enunciado, banca, órgão, cargo, assunto..."
             value={buscaTexto}
             onChange={e => setBuscaTexto(e.target.value)}
           />
@@ -206,18 +151,49 @@ export default function Questoes() {
             <option value="">Todas as disciplinas</option>
             {disciplinas.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
           </select>
-          <select className={styles.filtroSelect} value={filtros.status ?? ''}
-            onChange={e => setFiltro('status', e.target.value)}>
-            <option value="">Todos os status</option>
-            <option value="rascunho">Rascunho</option>
-            <option value="em_revisao">Em revisão</option>
-            <option value="publicado">Publicado</option>
+          <select className={styles.filtroSelect} value={filtros.assunto_id ?? ''}
+            onChange={e => setFiltro('assunto_id', e.target.value)}
+            disabled={!filtros.disciplina_id}>
+            <option value="">{filtros.disciplina_id ? 'Todos os assuntos' : 'Assunto (escolha a disciplina)'}</option>
+            {assuntos.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
           </select>
-          <select className={styles.filtroSelect} value={filtros.ano_escolar ?? ''}
-            onChange={e => setFiltro('ano_escolar', e.target.value)}>
-            <option value="">Todos os anos</option>
-            {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+          <select className={styles.filtroSelect} value={filtros.banca_id ?? ''}
+            onChange={e => setFiltro('banca_id', e.target.value)}>
+            <option value="">Todas as bancas</option>
+            {bancas.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
           </select>
+          <select className={styles.filtroSelect} value={filtros.orgao_id ?? ''}
+            onChange={e => setFiltro('orgao_id', e.target.value)}>
+            <option value="">Todos os órgãos</option>
+            {orgaos.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+          </select>
+          <select className={styles.filtroSelect} value={filtros.tipo ?? ''}
+            onChange={e => setFiltro('tipo', e.target.value)}>
+            <option value="">Todos os tipos</option>
+            <option value="multipla_escolha">Múltipla escolha</option>
+            <option value="certo_errado">Certo / Errado</option>
+          </select>
+          <select className={styles.filtroSelect} value={filtros.nivel ?? ''}
+            onChange={e => setFiltro('nivel', e.target.value)}>
+            <option value="">Todos os níveis</option>
+            <option value="fundamental">Fundamental</option>
+            <option value="medio">Médio</option>
+            <option value="superior">Superior</option>
+          </select>
+          <select className={styles.filtroSelect} value={filtros.dificuldade ?? ''}
+            onChange={e => setFiltro('dificuldade', e.target.value)}>
+            <option value="">Qualquer dificuldade</option>
+            {[1,2,3,4,5].map(n => (
+              <option key={n} value={n}>
+                {['','Muito fácil','Fácil','Média','Difícil','Muito difícil'][n]}
+              </option>
+            ))}
+          </select>
+          <input className={styles.filtroSelect} type="number" placeholder="Ano (ex: 2023)"
+            value={filtros.ano ?? ''}
+            onChange={e => setFiltro('ano', e.target.value)}
+            min="1990" max="2100"
+          />
           <button className={styles.btnLimpar}
             onClick={() => { setFiltros({}); setBuscaTexto('') }}>
             Limpar
@@ -243,31 +219,33 @@ export default function Questoes() {
                     {expandida ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </button>
                   <div className={styles.cardInfo} onClick={() => navigate(`/questoes/${q.id}`)}>
-                    <h3 className={styles.cardTitulo}>{q.titulo}</h3>
+                    <h3 className={styles.cardTitulo}>{resumoEnunciado(q.enunciado, 120) || rotuloQuestao(q)}</h3>
                     <div className={styles.cardMeta}>
+                      {q.bancas && <span className={styles.badge}>{q.bancas.nome}</span>}
+                      {q.orgaos && <span className={styles.badge}>{q.orgaos.nome}</span>}
+                      {q.ano && <span className={styles.badge}>{q.ano}</span>}
                       {q.disciplinas && <span className={styles.badge}>{q.disciplinas.nome}</span>}
-                      {q.ano_escolar && <span className={styles.badge}>{q.ano_escolar}</span>}
-                      {q.tipo === 'multipla_escolha' ? (
-                        <span className={styles.badge}>Múltipla escolha</span>
-                      ) : (
-                        <span className={styles.badge}>Dissertativa</span>
-                      )}
-                      <span className={`${styles.badge} ${styles.statusBadge} ${styles['status_' + q.status]}`}>
-                        {q.status === 'rascunho' ? '📝 Rascunho'
-                         : q.status === 'em_revisao' ? '🔍 Em revisão'
-                         : q.status === 'publicado' ? '✅ Publicado'
-                         : q.status}
+                      {q.assuntos && <span className={styles.badge}>{q.assuntos.nome}</span>}
+                      <span className={styles.badge}>
+                        {q.tipo === 'multipla_escolha' ? 'Múltipla escolha' : 'Certo/Errado'}
                       </span>
+                      {q.nivel && <span className={styles.badge}>{NIVEIS[q.nivel]}</span>}
                     </div>
                   </div>
                   <div className={styles.cardAcoes}>
-                    {(podeEditar || q.autor_id === usuario?.id) && (
-                      <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}/editar`)} title="Editar">
-                        <Pencil size={15} />
-                      </button>
-                    )}
+                    <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}/editar`)} title="Editar">
+                      <Pencil size={15} />
+                    </button>
                     <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}`)} title="Ver">
                       <Eye size={15} />
+                    </button>
+                    <button className={styles.iconBtn}
+                      onClick={() => {
+                        if (confirm('Excluir esta questão? As respostas registradas também serão apagadas.'))
+                          excluir.mutate(q.id)
+                      }}
+                      title="Excluir">
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
@@ -292,35 +270,32 @@ export default function Questoes() {
                       </div>
                     )}
 
-                    {q.gabarito && (
+                    {q.tipo === 'certo_errado' && (
                       <div className={styles.gabarito}>
                         <p className={styles.label}>Gabarito:</p>
-                        <p>{q.gabarito.texto}</p>
+                        <p style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {q.gabarito_certo
+                            ? <><CheckCircle size={15} style={{ color: '#059669' }} /> Certo</>
+                            : <><XCircle size={15} style={{ color: '#dc2626' }} /> Errado</>}
+                        </p>
                       </div>
                     )}
 
-                    <div className={styles.autoriaRow}>
-                      <span className={styles.autoriaItem}>
-                        Criada por <strong>{q.perfis?.nome ?? '—'}</strong>
-                      </span>
-                      <span className={styles.autoriaSep}>·</span>
-                      <span className={styles.autoriaItem}>
-                        {q.validacao ? (
-                          <><CheckCircle size={13} className={styles.autoriaOk} /> Validada por <strong>{q.validacao.nome ?? '—'}</strong> em {new Date(q.validacao.em).toLocaleDateString('pt-BR')}</>
-                        ) : (
-                          <span className={styles.autoriaPend}>Ainda não validada</span>
-                        )}
-                      </span>
-                    </div>
+                    {q.comentario && (
+                      <div className={styles.gabarito}>
+                        <p className={styles.label}>Comentário:</p>
+                        <div dangerouslySetInnerHTML={{ __html: q.comentario }} />
+                      </div>
+                    )}
 
                     <div className={styles.btnAddRow}>
                       <button className={styles.btnAddProva}
-                        onClick={() => setQuestaoParaProva(q)}>
-                        + Adicionar a uma prova
+                        onClick={() => setQuestaoParaSimulado(q)}>
+                        + Adicionar a um simulado
                       </button>
                       <button className={styles.btnAddColecao}
-                        onClick={() => setQuestaoParaColecao(q)}>
-                        + Adicionar a uma coleção
+                        onClick={() => setQuestaoParaCaderno(q)}>
+                        + Adicionar a um caderno
                       </button>
                     </div>
                   </div>
@@ -331,66 +306,66 @@ export default function Questoes() {
         </div>
       )}
 
-      {/* Modal para selecionar prova */}
-      {questaoParaProva && (
-        <div className={styles.modalOverlay} onClick={() => setQuestaoParaProva(null)}>
+      {/* Modal para selecionar simulado */}
+      {questaoParaSimulado && (
+        <div className={styles.modalOverlay} onClick={() => setQuestaoParaSimulado(null)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitulo}>Selecione uma prova</h3>
-            <p className={styles.modalSubtitulo}>Qual prova você quer adicionar esta questão?</p>
+            <h3 className={styles.modalTitulo}>Selecione um simulado</h3>
+            <p className={styles.modalSubtitulo}>A qual simulado você quer adicionar esta questão?</p>
             <div className={styles.provasList}>
-              {provas.length === 0 ? (
-                <p className={styles.vazioModal}>Nenhuma prova criada. <a href="/provas/nova">Criar prova</a></p>
+              {simulados.length === 0 ? (
+                <p className={styles.vazioModal}>Nenhum simulado criado ainda.</p>
               ) : (
-                provas.map(p => (
-                  <button key={p.id} className={`${styles.provaItem} ${provaSelected === p.id ? styles.provaItemSelecionada : ''}`}
-                    onClick={() => setProvaSelected(p.id)}>
-                    <span>{p.titulo}</span>
-                    <span className={styles.provaSubtitle}>{p.disciplinas?.nome} • {p.ano_escolar}</span>
+                simulados.map(s => (
+                  <button key={s.id} className={`${styles.provaItem} ${simuladoSelected === s.id ? styles.provaItemSelecionada : ''}`}
+                    onClick={() => setSimuladoSelected(s.id)}>
+                    <span>{s.titulo}</span>
+                    <span className={styles.provaSubtitle}>{s.total_questoes} questões</span>
                   </button>
                 ))
               )}
             </div>
             <div className={styles.modalBotoes}>
-              <button className={styles.btnCancel} onClick={() => setQuestaoParaProva(null)}>
+              <button className={styles.btnCancel} onClick={() => setQuestaoParaSimulado(null)}>
                 Cancelar
               </button>
               <button className={styles.btnConfirm}
-                onClick={() => addProva.mutate()}
-                disabled={addProva.isPending || !provaSelected}>
-                {addProva.isPending ? 'Adicionando...' : 'Confirmar'}
+                onClick={() => addSimulado.mutate()}
+                disabled={addSimulado.isPending || !simuladoSelected}>
+                {addSimulado.isPending ? 'Adicionando...' : 'Confirmar'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal para selecionar coleção */}
-      {questaoParaColecao && (
-        <div className={styles.modalOverlay} onClick={() => setQuestaoParaColecao(null)}>
+      {/* Modal para selecionar caderno */}
+      {questaoParaCaderno && (
+        <div className={styles.modalOverlay} onClick={() => setQuestaoParaCaderno(null)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitulo}>Selecione uma coleção</h3>
-            <p className={styles.modalSubtitulo}>Em qual coleção você quer adicionar esta questão?</p>
+            <h3 className={styles.modalTitulo}>Selecione um caderno</h3>
+            <p className={styles.modalSubtitulo}>Em qual caderno você quer adicionar esta questão?</p>
             <div className={styles.provasList}>
-              {colecoes.length === 0 ? (
-                <p className={styles.vazioModal}>Nenhuma coleção criada. <a href="/colecoes">Criar coleção</a></p>
+              {cadernos.length === 0 ? (
+                <p className={styles.vazioModal}>Nenhum caderno criado ainda.</p>
               ) : (
-                colecoes.map(c => (
-                  <button key={c.id} className={`${styles.provaItem} ${colecaoSelected === c.id ? styles.provaItemSelecionada : ''}`}
-                    onClick={() => setColecaoSelected(c.id)}>
+                cadernos.map(c => (
+                  <button key={c.id} className={`${styles.provaItem} ${cadernoSelected === c.id ? styles.provaItemSelecionada : ''}`}
+                    onClick={() => setCadernoSelected(c.id)}>
                     <span>{c.nome}</span>
-                    <span className={styles.provaSubtitle}>{c.total_questoes} questões{c.publica ? ' • pública' : ''}</span>
+                    <span className={styles.provaSubtitle}>{c.total_questoes} questões</span>
                   </button>
                 ))
               )}
             </div>
             <div className={styles.modalBotoes}>
-              <button className={styles.btnCancel} onClick={() => setQuestaoParaColecao(null)}>
+              <button className={styles.btnCancel} onClick={() => setQuestaoParaCaderno(null)}>
                 Cancelar
               </button>
               <button className={styles.btnConfirm}
-                onClick={() => addColecao.mutate()}
-                disabled={addColecao.isPending || !colecaoSelected}>
-                {addColecao.isPending ? 'Adicionando...' : 'Confirmar'}
+                onClick={() => addCaderno.mutate()}
+                disabled={addCaderno.isPending || !cadernoSelected}>
+                {addCaderno.isPending ? 'Adicionando...' : 'Confirmar'}
               </button>
             </div>
           </div>

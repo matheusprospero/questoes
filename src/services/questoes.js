@@ -1,96 +1,58 @@
 import { supabase } from './supabase'
 
+// Campos + relações padrão de uma questão
+const SELECT_QUESTAO = `
+  *,
+  disciplinas(id, nome, cor),
+  assuntos(id, nome),
+  bancas(id, nome),
+  orgaos(id, nome),
+  questao_alternativas(id, letra, texto, correta, ordem)
+`
+
+function normalizar(q) {
+  return {
+    ...q,
+    alternativas: q.questao_alternativas?.slice().sort((a, b) => a.ordem - b.ordem) ?? [],
+  }
+}
+
 // ── Listagem ─────────────────────────────────────────────────
 
 export async function listarQuestoes(filtros = {}) {
   let query = supabase
     .from('questoes')
-    .select(`
-      *,
-      disciplinas(nome, cor),
-      perfis(nome),
-      questao_habilidades(
-        habilidades(id, codigo, descricao)
-      ),
-      avaliacoes(nota),
-      questao_alternativas(id, letra, texto, correta, ordem),
-      questao_gabaritos(texto, criterios),
-      aprovacoes(status_novo, criado_em, perfis(nome))
-    `)
-    .is('arquivado_em', null)
+    .select(SELECT_QUESTAO)
     .order('criado_em', { ascending: false })
 
-  if (filtros.status)        query = query.eq('status', filtros.status)
   if (filtros.tipo)          query = query.eq('tipo', filtros.tipo)
   if (filtros.disciplina_id) query = query.eq('disciplina_id', filtros.disciplina_id)
-  if (filtros.ano_escolar)   query = query.eq('ano_escolar', filtros.ano_escolar)
-  if (filtros.dificuldade)   query = query.eq('nivel_dificuldade', filtros.dificuldade)
-  if (filtros.autor_id)      query = query.eq('autor_id', filtros.autor_id)
-  if (filtros.busca) {
-    query = query.textSearch('busca', filtros.busca, {
-      type: 'websearch',
-      config: 'portuguese',
-    })
-  }
+  if (filtros.assunto_id)    query = query.eq('assunto_id', filtros.assunto_id)
+  if (filtros.banca_id)      query = query.eq('banca_id', filtros.banca_id)
+  if (filtros.orgao_id)      query = query.eq('orgao_id', filtros.orgao_id)
+  if (filtros.ano)           query = query.eq('ano', filtros.ano)
+  if (filtros.nivel)         query = query.eq('nivel', filtros.nivel)
+  if (filtros.dificuldade)   query = query.eq('dificuldade', filtros.dificuldade)
 
   const { data, error } = await query
   if (error) throw error
-  return data.map(q => ({
-    ...q,
-    media_avaliacao: q.avaliacoes?.length
-      ? q.avaliacoes.reduce((s, a) => s + a.nota, 0) / q.avaliacoes.length
-      : null,
-    total_avaliacoes: q.avaliacoes?.length ?? 0,
-    habilidades: q.questao_habilidades?.map(qh => qh.habilidades) ?? [],
-    alternativas: q.questao_alternativas?.sort((a,b) => a.ordem - b.ordem) ?? [],
-    gabarito: q.questao_gabaritos?.[0] ?? null,
-    validacao: validacaoDeAprovacoes(q.aprovacoes),
-  }))
-}
-
-// Extrai quem validou (publicou) a questão a partir do histórico de aprovações
-function validacaoDeAprovacoes(aprovacoes) {
-  const pub = (aprovacoes ?? [])
-    .filter(a => a.status_novo === 'publicado')
-    .sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))[0]
-  return pub ? { nome: pub.perfis?.nome ?? null, em: pub.criado_em } : null
+  return data.map(normalizar)
 }
 
 export async function buscarQuestao(id) {
   const { data, error } = await supabase
     .from('questoes')
-    .select(`
-      *,
-      disciplinas(id, nome, cor),
-      perfis(id, nome),
-      questao_alternativas(id, letra, texto, correta, ordem),
-      questao_gabaritos(id, texto, criterios),
-      questao_habilidades(habilidades(id, codigo, descricao, ano_escolar)),
-      avaliacoes(nota, autor_id),
-      comentarios(id, texto, criado_em, arquivado_em, autor_id, pai_id, perfis(nome)),
-      aprovacoes(status_novo, justificativa, criado_em, perfis(nome))
-    `)
+    .select(SELECT_QUESTAO)
     .eq('id', id)
     .single()
 
   if (error) throw error
-
-  return {
-    ...data,
-    alternativas: data.questao_alternativas?.sort((a, b) => a.ordem - b.ordem) ?? [],
-    gabarito: data.questao_gabaritos?.[0] ?? null,
-    habilidades: data.questao_habilidades?.map(qh => qh.habilidades) ?? [],
-    media_avaliacao: data.avaliacoes?.length
-      ? data.avaliacoes.reduce((s, a) => s + a.nota, 0) / data.avaliacoes.length
-      : null,
-    comentarios: data.comentarios?.filter(c => !c.arquivado_em) ?? [],
-    validacao: validacaoDeAprovacoes(data.aprovacoes),
-  }
+  return normalizar(data)
 }
 
-// ── Criação / Edição ──────────────────────────────────────────
+// ── Criação / Edição / Exclusão ───────────────────────────────
 
-export async function criarQuestao(dados, alternativas, gabarito, habilidadeIds) {
+export async function criarQuestao(dados, alternativas) {
   const { data: questao, error } = await supabase
     .from('questoes')
     .insert(dados)
@@ -99,14 +61,11 @@ export async function criarQuestao(dados, alternativas, gabarito, habilidadeIds)
 
   if (error) throw error
 
-  await salvarAlternativasEGabarito(questao.id, dados.tipo, alternativas, gabarito)
-  await salvarHabilidades(questao.id, habilidadeIds)
-  await salvarVersao(questao.id, 1, questao, 'Criação inicial')
-
+  await salvarAlternativas(questao.id, dados.tipo, alternativas)
   return questao
 }
 
-export async function atualizarQuestao(id, dados, alternativas, gabarito, habilidadeIds) {
+export async function atualizarQuestao(id, dados, alternativas) {
   const { data: questao, error } = await supabase
     .from('questoes')
     .update(dados)
@@ -116,17 +75,16 @@ export async function atualizarQuestao(id, dados, alternativas, gabarito, habili
 
   if (error) throw error
 
-  await salvarAlternativasEGabarito(id, dados.tipo, alternativas, gabarito)
-  await salvarHabilidades(id, habilidadeIds)
-  await salvarVersao(id, dados.versao_atual, questao, dados.alteracoes || 'Atualização')
-
+  await salvarAlternativas(id, dados.tipo, alternativas)
   return questao
 }
 
-async function salvarAlternativasEGabarito(questaoId, tipo, alternativas, gabarito) {
+async function salvarAlternativas(questaoId, tipo, alternativas) {
+  // Sempre limpa: se mudou de múltipla escolha para certo/errado, remove as antigas
+  await supabase.from('questao_alternativas').delete().eq('questao_id', questaoId)
+
   if (tipo === 'multipla_escolha' && alternativas?.length) {
-    await supabase.from('questao_alternativas').delete().eq('questao_id', questaoId)
-    await supabase.from('questao_alternativas').insert(
+    const { error } = await supabase.from('questao_alternativas').insert(
       alternativas.map((alt, i) => ({
         questao_id: questaoId,
         letra: alt.letra,
@@ -135,121 +93,48 @@ async function salvarAlternativasEGabarito(questaoId, tipo, alternativas, gabari
         ordem: i,
       }))
     )
-  }
-
-  if (tipo === 'dissertativa' && gabarito) {
-    await supabase.from('questao_gabaritos').delete().eq('questao_id', questaoId)
-    await supabase.from('questao_gabaritos').insert({
-      questao_id: questaoId,
-      texto: gabarito.texto,
-      criterios: gabarito.criterios,
-    })
+    if (error) throw error
   }
 }
 
-async function salvarHabilidades(questaoId, habilidadeIds) {
-  if (!habilidadeIds) return
-  await supabase.from('questao_habilidades').delete().eq('questao_id', questaoId)
-  if (habilidadeIds.length > 0) {
-    await supabase.from('questao_habilidades').insert(
-      habilidadeIds.map(hid => ({ questao_id: questaoId, habilidade_id: hid }))
-    )
-  }
-}
-
-async function salvarVersao(questaoId, versao, snapshot, alteracoes) {
-  const { data: { user } } = await supabase.auth.getUser()
-  await supabase.from('questao_versoes').upsert({
-    questao_id: questaoId,
-    numero_versao: versao,
-    snapshot,
-    alteracoes,
-    autor_id: user.id,
-  })
-}
-
-// ── Fluxo de aprovação ────────────────────────────────────────
-
-export async function mudarStatus(questaoId, novoStatus, justificativa = null) {
-  const { data: questao } = await supabase
-    .from('questoes')
-    .select('status')
-    .eq('id', questaoId)
-    .single()
-
-  const { error } = await supabase
-    .from('questoes')
-    .update({ status: novoStatus })
-    .eq('id', questaoId)
-
-  if (error) throw error
-
-  const { data: { user } } = await supabase.auth.getUser()
-  await supabase.from('aprovacoes').insert({
-    questao_id: questaoId,
-    status_anterior: questao.status,
-    status_novo: novoStatus,
-    justificativa,
-    autor_id: user.id,
-  })
-}
-
-// ── Avaliação ─────────────────────────────────────────────────
-
-export async function avaliarQuestao(questaoId, nota) {
-  const { data: { user } } = await supabase.auth.getUser()
-  const { error } = await supabase
-    .from('avaliacoes')
-    .upsert({ questao_id: questaoId, nota, autor_id: user.id })
+export async function excluirQuestao(id) {
+  const { error } = await supabase.from('questoes').delete().eq('id', id)
   if (error) throw error
 }
 
-// ── Favorito ──────────────────────────────────────────────────
+// ── Favoritos ─────────────────────────────────────────────────
 
 export async function toggleFavorito(questaoId, favoritoId) {
-  const { data: { user } } = await supabase.auth.getUser()
   if (favoritoId) {
     await supabase.from('favoritos').delete().eq('id', favoritoId)
     return null
   }
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('favoritos')
-    .insert({ usuario_id: user.id, questao_id: questaoId })
+    .insert({ questao_id: questaoId })
     .select()
     .single()
+  if (error) throw error
   return data?.id
 }
 
 export async function listarFavoritos() {
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('favoritos')
     .select('id, questao_id')
-    .eq('usuario_id', user.id)
-    .not('questao_id', 'is', null)
+  if (error) throw error
   return data ?? []
 }
 
-// Questões favoritadas do usuário, já com os detalhes para exibição
+// Questões favoritadas, já com os detalhes para exibição
 export async function listarQuestoesFavoritas() {
-  const { data: { user } } = await supabase.auth.getUser()
   const { data, error } = await supabase
     .from('favoritos')
     .select(`
       id,
       criado_em,
-      questoes(
-        *,
-        disciplinas(nome, cor),
-        perfis(nome),
-        questao_alternativas(id, letra, texto, correta, ordem),
-        questao_gabaritos(texto, criterios),
-        questao_habilidades(habilidades(id, codigo, descricao)),
-        avaliacoes(nota)
-      )
+      questoes(${SELECT_QUESTAO})
     `)
-    .eq('usuario_id', user.id)
-    .not('questao_id', 'is', null)
     .order('criado_em', { ascending: false })
 
   if (error) throw error
@@ -257,19 +142,12 @@ export async function listarQuestoesFavoritas() {
   return (data || [])
     .filter(f => f.questoes)
     .map(f => ({
-      ...f.questoes,
+      ...normalizar(f.questoes),
       favorito_id: f.id,
-      alternativas: f.questoes.questao_alternativas?.sort((a, b) => a.ordem - b.ordem) ?? [],
-      gabarito: f.questoes.questao_gabaritos?.[0] ?? null,
-      habilidades: f.questoes.questao_habilidades?.map(qh => qh.habilidades) ?? [],
-      media_avaliacao: f.questoes.avaliacoes?.length
-        ? f.questoes.avaliacoes.reduce((s, a) => s + a.nota, 0) / f.questoes.avaliacoes.length
-        : null,
-      total_avaliacoes: f.questoes.avaliacoes?.length ?? 0,
     }))
 }
 
-// ── Dados auxiliares ──────────────────────────────────────────
+// ── Classificação (disciplinas, assuntos, bancas, órgãos) ─────
 
 export async function listarDisciplinas() {
   const { data, error } = await supabase
@@ -281,48 +159,83 @@ export async function listarDisciplinas() {
   return data
 }
 
-export async function listarHabilidades(filtros = {}) {
+export async function listarAssuntos(disciplinaId) {
   let query = supabase
-    .from('habilidades')
-    .select('id, codigo, descricao, ano_escolar, disciplina_id')
+    .from('assuntos')
+    .select('id, nome, disciplina_id')
     .eq('ativo', true)
-    .order('codigo')
+    .order('nome')
 
-  if (filtros.disciplina_id) query = query.eq('disciplina_id', filtros.disciplina_id)
-  if (filtros.ano_escolar)   query = query.eq('ano_escolar', filtros.ano_escolar)
+  if (disciplinaId) query = query.eq('disciplina_id', disciplinaId)
 
   const { data, error } = await query
   if (error) throw error
   return data
 }
 
-export async function registrarVisualizacao(questaoId) {
-  const { data: { user } } = await supabase.auth.getUser()
-  await supabase.from('historico_uso').insert({
-    usuario_id: user?.id,
-    tipo_acao: 'visualizacao',
-    questao_id: questaoId,
-  })
+export async function criarAssunto(disciplinaId, nome) {
+  const { data, error } = await supabase
+    .from('assuntos')
+    .insert({ disciplina_id: disciplinaId, nome: nome.trim() })
+    .select()
+    .single()
+  if (error) throw error
+  return data
 }
 
-export async function adicionarQuestaoProva(provaId, questaoId) {
-  // Obter próxima ordem
-  const { data: maxOrdem } = await supabase
-    .from('prova_questoes')
-    .select('ordem')
-    .eq('prova_id', provaId)
-    .order('ordem', { ascending: false })
-    .limit(1)
-    .single()
-  
-  const novaOrdem = (maxOrdem?.ordem ?? -1) + 1
-  
-  // Inserir questão na prova
-  const { error } = await supabase.from('prova_questoes').insert({
-    prova_id: provaId,
-    questao_id: questaoId,
-    ordem: novaOrdem,
-  })
-  
+export async function listarBancas() {
+  const { data, error } = await supabase.from('bancas').select('*').order('nome')
   if (error) throw error
+  return data
+}
+
+export async function criarBanca(nome) {
+  const { data, error } = await supabase
+    .from('bancas')
+    .insert({ nome: nome.trim() })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function listarOrgaos() {
+  const { data, error } = await supabase.from('orgaos').select('*').order('nome')
+  if (error) throw error
+  return data
+}
+
+export async function criarOrgao(nome) {
+  const { data, error } = await supabase
+    .from('orgaos')
+    .insert({ nome: nome.trim() })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ── Utilidades de exibição ────────────────────────────────────
+
+// Resumo do enunciado (sem HTML) para listagens
+export function resumoEnunciado(html, tamanho = 160) {
+  const texto = (html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  return texto.length > tamanho ? texto.slice(0, tamanho) + '…' : texto
+}
+
+// Rótulo curto tipo "Cebraspe · PF · 2023" para identificar a questão
+export function rotuloQuestao(q) {
+  const partes = [q.bancas?.nome, q.orgaos?.nome, q.ano].filter(Boolean)
+  return partes.length ? partes.join(' · ') : 'Questão sem origem'
+}
+
+// Gabarito em texto: letra correta ou Certo/Errado
+export function gabaritoQuestao(q) {
+  if (q.tipo === 'certo_errado') {
+    if (q.gabarito_certo === true)  return 'Certo'
+    if (q.gabarito_certo === false) return 'Errado'
+    return '—'
+  }
+  const correta = (q.alternativas || []).find(a => a.correta)
+  return correta?.letra ?? '—'
 }

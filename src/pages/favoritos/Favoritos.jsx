@@ -1,25 +1,21 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { listarQuestoesFavoritas, toggleFavorito } from '../../services/questoes'
-import { useAuth } from '../../contexts/AuthContext'
+import { listarQuestoesFavoritas, toggleFavorito, resumoEnunciado, rotuloQuestao } from '../../services/questoes'
 import toast from 'react-hot-toast'
-import { Search, Eye, Pencil, Heart, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react'
+import { Search, Eye, Pencil, Heart, ChevronDown, ChevronUp, CheckCircle, XCircle } from 'lucide-react'
 import styles from './Favoritos.module.css'
 
 export default function Favoritos() {
   const navigate = useNavigate()
-  const { usuario, isFormador, isAdmin } = useAuth()
-  const podeEditar = isFormador || isAdmin
   const queryClient = useQueryClient()
 
   const [buscaTexto, setBuscaTexto] = useState('')
   const [expandidas, setExpandidas] = useState(new Set())
 
   const { data: questoes = [], isLoading } = useQuery({
-    queryKey: ['favoritos', usuario?.id],
+    queryKey: ['favoritos', 'detalhes'],
     queryFn: listarQuestoesFavoritas,
-    enabled: !!usuario,
   })
 
   const desfavoritar = useMutation({
@@ -42,7 +38,8 @@ export default function Favoritos() {
   const questoesFiltradas = questoes.filter(q => {
     const t = buscaTexto.toLowerCase()
     return !buscaTexto || [
-      q.titulo, q.disciplinas?.nome, q.ano_escolar,
+      q.disciplinas?.nome, q.assuntos?.nome, q.bancas?.nome, q.orgaos?.nome,
+      q.cargo, String(q.ano ?? ''),
       q.enunciado?.replace(/<[^>]*>/g, ''),
     ].some(c => c?.toLowerCase().includes(t))
   })
@@ -61,7 +58,7 @@ export default function Favoritos() {
           <Search size={15} className={styles.searchIcon} />
           <input
             className={styles.searchInput}
-            placeholder="Buscar nos favoritos por título, disciplina, enunciado..."
+            placeholder="Buscar nos favoritos por enunciado, banca, disciplina..."
             value={buscaTexto}
             onChange={e => setBuscaTexto(e.target.value)}
           />
@@ -95,12 +92,14 @@ export default function Favoritos() {
                     {expandida ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </button>
                   <div className={styles.cardInfo} onClick={() => navigate(`/questoes/${q.id}`)}>
-                    <h3 className={styles.cardTitulo}>{q.titulo}</h3>
+                    <h3 className={styles.cardTitulo}>{resumoEnunciado(q.enunciado, 120) || rotuloQuestao(q)}</h3>
                     <div className={styles.cardMeta}>
+                      {q.bancas && <span className={styles.badge}>{q.bancas.nome}</span>}
+                      {q.ano && <span className={styles.badge}>{q.ano}</span>}
                       {q.disciplinas && <span className={styles.badge}>{q.disciplinas.nome}</span>}
-                      {q.ano_escolar && <span className={styles.badge}>{q.ano_escolar}</span>}
+                      {q.assuntos && <span className={styles.badge}>{q.assuntos.nome}</span>}
                       <span className={styles.badge}>
-                        {q.tipo === 'multipla_escolha' ? 'Múltipla escolha' : 'Dissertativa'}
+                        {q.tipo === 'multipla_escolha' ? 'Múltipla escolha' : 'Certo/Errado'}
                       </span>
                     </div>
                   </div>
@@ -111,11 +110,9 @@ export default function Favoritos() {
                       title="Remover dos favoritos">
                       <Heart size={15} fill="currentColor" />
                     </button>
-                    {(podeEditar || q.autor_id === usuario?.id) && (
-                      <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}/editar`)} title="Editar">
-                        <Pencil size={15} />
-                      </button>
-                    )}
+                    <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}/editar`)} title="Editar">
+                      <Pencil size={15} />
+                    </button>
                     <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}`)} title="Ver">
                       <Eye size={15} />
                     </button>
@@ -138,10 +135,14 @@ export default function Favoritos() {
                       </div>
                     )}
 
-                    {q.gabarito && (
+                    {q.tipo === 'certo_errado' && (
                       <div className={styles.gabarito}>
                         <p className={styles.label}>Gabarito:</p>
-                        <p>{q.gabarito.texto}</p>
+                        <p style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {q.gabarito_certo
+                            ? <><CheckCircle size={15} style={{ color: '#059669' }} /> Certo</>
+                            : <><XCircle size={15} style={{ color: '#dc2626' }} /> Errado</>}
+                        </p>
                       </div>
                     )}
                   </div>
