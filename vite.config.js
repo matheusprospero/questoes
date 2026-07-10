@@ -1,12 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Nome exato do repositório GitHub (usado no deploy via gh-pages)
-const REPO_NAME = 'questoes'
-
+// Domínio próprio (matheusprospero.com.br) via arquivo public/CNAME:
+// o site é servido na RAIZ do domínio, então a base é '/'.
 export default defineConfig({
   plugins: [react()],
-  base: process.env.NODE_ENV === 'production' ? `/${REPO_NAME}/` : '/',
+  base: '/',
   resolve: {
     alias: {
       '@': '/src',
