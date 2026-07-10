@@ -77,7 +77,7 @@
 .qNum { font-weight: 700; font-size: 1em; }
 .qDif { font-size: 9pt; color: #666; letter-spacing: 1px; }
 
-.enunciado { margin-bottom: 8px; }
+.enunciado { margin-bottom: 8px; text-align: justify; }
 .enunciado img { max-width: 100%; height: auto; }
 
 .alternativas { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 2px; }

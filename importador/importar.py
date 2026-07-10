@@ -17,7 +17,7 @@ Como usar (na SUA máquina — a chave nunca sai daqui):
 
 Requisitos: só a biblioteca padrão do Python (urllib). Nenhuma dependência externa.
 """
-import sys, os, json, mimetypes, urllib.request, urllib.parse, urllib.error
+import sys, os, json, re, mimetypes, urllib.request, urllib.parse, urllib.error
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
@@ -171,7 +171,14 @@ def main():
     total = 0
     for q in lote["questoes"]:
         enun = q["enunciado"]
-        # substitui placeholders {{IMG:arquivo.png}} pela URL pública
+        # 1) placeholder DENTRO de um src="..." → recebe só a URL
+        #    (evita aninhar <p><img>…</p> dentro de outra tag img)
+        enun = re.sub(
+            r'src="\{\{IMG:([^}]+)\}\}"',
+            lambda m: 'src="' + get_img_url(m.group(1)) + '"',
+            enun,
+        )
+        # 2) placeholder sozinho no texto → vira o bloco <p><img …/></p>
         while "{{IMG:" in enun:
             ini = enun.index("{{IMG:")
             fim = enun.index("}}", ini)

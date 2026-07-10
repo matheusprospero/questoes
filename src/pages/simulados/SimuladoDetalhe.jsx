@@ -104,7 +104,7 @@ export default function SimuladoDetalhe() {
           <p style="font-weight:700;font-size:${fontSize};margin:0 0 6px">
             Questão ${idx + 1}${origemHtml}
           </p>
-          <div style="font-size:${fontSize};margin-bottom:8px">${q.enunciado}</div>
+          <div style="font-size:${fontSize};margin-bottom:8px;text-align:justify">${q.enunciado}</div>
           ${alts}
         </div>`
     }).join('')

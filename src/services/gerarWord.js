@@ -232,6 +232,7 @@ export async function gerarWordSimulado(prova) {
     const itensEnunciado = await processarNo(divEnunciado)
     const parsEnunciado = itensParagrafos(itensEnunciado, {
       fontSize, keepNext: semQuebra,
+      alignment: AlignmentType.JUSTIFIED,
       spacingBefore: 20, spacingAfter: 80,
     })
     parsQuestoes.push(...parsEnunciado)
