@@ -38,6 +38,19 @@
   color: #ffffff;
   margin: 0 auto 14px;
   box-shadow: var(--shadow-primary);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.logoKicker {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 2px;
 }
 
 .logoTitle {

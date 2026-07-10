@@ -4,7 +4,10 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
   listarQuestoes, listarDisciplinas, listarAssuntos, listarBancas, gabaritoQuestao,
 } from '../../services/questoes'
-import { registrarResposta, listarRespostas, idsUltimaErrada, montarRecomendadas } from '../../services/estudo'
+import {
+  registrarResposta, listarRespostas, idsUltimaErrada,
+  montarRecomendadas, amostraDiversificada,
+} from '../../services/estudo'
 import { buscarSimulado } from '../../services/simulados'
 import VideoYouTube from '../../components/VideoYouTube'
 import {
@@ -116,7 +119,8 @@ export default function Estudo() {
           // Já vem priorizado pelos assuntos com mais erros
           questoes = montarRecomendadas(questoes, respostas, { limite: qtd > 0 ? qtd : 15 })
         } else {
-          questoes = embaralhar(questoes)
+          // Com quantidade definida, diversifica disciplinas/bancas/provas
+          questoes = qtd > 0 ? amostraDiversificada(questoes, qtd) : embaralhar(questoes)
         }
 
         if (qtd > 0) questoes = questoes.slice(0, qtd)

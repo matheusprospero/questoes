@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { BookMarked, Mail, Lock, AlertCircle, ChevronDown } from 'lucide-react'
+import { Mail, Lock, AlertCircle, ChevronDown } from 'lucide-react'
 import styles from './Login.module.css'
 
 function GoogleIcon() {
@@ -58,11 +58,10 @@ export default function Login() {
       <div className={styles.card}>
         {/* Logo */}
         <div className={styles.logoArea}>
-          <div className={styles.logoIcon}>
-            <BookMarked size={24} />
-          </div>
-          <h1 className={styles.logoTitle}>Questões de Concursos</h1>
-          <p className={styles.logoSub}>Questões comentadas com resolução em vídeo</p>
+          <div className={styles.logoIcon}>MP</div>
+          <p className={styles.logoKicker}>Professor</p>
+          <h1 className={styles.logoTitle}>Matheus Próspero</h1>
+          <p className={styles.logoSub}>Banco de Questões para Concursos Públicos</p>
         </div>
 
         {/* Entrar com Google (aluno) */}

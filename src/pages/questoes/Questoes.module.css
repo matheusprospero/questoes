@@ -294,3 +294,58 @@
 .status_em_revisao { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
 .status_publicado { background: #ecfdf5; color: #047857; border: 1px solid #bbf7d0; }
 .status_arquivado { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+
+/* ── Exploração (cards iniciais de filtro) ────────── */
+.exploracao { display: flex; flex-direction: column; gap: 22px; margin-top: 8px; }
+
+.expTitulo {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 13px; font-weight: 800; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+.expTitulo svg { color: var(--color-primary); }
+
+.expGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+}
+
+.expCard {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px; text-align: left;
+  font-family: var(--font-sans);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.expCard:hover {
+  border-color: var(--color-primary-mid);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.expCor { width: 10px; height: 10px; border-radius: var(--radius-full); flex-shrink: 0; }
+
+.expInfo { display: flex; flex-direction: column; min-width: 0; }
+.expNome {
+  font-size: 13.5px; font-weight: 700; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.expTotal { font-size: 11.5px; color: var(--text-tertiary); }
+
+.expVerTodas {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  align-self: center;
+  padding: 11px 22px;
+  font-size: 13.5px; font-weight: 700; font-family: var(--font-sans);
+  background: var(--gradient-primary); color: #fff;
+  border: none; border-radius: var(--radius-md); cursor: pointer;
+  box-shadow: var(--shadow-primary);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.expVerTodas:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(79, 70, 229, 0.36); }

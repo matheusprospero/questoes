@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   listarQuestoes, excluirQuestao, listarDisciplinas, listarAssuntos,
   listarBancas, listarOrgaos, listarCargos, listarAnos,
@@ -9,7 +9,10 @@ import {
 import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simulados'
 import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos'
 import { useAuth } from '../../contexts/AuthContext'
-import { Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronUp, CheckCircle, XCircle, X } from 'lucide-react'
+import {
+  Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronUp,
+  CheckCircle, XCircle, X, BookOpen, Landmark, LayoutGrid,
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Questoes.module.css'
 
@@ -21,10 +24,16 @@ export default function Questoes() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { isAdmin } = useAuth()
+  const [searchParams] = useSearchParams()
 
-  const [filtros, setFiltros] = useState({})
+  // ?disciplina=<id> (vindo da página Início) já entra filtrado
+  const [filtros, setFiltros] = useState(() => {
+    const d = searchParams.get('disciplina')
+    return d ? { disciplina_id: d } : {}
+  })
   const [buscaTexto, setBuscaTexto] = useState('')
   const [mostrarFiltros, setMostrarFiltros] = useState(true)
+  const [verTodas, setVerTodas] = useState(false)
   const [expandidas, setExpandidas] = useState(new Set())
   const [questaoParaSimulado, setQuestaoParaSimulado] = useState(null)
   const [simuladoSelected, setSimuladoSelected] = useState(null)
@@ -138,6 +147,34 @@ export default function Questoes() {
 
   const filtrosAtivos = Object.entries(filtros)
 
+  // Tela de exploração: sem filtro, sem busca e sem "ver todas" → cards
+  const explorando = filtrosAtivos.length === 0 && !buscaTexto && !verTodas
+
+  // Contagens para os cards (quando explorando, "questoes" = banco inteiro)
+  const contagens = useMemo(() => {
+    const disc = new Map(), banc = new Map(), org = new Map()
+    for (const q of questoes) {
+      if (q.disciplinas) {
+        const g = disc.get(q.disciplinas.id) ?? { ...q.disciplinas, total: 0 }
+        g.total += 1; disc.set(q.disciplinas.id, g)
+      }
+      if (q.bancas) {
+        const g = banc.get(q.bancas.id) ?? { ...q.bancas, total: 0 }
+        g.total += 1; banc.set(q.bancas.id, g)
+      }
+      if (q.orgaos) {
+        const g = org.get(q.orgaos.id) ?? { ...q.orgaos, total: 0 }
+        g.total += 1; org.set(q.orgaos.id, g)
+      }
+    }
+    const porTotal = (a, b) => b.total - a.total
+    return {
+      disciplinas: [...disc.values()].sort(porTotal),
+      bancas: [...banc.values()].sort(porTotal),
+      orgaos: [...org.values()].sort(porTotal),
+    }
+  }, [questoes])
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -165,7 +202,10 @@ export default function Questoes() {
         <button
           type="button"
           className={`${styles.btnFiltro} ${(mostrarFiltros || filtrosAtivos.length) ? styles.btnFiltroAtivo : ''}`}
-          onClick={() => setMostrarFiltros(v => !v)}
+          onClick={() => {
+            if (explorando) { setVerTodas(true); setMostrarFiltros(true) }
+            else setMostrarFiltros(v => !v)
+          }}
         >
           Filtros
           {filtrosAtivos.length > 0 && <span className={styles.filtroBadge}>{filtrosAtivos.length}</span>}
@@ -173,7 +213,66 @@ export default function Questoes() {
         </button>
       </div>
 
-      {filtrosAtivos.length > 0 && (
+      {/* ── Exploração: cards para escolher por onde começar ── */}
+      {explorando && (
+        isLoading ? (
+          <div className={styles.loading}>Carregando questões...</div>
+        ) : (
+        <div className={styles.exploracao}>
+          <div>
+            <h2 className={styles.expTitulo}><BookOpen size={15} /> Comece por uma disciplina</h2>
+            <div className={styles.expGrid}>
+              {contagens.disciplinas.map(d => (
+                <button key={d.id} className={styles.expCard}
+                  onClick={() => setFiltro('disciplina_id', String(d.id))}>
+                  <span className={styles.expCor} style={{ background: d.cor || 'var(--color-primary)' }} />
+                  <span className={styles.expInfo}>
+                    <span className={styles.expNome}>{d.nome}</span>
+                    <span className={styles.expTotal}>{d.total} questões</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h2 className={styles.expTitulo}><Landmark size={15} /> Ou por banca</h2>
+            <div className={styles.expGrid}>
+              {contagens.bancas.map(b => (
+                <button key={b.id} className={styles.expCard}
+                  onClick={() => setFiltro('banca_id', String(b.id))}>
+                  <span className={styles.expInfo}>
+                    <span className={styles.expNome}>{b.nome}</span>
+                    <span className={styles.expTotal}>{b.total} questões</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h2 className={styles.expTitulo}><Landmark size={15} /> Ou por órgão / prova</h2>
+            <div className={styles.expGrid}>
+              {contagens.orgaos.map(o => (
+                <button key={o.id} className={styles.expCard}
+                  onClick={() => setFiltro('orgao_id', String(o.id))}>
+                  <span className={styles.expInfo}>
+                    <span className={styles.expNome}>{o.nome}</span>
+                    <span className={styles.expTotal}>{o.total} questões</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button className={styles.expVerTodas} onClick={() => setVerTodas(true)}>
+            <LayoutGrid size={15} /> Ver todas as {questoes.length} questões
+          </button>
+        </div>
+        )
+      )}
+
+      {!explorando && filtrosAtivos.length > 0 && (
         <div className={styles.chipsRow}>
           {filtrosAtivos.map(([key, val]) => (
             <button key={key} className={styles.chip} onClick={() => setFiltro(key, '')} title="Remover filtro">
@@ -181,13 +280,14 @@ export default function Questoes() {
               <X size={12} />
             </button>
           ))}
-          <button className={styles.chipLimpar} onClick={() => { setFiltros({}); setBuscaTexto('') }}>
+          <button className={styles.chipLimpar}
+            onClick={() => { setFiltros({}); setBuscaTexto(''); setVerTodas(false) }}>
             Limpar tudo
           </button>
         </div>
       )}
 
-      {mostrarFiltros && (
+      {!explorando && mostrarFiltros && (
         <div className={styles.filtrosPanel}>
           <div className={styles.filtroGrupo}>
             <label className={styles.filtroLabel}>Disciplina</label>
@@ -271,7 +371,7 @@ export default function Questoes() {
         </div>
       )}
 
-      {isLoading ? (
+      {!explorando && (isLoading ? (
         <div className={styles.loading}>Carregando questões...</div>
       ) : questoesFiltradas.length === 0 ? (
         <div className={styles.vazio}>
@@ -378,7 +478,7 @@ export default function Questoes() {
             )
           })}
         </div>
-      )}
+      ))}
 
       {/* Modal para selecionar simulado */}
       {questaoParaSimulado && (

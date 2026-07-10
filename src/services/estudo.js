@@ -44,6 +44,53 @@ export function idsUltimaErrada(respostas) {
   )
 }
 
+// Amostra diversificada: ao montar uma sessão limitada sem filtros,
+// mistura disciplinas, bancas e provas diferentes (round-robin), em vez
+// de sortear e arriscar cair tudo da mesma prova.
+export function amostraDiversificada(questoes, qtd) {
+  const embaralhadas = [...questoes].sort(() => Math.random() - 0.5)
+  if (!qtd || qtd >= questoes.length) return embaralhadas
+
+  // agrupa por disciplina e, dentro dela, por prova (banca+órgão+ano+cargo)
+  const porDisciplina = new Map()
+  for (const q of embaralhadas) {
+    const d = q.disciplina_id ?? 'sem-disciplina'
+    if (!porDisciplina.has(d)) porDisciplina.set(d, new Map())
+    const provas = porDisciplina.get(d)
+    const p = [q.banca_id, q.orgao_id, q.ano, q.cargo].map(v => v ?? '').join('|')
+    if (!provas.has(p)) provas.set(p, [])
+    provas.get(p).push(q)
+  }
+
+  // dentro de cada disciplina, alterna entre provas diferentes
+  const filas = [...porDisciplina.values()].map(provas => {
+    const listas = [...provas.values()]
+    const fila = []
+    let sobrou = true
+    while (sobrou) {
+      sobrou = false
+      for (const lista of listas) {
+        if (lista.length) { fila.push(lista.pop()); sobrou = true }
+      }
+    }
+    return fila
+  })
+
+  // alterna entre disciplinas até fechar a quantidade
+  const resultado = []
+  while (resultado.length < qtd) {
+    let pegou = false
+    for (const fila of filas) {
+      if (fila.length && resultado.length < qtd) {
+        resultado.push(fila.shift())
+        pegou = true
+      }
+    }
+    if (!pegou) break
+  }
+  return resultado.sort(() => Math.random() - 0.5) // ordem final misturada
+}
+
 // Sugestões "similares às que errei": questões AINDA NÃO respondidas,
 // dos mesmos assuntos/disciplinas das questões cuja última resposta foi
 // errada. Quanto mais erros no assunto, maior a prioridade da sugestão.

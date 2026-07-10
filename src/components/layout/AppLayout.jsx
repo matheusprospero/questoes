@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   HelpCircle, ClipboardList, Layers, Heart, Home,
-  LogOut, Menu, X, BookMarked, BookOpen, BarChart2, Users
+  LogOut, Menu, X, BookOpen, BarChart2, Users
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
 
@@ -66,12 +66,11 @@ export default function AppLayout() {
     <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
       <div className={styles.sidebarHeader}>
         <div className={styles.logo}>
-          <div className={styles.logoIcon}>
-            <BookMarked size={16} />
-          </div>
+          <div className={styles.logoIcon}>MP</div>
           <div>
-            <div className={styles.logoText}>Questões</div>
-            <div className={styles.logoSub}>Concursos Públicos</div>
+            <div className={styles.logoKicker}>Professor</div>
+            <div className={styles.logoText}>Matheus Próspero</div>
+            <div className={styles.logoSub}>Banco de Questões</div>
           </div>
         </div>
       </div>
@@ -134,7 +133,7 @@ export default function AppLayout() {
           >
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <div className={styles.mobileLogo}>Questões de Concursos</div>
+          <div className={styles.mobileLogo}>Prof. Matheus Próspero</div>
         </header>
 
         <main className={styles.content} id="main-content">
