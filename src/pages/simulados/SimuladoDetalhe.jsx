@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { buscarSimulado } from '../../services/simulados'
-import { ChevronLeft, Printer, Pencil, FileText } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
+import { ChevronLeft, Printer, Pencil, FileText, Play } from 'lucide-react'
 import { gerarWordSimulado } from '../../services/gerarWord'
 import { useState } from 'react'
 import { CABECALHO_PADRAO } from '../../components/SimuladoHeader'
@@ -25,6 +26,7 @@ function gabaritoLinha(q, idx) {
 export default function SimuladoDetalhe() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { usuario } = useAuth()
 
   const [modoVisualizacao, setModoVisualizacao] = useState('normal')
 
@@ -226,16 +228,21 @@ export default function SimuladoDetalhe() {
 
           <div className={styles.topbarSep} />
 
+          <button className={styles.btnSecondary} onClick={() => navigate(`/estudo?simulado=${id}`)}>
+            <Play size={14} /> Resolver online
+          </button>
           <button className={styles.btnSecondary} onClick={handleImprimir}>
             <Printer size={14} /> Imprimir / PDF
           </button>
           <button className={styles.btnSecondary} onClick={handleWord}>
             <FileText size={14} /> Word
           </button>
-          <button className={styles.btnSecondary}
-            onClick={() => navigate(`/simulados/${id}/editar`)}>
-            <Pencil size={14} /> Editar
-          </button>
+          {simulado.usuario_id === usuario?.id && (
+            <button className={styles.btnSecondary}
+              onClick={() => navigate(`/simulados/${id}/editar`)}>
+              <Pencil size={14} /> Editar
+            </button>
+          )}
         </div>
       </div>
 

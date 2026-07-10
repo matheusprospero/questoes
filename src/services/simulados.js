@@ -117,6 +117,15 @@ async function salvarQuestoes(simuladoId, questaoIds) {
   }
 }
 
+// Professor propõe (ou retira a proposta de) um simulado para todos os alunos
+export async function alternarProposto(id, proposto) {
+  const { error } = await supabase
+    .from('simulados')
+    .update({ proposto })
+    .eq('id', id)
+  if (error) throw error
+}
+
 export async function deletarSimulado(id) {
   const { error } = await supabase.from('simulados').delete().eq('id', id)
   if (error) throw error

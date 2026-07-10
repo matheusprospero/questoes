@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
   listarQuestoes, listarDisciplinas, listarAssuntos, listarBancas, gabaritoQuestao,
 } from '../../services/questoes'
 import { registrarResposta, listarRespostas, idsUltimaErrada, montarRecomendadas } from '../../services/estudo'
+import { buscarSimulado } from '../../services/simulados'
 import VideoYouTube from '../../components/VideoYouTube'
 import {
   Play, CheckCircle, XCircle, ChevronRight, RotateCcw, BarChart2, BookOpen, Youtube, Sparkles,
@@ -49,6 +50,32 @@ export default function Estudo() {
   const [selecionada, setSelecionada] = useState(null) // letra ou 'C'/'E'
   const [respondida, setRespondida] = useState(false)
   const [historico, setHistorico] = useState([])    // { questao, resposta, acertou }
+  const [origemSessao, setOrigemSessao] = useState('estudo') // estudo | simulado
+
+  // ?simulado=<id> → resolve online as questões daquele simulado, na ordem
+  const simuladoId = searchParams.get('simulado')
+  const [carregandoSimulado, setCarregandoSimulado] = useState(!!simuladoId)
+  const [tituloSimulado, setTituloSimulado] = useState(null)
+  useEffect(() => {
+    if (!simuladoId) return
+    ;(async () => {
+      try {
+        const sim = await buscarSimulado(simuladoId)
+        const questoes = (sim.questoes || []).filter(temGabarito)
+        if (questoes.length === 0) {
+          toast.error('Este simulado não tem questões com gabarito para resolver.')
+          return
+        }
+        setTituloSimulado(sim.titulo)
+        await comecar(questoes, 'simulado')
+      } catch (err) {
+        toast.error('Não foi possível abrir o simulado: ' + err.message)
+      } finally {
+        setCarregandoSimulado(false)
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [simuladoId])
 
   const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
   const { data: assuntos = [] } = useQuery({
@@ -69,9 +96,10 @@ export default function Estudo() {
 
   const [carregando, setCarregando] = useState(false)
 
-  async function comecar(questoesBase = null) {
+  async function comecar(questoesBase = null, origem = 'estudo') {
     setCarregando(true)
     try {
+      setOrigemSessao(origem)
       let questoes = questoesBase
       if (!questoes) {
         questoes = await listarQuestoes(filtros)
@@ -132,6 +160,7 @@ export default function Estudo() {
         questao_id: questaoAtual.id,
         resposta: selecionada,
         acertou,
+        origem: origemSessao,
       })
       queryClient.invalidateQueries({ queryKey: ['respostas'] })
     } catch (err) {
@@ -177,6 +206,13 @@ export default function Estudo() {
 
   // ══════════════ FASE: CONFIG ══════════════
   if (fase === 'config') {
+    if (carregandoSimulado) {
+      return (
+        <div className={styles.page}>
+          <div className={styles.carregandoSimulado}>Abrindo simulado...</div>
+        </div>
+      )
+    }
     return (
       <div className={styles.page}>
         <div className={styles.header}>
@@ -336,6 +372,9 @@ export default function Estudo() {
       <div className={styles.progressoBar}>
         <div className={styles.progressoInfo}>
           <span className={styles.progressoTexto}>
+            {origemSessao === 'simulado' && tituloSimulado && (
+              <span className={styles.tagSimulado}>{tituloSimulado}</span>
+            )}
             Questão <strong>{indice + 1}</strong> de {sessao.length}
           </span>
           <span className={styles.progressoPlacar}>

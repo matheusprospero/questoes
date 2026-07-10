@@ -196,6 +196,7 @@ create table simulados (
   instrucoes    text,
   cabecalho     text,                       -- HTML do cabeçalho de impressão
   cfg_impressao jsonb not null default '{}',
+  proposto      boolean not null default false, -- proposto pelo professor a todos
   criado_em     timestamptz not null default now()
 );
 
@@ -305,6 +306,21 @@ create policy "dono_via_caderno" on caderno_questoes for all to authenticated
 create policy "dono_via_simulado" on simulado_questoes for all to authenticated
   using (exists (select 1 from simulados s where s.id = simulado_id and s.usuario_id = auth.uid()))
   with check (exists (select 1 from simulados s where s.id = simulado_id and s.usuario_id = auth.uid()));
+
+-- Simulados propostos: o professor propõe e todos leem (só leitura)
+create or replace function usuario_eh_admin(uid uuid)
+returns boolean language sql security definer set search_path = public as $$
+  select exists (select 1 from perfis where id = uid and papel = 'admin');
+$$;
+
+create policy "leitura_propostos" on simulados for select to authenticated
+  using (proposto = true and usuario_eh_admin(usuario_id));
+
+create policy "leitura_itens_propostos" on simulado_questoes for select to authenticated
+  using (exists (
+    select 1 from simulados s
+    where s.id = simulado_id and s.proposto = true and usuario_eh_admin(s.usuario_id)
+  ));
 
 -- ============================================================================
 -- STORAGE — bucket "midia" para imagens do editor (só admin envia)

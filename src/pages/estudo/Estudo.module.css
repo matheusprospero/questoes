@@ -173,3 +173,18 @@
 .resultadoItem:hover { background: var(--bg-subtle); }
 .resultadoItemTexto { flex: 1; font-size: 13px; color: var(--text-primary); }
 .resultadoItemResp { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; }
+
+/* ── Sessão vinda de um simulado ─────────────────── */
+.carregandoSimulado {
+  text-align: center; padding: 64px;
+  color: var(--text-tertiary); font-size: 13px;
+}
+.tagSimulado {
+  display: inline-flex; align-items: center;
+  margin-right: 10px; padding: 3px 10px;
+  font-size: 11px; font-weight: 700;
+  background: var(--color-primary-light); color: var(--color-primary);
+  border: 1px solid var(--color-primary-mid);
+  border-radius: var(--radius-full);
+  max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
