@@ -24,7 +24,7 @@ export default function Questoes() {
 
   const [filtros, setFiltros] = useState({})
   const [buscaTexto, setBuscaTexto] = useState('')
-  const [mostrarFiltros, setMostrarFiltros] = useState(false)
+  const [mostrarFiltros, setMostrarFiltros] = useState(true)
   const [expandidas, setExpandidas] = useState(new Set())
   const [questaoParaSimulado, setQuestaoParaSimulado] = useState(null)
   const [simuladoSelected, setSimuladoSelected] = useState(null)
@@ -189,65 +189,85 @@ export default function Questoes() {
 
       {mostrarFiltros && (
         <div className={styles.filtrosPanel}>
-          <select className={styles.filtroSelect} value={filtros.disciplina_id ?? ''}
-            onChange={e => setFiltro('disciplina_id', e.target.value)}>
-            <option value="">Todas as disciplinas</option>
-            {disciplinas.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
-          </select>
-          <select className={styles.filtroSelect} value={filtros.assunto_id ?? ''}
-            onChange={e => setFiltro('assunto_id', e.target.value)}
-            disabled={!filtros.disciplina_id}>
-            <option value="">{filtros.disciplina_id ? 'Todos os assuntos' : 'Assunto (escolha a disciplina)'}</option>
-            {assuntos.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
-          </select>
-          <select className={styles.filtroSelect} value={filtros.banca_id ?? ''}
-            onChange={e => setFiltro('banca_id', e.target.value)}>
-            <option value="">Todas as bancas</option>
-            {bancas.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
-          </select>
-          <select className={styles.filtroSelect} value={filtros.orgao_id ?? ''}
-            onChange={e => setFiltro('orgao_id', e.target.value)}>
-            <option value="">Todos os órgãos</option>
-            {orgaos.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
-          </select>
-          <select className={styles.filtroSelect} value={filtros.cargo ?? ''}
-            onChange={e => setFiltro('cargo', e.target.value)}>
-            <option value="">Todos os cargos</option>
-            {cargos.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select className={styles.filtroSelect} value={filtros.tipo ?? ''}
-            onChange={e => setFiltro('tipo', e.target.value)}>
-            <option value="">Todos os tipos</option>
-            <option value="multipla_escolha">Múltipla escolha</option>
-            <option value="certo_errado">Certo / Errado</option>
-          </select>
-          <select className={styles.filtroSelect} value={filtros.nivel ?? ''}
-            onChange={e => setFiltro('nivel', e.target.value)}>
-            <option value="">Todos os níveis</option>
-            <option value="fundamental">Fundamental</option>
-            <option value="medio">Médio</option>
-            <option value="superior">Superior</option>
-          </select>
-          <select className={styles.filtroSelect} value={filtros.dificuldade ?? ''}
-            onChange={e => setFiltro('dificuldade', e.target.value)}>
-            <option value="">Qualquer dificuldade</option>
-            {[1,2,3,4,5].map(n => (
-              <option key={n} value={n}>
-                {['','Muito fácil','Fácil','Média','Difícil','Muito difícil'][n]}
-              </option>
-            ))}
-          </select>
-          <select className={styles.filtroSelect} value={filtros.ano ?? ''}
-            onChange={e => setFiltro('ano', e.target.value)}>
-            <option value="">Todos os anos</option>
-            {anos.map(a => <option key={a} value={a}>{a}</option>)}
-          </select>
-          {filtrosAtivos.length > 0 && (
-            <button className={styles.btnLimpar}
-              onClick={() => { setFiltros({}); setBuscaTexto('') }}>
-              Limpar
-            </button>
-          )}
+          <div className={styles.filtroGrupo}>
+            <label className={styles.filtroLabel}>Disciplina</label>
+            <select className={styles.filtroSelect} value={filtros.disciplina_id ?? ''}
+              onChange={e => setFiltro('disciplina_id', e.target.value)}>
+              <option value="">Todas</option>
+              {disciplinas.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
+            </select>
+          </div>
+          <div className={styles.filtroGrupo}>
+            <label className={styles.filtroLabel}>Assunto</label>
+            <select className={styles.filtroSelect} value={filtros.assunto_id ?? ''}
+              onChange={e => setFiltro('assunto_id', e.target.value)}
+              disabled={!filtros.disciplina_id}
+              title={filtros.disciplina_id ? undefined : 'Escolha primeiro a disciplina'}>
+              <option value="">{filtros.disciplina_id ? 'Todos' : 'Escolha a disciplina'}</option>
+              {assuntos.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
+            </select>
+          </div>
+          <div className={styles.filtroGrupo}>
+            <label className={styles.filtroLabel}>Banca</label>
+            <select className={styles.filtroSelect} value={filtros.banca_id ?? ''}
+              onChange={e => setFiltro('banca_id', e.target.value)}>
+              <option value="">Todas</option>
+              {bancas.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
+            </select>
+          </div>
+          <div className={styles.filtroGrupo}>
+            <label className={styles.filtroLabel}>Órgão</label>
+            <select className={styles.filtroSelect} value={filtros.orgao_id ?? ''}
+              onChange={e => setFiltro('orgao_id', e.target.value)}>
+              <option value="">Todos</option>
+              {orgaos.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+            </select>
+          </div>
+          <div className={`${styles.filtroGrupo} ${styles.filtroGrupoLargo}`}>
+            <label className={styles.filtroLabel}>Cargo</label>
+            <select className={styles.filtroSelect} value={filtros.cargo ?? ''}
+              onChange={e => setFiltro('cargo', e.target.value)}>
+              <option value="">Todos</option>
+              {cargos.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className={styles.filtroGrupo}>
+            <label className={styles.filtroLabel}>Tipo</label>
+            <select className={styles.filtroSelect} value={filtros.tipo ?? ''}
+              onChange={e => setFiltro('tipo', e.target.value)}>
+              <option value="">Todos</option>
+              <option value="multipla_escolha">Múltipla escolha</option>
+              <option value="certo_errado">Certo / Errado</option>
+            </select>
+          </div>
+          <div className={styles.filtroGrupo}>
+            <label className={styles.filtroLabel}>Nível</label>
+            <select className={styles.filtroSelect} value={filtros.nivel ?? ''}
+              onChange={e => setFiltro('nivel', e.target.value)}>
+              <option value="">Todos</option>
+              <option value="fundamental">Fundamental</option>
+              <option value="medio">Médio</option>
+              <option value="superior">Superior</option>
+            </select>
+          </div>
+          <div className={styles.filtroGrupo}>
+            <label className={styles.filtroLabel}>Dificuldade</label>
+            <select className={styles.filtroSelect} value={filtros.dificuldade ?? ''}
+              onChange={e => setFiltro('dificuldade', e.target.value)}>
+              <option value="">Qualquer</option>
+              {[1,2,3,4,5].map(n => (
+                <option key={n} value={n}>{DIFICULDADES[n]}</option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.filtroGrupo}>
+            <label className={styles.filtroLabel}>Ano</label>
+            <select className={styles.filtroSelect} value={filtros.ano ?? ''}
+              onChange={e => setFiltro('ano', e.target.value)}>
+              <option value="">Todos</option>
+              {anos.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+          </div>
         </div>
       )}
 

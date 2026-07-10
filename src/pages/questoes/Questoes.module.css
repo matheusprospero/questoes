@@ -60,16 +60,32 @@
 .chipLimpar:hover { color: var(--text-secondary); }
 
 .filtrosPanel {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  padding: 14px; background: var(--bg-surface);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px 14px;
+  padding: 16px; background: var(--bg-surface);
   border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
   margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.filtroGrupo { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+@media (min-width: 700px) {
+  .filtroGrupoLargo { grid-column: span 2; }
+}
+.filtroLabel {
+  font-size: 10.5px; font-weight: 700; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.06em;
 }
 .filtroSelect {
-  padding: 7px 10px; font-size: 12px; font-family: var(--font-sans);
+  width: 100%;
+  padding: 8px 10px; font-size: 12.5px; font-family: var(--font-sans);
   border: 1px solid var(--border-default); border-radius: var(--radius-md);
   background: var(--bg-surface); color: var(--text-primary); outline: none; cursor: pointer;
+  transition: border-color 0.15s;
 }
+.filtroSelect:hover:not(:disabled) { border-color: var(--color-primary-mid); }
+.filtroSelect:focus { border-color: var(--color-primary); }
+.filtroSelect:disabled { background: var(--bg-subtle); color: var(--text-tertiary); cursor: not-allowed; }
 .btnLimpar {
   padding: 7px 12px; font-size: 12px; font-family: var(--font-sans);
   border: 1px solid var(--border-default); border-radius: var(--radius-md);
