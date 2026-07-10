@@ -1,6 +1,9 @@
 import { useRef, useEffect, useState } from 'react'
 import { uploadImagem } from '../services/upload'
-import { Image, Bold, Italic, List, ChevronDown, ChevronUp } from 'lucide-react'
+import {
+  Image, Bold, Italic, List, ChevronDown, ChevronUp,
+  RefreshCw, Trash2, AlignCenter,
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './RichEditor.module.css'
 
@@ -79,10 +82,22 @@ const CATEGORIAS = [
 export default function RichEditor({ value = '', onChange, label = '', placeholder = '', compact = false }) {
   const editorRef = useRef(null)
   const fileInputRef = useRef(null)
+  const trocaImgRef = useRef(null)
   const [mostraSimbolos, setMostraSimbolos] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [imgSel, setImgSel] = useState(null) // <img> selecionada para edição
   const lastSelection = useRef(null)
   const isFocused = useRef(false)
+
+  // Emite o HTML sem a classe de seleção (marcação só visual do editor)
+  function emitir() {
+    const clone = editorRef.current.cloneNode(true)
+    clone.querySelectorAll('img').forEach(i => {
+      i.classList.remove(styles.imgSelecionada)
+      if (!i.getAttribute('class')) i.removeAttribute('class')
+    })
+    onChange(clone.innerHTML)
+  }
 
   // Sincroniza quando value chega de fora (ex: carregamento de questão para edição)
   useEffect(() => {
@@ -120,7 +135,7 @@ export default function RichEditor({ value = '', onChange, label = '', placehold
     } else {
       editorRef.current.innerHTML += texto
     }
-    onChange(editorRef.current.innerHTML)
+    emitir()
   }
 
   function inserirImagem(url) {
@@ -132,7 +147,65 @@ export default function RichEditor({ value = '', onChange, label = '', placehold
       sel.addRange(lastSelection.current)
     }
     document.execCommand('insertHTML', false, img)
-    onChange(editorRef.current.innerHTML)
+    emitir()
+  }
+
+  // ── Edição de imagem já inserida (clicar na imagem seleciona) ──
+  function limparSelecaoImg() {
+    editorRef.current?.querySelectorAll('img').forEach(i =>
+      i.classList.remove(styles.imgSelecionada))
+  }
+
+  function handleEditorClick(e) {
+    if (e.target.tagName === 'IMG') {
+      limparSelecaoImg()
+      e.target.classList.add(styles.imgSelecionada)
+      setImgSel(e.target)
+    } else if (imgSel) {
+      limparSelecaoImg()
+      setImgSel(null)
+    }
+  }
+
+  function larguraImg(pct) {
+    if (!imgSel) return
+    imgSel.style.width = pct ? `${pct}%` : ''
+    imgSel.style.maxWidth = '100%'
+    imgSel.style.height = 'auto'
+    emitir()
+  }
+
+  function centralizarImg() {
+    if (!imgSel) return
+    const centralizada = imgSel.style.marginLeft === 'auto'
+    imgSel.style.display = 'block'
+    imgSel.style.marginLeft = centralizada ? '' : 'auto'
+    imgSel.style.marginRight = centralizada ? '' : 'auto'
+    emitir()
+  }
+
+  function removerImg() {
+    if (!imgSel) return
+    imgSel.remove()
+    setImgSel(null)
+    emitir()
+  }
+
+  async function handleTrocaImagem(e) {
+    const file = e.target.files?.[0]
+    if (!file || !imgSel) return
+    try {
+      setUploading(true)
+      const { url } = await uploadImagem(file)
+      imgSel.src = url
+      emitir()
+      toast.success('Imagem substituída!')
+    } catch (err) {
+      toast.error('Erro ao substituir imagem: ' + err.message)
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
   }
 
   async function handleUploadImagem(e) {
@@ -154,11 +227,11 @@ export default function RichEditor({ value = '', onChange, label = '', placehold
   function formatar(comando) {
     editorRef.current?.focus()
     document.execCommand(comando, false)
-    onChange(editorRef.current.innerHTML)
+    emitir()
   }
 
   function handleInput() {
-    onChange(editorRef.current.innerHTML)
+    emitir()
   }
 
   return (
@@ -211,6 +284,49 @@ export default function RichEditor({ value = '', onChange, label = '', placehold
         />
       </div>
 
+      {/* Barra de edição da imagem selecionada */}
+      {imgSel && (
+        <div className={styles.imgBar}>
+          <span className={styles.imgBarLabel}>Imagem selecionada — largura:</span>
+          {[25, 50, 75, 100].map(p => (
+            <button key={p} type="button" className={styles.imgBtn}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => larguraImg(p)}>
+              {p}%
+            </button>
+          ))}
+          <button type="button" className={styles.imgBtn}
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => larguraImg(null)}>
+            Original
+          </button>
+          <div className={styles.sep} />
+          <button type="button" className={styles.imgBtn}
+            onMouseDown={e => e.preventDefault()}
+            onClick={centralizarImg} title="Centralizar / alinhar à esquerda">
+            <AlignCenter size={12} /> Centralizar
+          </button>
+          <button type="button" className={styles.imgBtn}
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => trocaImgRef.current?.click()}
+            disabled={uploading} title="Enviar outra imagem no lugar">
+            <RefreshCw size={12} /> {uploading ? 'Enviando...' : 'Substituir'}
+          </button>
+          <button type="button" className={`${styles.imgBtn} ${styles.imgBtnDanger}`}
+            onMouseDown={e => e.preventDefault()}
+            onClick={removerImg} title="Remover imagem">
+            <Trash2 size={12} /> Remover
+          </button>
+          <input
+            ref={trocaImgRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleTrocaImagem}
+          />
+        </div>
+      )}
+
       {/* Painel de símbolos */}
       {mostraSimbolos && (
         <div className={`${styles.symbolsPanel} ${compact ? styles.symbolsPanelCompact : ''}`}>
@@ -243,6 +359,7 @@ export default function RichEditor({ value = '', onChange, label = '', placehold
         contentEditable
         suppressContentEditableWarning
         onInput={handleInput}
+        onClick={handleEditorClick}
         onMouseUp={salvarSelecao}
         onKeyUp={salvarSelecao}
         data-placeholder={placeholder}
