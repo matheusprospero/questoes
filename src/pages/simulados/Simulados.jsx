@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { listarSimulados, deletarSimulado, criarSimulado, buscarSimulado } from '../../services/simulados'
 import toast from 'react-hot-toast'
 import { Plus, Search, Eye, Pencil, Trash2, FileText, Copy } from 'lucide-react'
+import GuiaUso from '../../components/GuiaUso'
 import styles from './Simulados.module.css'
 
 export default function Simulados() {
@@ -61,9 +62,15 @@ export default function Simulados() {
         </button>
       </div>
 
-      <p className={styles.abaDesc}>
-        Monte simulados com questões do banco e exporte para Word ou PDF/impressão.
-      </p>
+      <GuiaUso
+        id="simulados"
+        titulo="Como usar os simulados"
+        passos={[
+          { titulo: 'Crie um simulado', texto: 'Clique em "Novo simulado", dê um título e, se quiser, instruções de prova.' },
+          { titulo: 'Monte a prova', texto: 'No Banco de Questões, expanda uma questão e clique em "+ Adicionar a um simulado".' },
+          { titulo: 'Exporte ou imprima', texto: 'Abra o simulado e exporte para Word ou imprima — cronometre o tempo e treine como no dia da prova.' },
+        ]}
+      />
 
       {/* Busca */}
       <div className={styles.searchBar}>

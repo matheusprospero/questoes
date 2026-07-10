@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import {
-  HelpCircle, ClipboardList, Layers, Heart,
+  HelpCircle, ClipboardList, Layers, Heart, Home,
   LogOut, Menu, X, BookMarked, BookOpen, BarChart2, Users
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   {
     section: 'Estudo',
     items: [
+      { to: '/',              label: 'Início',            icon: Home, end: true },
       { to: '/estudo',        label: 'Resolver Questões', icon: BookOpen  },
       { to: '/estatisticas',  label: 'Estatísticas',      icon: BarChart2 },
     ]
@@ -31,10 +32,11 @@ const NAV_ITEMS = [
   },
 ]
 
-function NavItem({ to, label, Icon }) {
+function NavItem({ to, label, Icon, end }) {
   return (
     <NavLink
       to={to}
+      end={end}
       className={({ isActive }) =>
         `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
       }
@@ -79,7 +81,7 @@ export default function AppLayout() {
           <div key={group.section}>
             <div className={styles.navSection}>{group.section}</div>
             {group.items.map(item => (
-              <NavItem key={item.to} to={item.to} label={item.label} Icon={item.icon} />
+              <NavItem key={item.to} to={item.to} label={item.label} Icon={item.icon} end={item.end} />
             ))}
           </div>
         ))}

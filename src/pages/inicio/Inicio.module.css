@@ -1,0 +1,237 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ── Hero ─────────────────────────────────────────── */
+.hero {
+  position: relative;
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(480px 260px at 88% -20%, rgba(139, 92, 246, 0.55), transparent 65%),
+    radial-gradient(420px 260px at 8% 120%, rgba(56, 189, 248, 0.25), transparent 60%),
+    linear-gradient(140deg, #312e81 0%, #4338ca 52%, #6d28d9 100%);
+  padding: 40px 36px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.heroConteudo {
+  max-width: 560px;
+}
+
+.heroTitulo {
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.heroTexto {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+
+.heroBotoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.heroBtnPrimario {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  background: #ffffff;
+  color: var(--color-primary-dark);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 26px rgba(16, 10, 60, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.heroBtnPrimario:hover {
+  transform: translateY(-1px);
+  text-decoration: none;
+  color: var(--color-primary-dark);
+  box-shadow: 0 14px 32px rgba(16, 10, 60, 0.45);
+}
+
+.heroBtnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 18px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.heroBtnGhost:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* ── Seções ───────────────────────────────────────── */
+.secaoTitulo {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+
+/* ── Passos (como funciona) ───────────────────────── */
+.passos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.passo {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.passoNum {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--color-primary-light);
+  line-height: 1;
+}
+
+.passoIcone {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--gradient-primary-soft);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary-mid);
+}
+
+.passoTitulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.passoTexto {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── Cards de módulos ─────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-primary-mid);
+  box-shadow: var(--shadow-md);
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.cardDestaque {
+  border: 1px solid var(--color-primary-mid);
+  background:
+    radial-gradient(320px 160px at 100% 0%, rgba(124, 58, 237, 0.08), transparent 70%),
+    var(--bg-surface);
+}
+
+.cardIcone {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: var(--gradient-primary);
+  color: #ffffff;
+  box-shadow: var(--shadow-primary);
+  margin-bottom: 4px;
+}
+
+.cardTitulo {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.cardTexto {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.cardDica {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+}
+
+.cardCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.card:hover .cardCta {
+  gap: 9px;
+}
+.cardCta { transition: gap 0.15s; }
+
+@media (max-width: 600px) {
+  .hero { padding: 28px 22px; }
+  .heroTitulo { font-size: 23px; }
+}

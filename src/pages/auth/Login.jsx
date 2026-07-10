@@ -19,7 +19,7 @@ export default function Login() {
   const { signIn, signInGoogle } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const destino = location.state?.from?.pathname ?? '/questoes'
+  const destino = location.state?.from?.pathname ?? '/'
 
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')

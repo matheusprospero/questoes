@@ -1,4 +1,4 @@
-/* Login.module.css — Identidade GOM */
+/* Login.module.css — Identidade v2 "Indigo" */
 
 .page {
   min-height: 100vh;
@@ -6,68 +6,60 @@
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(circle at 92% 12%, rgba(0, 229, 255, 0.14), transparent 36%),
-    linear-gradient(135deg, #002b5e 0%, #063f70 58%, #075985 100%);
+    radial-gradient(720px 420px at 85% 8%, rgba(139, 92, 246, 0.35), transparent 60%),
+    radial-gradient(640px 420px at 8% 92%, rgba(56, 189, 248, 0.18), transparent 55%),
+    linear-gradient(150deg, #312e81 0%, #4338ca 55%, #6d28d9 100%);
   padding: 24px;
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 24px;
   padding: 42px 38px;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 30px 80px rgba(0, 43, 94, 0.28);
-  position: relative;
-  overflow: hidden;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 5px;
-  background: linear-gradient(90deg, #00e5ff, #002b5e, #00e5ff);
+  box-shadow: 0 30px 80px rgba(23, 15, 60, 0.45);
 }
 
 .logoArea {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 30px;
 }
 
 .logoIcon {
   width: 58px;
   height: 58px;
-  background: linear-gradient(135deg, #002b5e, #075985);
-  border: 1px solid rgba(0, 229, 255, 0.22);
-  border-radius: 20px;
+  background: var(--gradient-primary);
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #00e5ff;
+  color: #ffffff;
   margin: 0 auto 14px;
-  box-shadow: 0 12px 28px rgba(0, 43, 94, 0.22);
+  box-shadow: var(--shadow-primary);
 }
 
 .logoTitle {
+  font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 900;
-  color: #002b5e;
+  font-weight: 800;
+  color: var(--text-primary);
   margin-bottom: 4px;
   letter-spacing: -0.02em;
 }
 
 .logoSub {
   font-size: 13px;
-  color: #64748b;
-  font-weight: 600;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .form {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin-top: 12px;
 }
 
 .field {
@@ -79,7 +71,7 @@
 .label {
   font-size: 12px;
   font-weight: 700;
-  color: #475569;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -93,7 +85,7 @@
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: var(--text-tertiary);
   pointer-events: none;
 }
 
@@ -101,66 +93,58 @@
   width: 100%;
   padding: 11px 14px 11px 36px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   font-family: var(--font-sans);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
   background: #ffffff;
-  color: #0f172a;
+  color: var(--text-primary);
   transition: border-color 0.15s, box-shadow 0.15s;
   outline: none;
 }
 
 .input:focus {
-  border-color: #00e5ff;
-  box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
 }
 
-.input::placeholder { color: #94a3b8; }
+.input::placeholder { color: var(--text-tertiary); }
 
 .erro {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  font-weight: 700;
-  color: #991b1b;
-  background: #fef2f2;
+  font-weight: 600;
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
   border: 1px solid #fecaca;
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 11px 13px;
+  margin-top: 14px;
 }
 
 .btnPrimary {
   padding: 12px 18px;
-  background: linear-gradient(135deg, #002b5e, #075985);
+  background: var(--gradient-primary);
   color: white;
   border: none;
-  border-radius: 14px;
+  border-radius: 12px;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   font-family: var(--font-sans);
   cursor: pointer;
   transition: all 0.2s;
   margin-top: 4px;
-  box-shadow: 0 10px 24px rgba(0, 43, 94, 0.22);
+  box-shadow: var(--shadow-primary);
   letter-spacing: 0.01em;
 }
 
 .btnPrimary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 14px 32px rgba(0, 43, 94, 0.28);
+  box-shadow: 0 14px 32px rgba(79, 70, 229, 0.38);
 }
 .btnPrimary:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.ajuda {
-  margin-top: 24px;
-  font-size: 12px;
-  color: #64748b;
-  text-align: center;
-  line-height: 1.5;
-  font-weight: 600;
-}
 
 .btnGoogle {
   width: 100%;
@@ -170,28 +154,29 @@
   gap: 10px;
   padding: 12px 18px;
   background: #ffffff;
-  color: #1f2937;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  border-radius: 14px;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 700;
   font-family: var(--font-sans);
   cursor: pointer;
   transition: all 0.15s;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 .btnGoogle:hover:not(:disabled) {
-  background: #f8fafc;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.1);
+  background: var(--bg-subtle);
+  border-color: var(--color-primary-mid);
+  box-shadow: var(--shadow-md);
 }
 .btnGoogle:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .googleHint {
   margin: 10px 0 4px;
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-secondary);
   text-align: center;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .toggleProfessor {
@@ -203,13 +188,11 @@
   padding: 6px 10px;
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: var(--text-tertiary);
   font-size: 12px;
   font-weight: 700;
   font-family: var(--font-sans);
   cursor: pointer;
 }
-.toggleProfessor:hover { color: #475569; }
+.toggleProfessor:hover { color: var(--text-secondary); }
 .chevronOpen { transform: rotate(180deg); }
-
-.form { margin-top: 12px; }

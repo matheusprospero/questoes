@@ -138,17 +138,17 @@
   font-weight: 700;
   font-family: var(--font-sans);
   color: white;
-  background: linear-gradient(135deg, var(--color-primary), #075985);
+  background: var(--gradient-primary);
   border: none;
   border-radius: var(--radius-md);
   padding: 7px 16px;
   cursor: pointer;
   transition: all 0.15s;
-  box-shadow: 0 4px 12px rgba(0, 43, 94, 0.22);
+  box-shadow: var(--shadow-primary);
 }
 .btnCopiar:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(0, 43, 94, 0.30);
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.36);
 }
 .btnCopiar:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -225,13 +225,13 @@
 .btnEnviar {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 16px; border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--color-primary), #075985);
+  background: var(--gradient-primary);
   color: white; border: none; font-size: 13px; font-weight: 700;
   font-family: var(--font-sans); cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,43,94,0.20);
+  box-shadow: var(--shadow-primary);
   transition: all 0.15s;
 }
-.btnEnviar:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,43,94,0.28); }
+.btnEnviar:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(79, 70, 229, 0.36); }
 .btnEnviar:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .btnAprovarProva {

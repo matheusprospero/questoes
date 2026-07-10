@@ -6,6 +6,7 @@ import {
 } from '../../services/cadernos'
 import toast from 'react-hot-toast'
 import { Plus, Search, Eye, Pencil, Trash2, Layers } from 'lucide-react'
+import GuiaUso from '../../components/GuiaUso'
 import styles from './Cadernos.module.css'
 
 const FORM_VAZIO = { nome: '', descricao: '' }
@@ -84,9 +85,15 @@ export default function Cadernos() {
         </button>
       </div>
 
-      <p className={styles.abaDesc}>
-        Agrupe questões por edital, matéria ou tema para organizar seu estudo.
-      </p>
+      <GuiaUso
+        id="cadernos"
+        titulo="Como usar os cadernos"
+        passos={[
+          { titulo: 'Crie um caderno', texto: 'Dê um nome por matéria, tema ou edital. Ex.: "Matemática — Vunesp" ou "Prefeitura de Sorocaba 2025".' },
+          { titulo: 'Adicione questões', texto: 'No Banco de Questões, expanda uma questão e clique em "+ Adicionar a um caderno".' },
+          { titulo: 'Revise quando quiser', texto: 'Abra o caderno para rever as questões escolhidas — perfeito para revisão de véspera.' },
+        ]}
+      />
 
       {/* Busca */}
       <div className={styles.searchBar}>

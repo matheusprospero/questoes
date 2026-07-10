@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import RotaProtegida from './components/layout/RotaProtegida'
 import Login from './pages/auth/Login'
+import Inicio from './pages/inicio/Inicio'
 import Questoes from './pages/questoes/Questoes'
 import QuestaoForm from './pages/questoes/QuestaoForm'
 import QuestaoDetalhe from './pages/questoes/QuestaoDetalhe'
@@ -24,7 +25,7 @@ const router = createBrowserRouter([
     path: '/',
     element: <RotaProtegida><AppLayout /></RotaProtegida>,
     children: [
-      { index: true, element: <Navigate to="/questoes" replace /> },
+      { index: true, element: <Inicio /> },
       { path: 'questoes',            element: <Questoes /> },
       { path: 'questoes/nova',       element: <RotaProtegida somenteAdmin><QuestaoForm /></RotaProtegida> },
       { path: 'questoes/:id',        element: <QuestaoDetalhe /> },

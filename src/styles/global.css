@@ -1,8 +1,8 @@
 /* ============================================================
-   REPOSITÓRIO PEDAGÓGICO MUNICIPAL — Identidade Visual GOM
+   QUESTÕES DE CONCURSOS — Identidade Visual v2 "Indigo"
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -11,58 +11,62 @@
 }
 
 :root {
-  /* Cores institucionais — identidade GOM */
-  --color-primary:        #002b5e;
-  --color-primary-dark:   #001d40;
-  --color-primary-light:  #e0f2fe;
-  --color-primary-mid:    #bae6fd;
-  --color-accent:         #00e5ff;
+  /* Marca — indigo → violeta */
+  --color-primary:        #4f46e5;
+  --color-primary-dark:   #4338ca;
+  --color-primary-light:  #eef2ff;
+  --color-primary-mid:    #c7d2fe;
+  --color-accent:         #8b5cf6;
+  --gradient-primary:     linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --gradient-primary-soft: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
 
   /* Semânticas */
-  --color-success:        #047857;
+  --color-success:        #059669;
   --color-success-bg:     #ecfdf5;
-  --color-warning:        #92400e;
+  --color-warning:        #b45309;
   --color-warning-bg:     #fffbeb;
-  --color-danger:         #991b1b;
+  --color-danger:         #dc2626;
   --color-danger-bg:      #fef2f2;
-  --color-info:           #075985;
-  --color-info-bg:        #eff6ff;
+  --color-info:           #4338ca;
+  --color-info-bg:        #eef2ff;
 
   /* Superfícies */
-  --bg-page:              #f4f7f9;
+  --bg-page:              #f6f7fb;
   --bg-surface:           #ffffff;
-  --bg-subtle:            #f1f5f9;
+  --bg-subtle:            #f3f4f8;
 
   /* Texto */
-  --text-primary:         #0f172a;
-  --text-secondary:       #475569;
-  --text-tertiary:        #94a3b8;
+  --text-primary:         #101321;
+  --text-secondary:       #4b5069;
+  --text-tertiary:        #9298b0;
   --text-inverse:         #ffffff;
 
   /* Bordas */
-  --border-subtle:        rgba(148, 163, 184, 0.22);
-  --border-default:       rgba(148, 163, 184, 0.35);
-  --border-strong:        rgba(148, 163, 184, 0.55);
+  --border-subtle:        rgba(99, 102, 241, 0.10);
+  --border-default:       rgba(80, 86, 120, 0.18);
+  --border-strong:        rgba(80, 86, 120, 0.32);
 
   /* Tipografia */
   --font-sans:            'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display:         'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   --font-mono:            'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Espaçamentos */
-  --radius-sm:            6px;
+  /* Raios */
+  --radius-sm:            8px;
   --radius-md:            12px;
-  --radius-lg:            18px;
+  --radius-lg:            16px;
   --radius-xl:            22px;
   --radius-full:          9999px;
 
   /* Layout */
-  --sidebar-width:        240px;
+  --sidebar-width:        248px;
   --topbar-height:        62px;
 
   /* Sombras */
-  --shadow-sm:            0 4px 12px rgba(15, 23, 42, 0.045);
-  --shadow-md:            0 10px 28px rgba(15, 23, 42, 0.07);
-  --shadow-lg:            0 18px 44px rgba(15, 23, 42, 0.12);
+  --shadow-sm:            0 2px 8px rgba(23, 25, 60, 0.05);
+  --shadow-md:            0 8px 24px rgba(23, 25, 60, 0.08);
+  --shadow-lg:            0 20px 48px rgba(23, 25, 60, 0.14);
+  --shadow-primary:       0 8px 24px rgba(79, 70, 229, 0.28);
 }
 
 html {
@@ -74,12 +78,18 @@ html {
 body {
   font-family: var(--font-sans);
   background:
-    radial-gradient(circle at top left, rgba(0, 229, 255, 0.06), transparent 30%),
-    linear-gradient(180deg, #f8fafc 0%, var(--bg-page) 42%, #eef3f7 100%);
+    radial-gradient(900px 420px at 88% -10%, rgba(124, 58, 237, 0.07), transparent 60%),
+    radial-gradient(700px 380px at -10% 20%, rgba(79, 70, 229, 0.06), transparent 55%),
+    var(--bg-page);
   color: var(--text-primary);
   line-height: 1.5;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
 #root {
@@ -88,15 +98,15 @@ body {
   flex-direction: column;
 }
 
-/* Scrollbar profissional */
+/* Scrollbar */
 ::-webkit-scrollbar { width: 7px; height: 7px; }
-::-webkit-scrollbar-track { background: rgba(148, 163, 184, 0.08); border-radius: var(--radius-full); }
-::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.45); border-radius: var(--radius-full); }
-::-webkit-scrollbar-thumb:hover { background: rgba(0, 229, 255, 0.65); }
+::-webkit-scrollbar-track { background: rgba(80, 86, 120, 0.06); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.35); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.55); }
 
 /* Links */
 a { color: var(--color-primary); text-decoration: none; }
-a:hover { color: #075985; text-decoration: underline; }
+a:hover { color: var(--color-primary-dark); text-decoration: underline; }
 
 /* Foco acessível */
 :focus-visible {
