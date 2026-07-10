@@ -403,7 +403,7 @@ create policy "leitura_itens_propostos" on simulado_questoes for select to authe
 create policy "dono_total" on aulas for all to authenticated
   using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
 create policy "leitura_publicadas" on aulas for select to authenticated
-  using (publicada = true and usuario_eh_admin(usuario_id));
+  using (publicada = true and eh_assinante(auth.uid()));
 
 create policy "dono_via_aula" on aula_questoes for all to authenticated
   using (exists (select 1 from aulas a where a.id = aula_id and a.usuario_id = auth.uid()))
@@ -411,7 +411,7 @@ create policy "dono_via_aula" on aula_questoes for all to authenticated
 create policy "leitura_itens_publicadas" on aula_questoes for select to authenticated
   using (exists (
     select 1 from aulas a
-    where a.id = aula_id and a.publicada = true and usuario_eh_admin(a.usuario_id)
+    where a.id = aula_id and a.publicada = true and eh_assinante(auth.uid())
   ));
 
 -- Destaques: professor gerencia os seus; alunos leem os ativos

@@ -5,6 +5,7 @@ import { buscarAula } from '../../services/aulas'
 import { resumoEnunciado, rotuloQuestao } from '../../services/questoes'
 import { useAuth } from '../../contexts/AuthContext'
 import VideoYouTube from '../../components/VideoYouTube'
+import BloqueioAssinante from '../../components/BloqueioAssinante'
 import {
   ChevronLeft, Pencil, Play, ChevronDown, ChevronUp, CheckCircle, XCircle,
   GraduationCap, PlayCircle,
@@ -17,12 +18,13 @@ const temGabarito = (q) =>
 export default function AulaDetalhe() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isAdmin } = useAuth()
+  const { isAdmin, isAssinante } = useAuth()
   const [expandida, setExpandida] = useState(new Set())
 
   const { data: aula, isLoading, error } = useQuery({
     queryKey: ['aula', id],
     queryFn: () => buscarAula(id),
+    enabled: isAssinante,
   })
 
   function toggle(qid) {
@@ -33,6 +35,18 @@ export default function AulaDetalhe() {
     })
   }
 
+  if (!isAssinante) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.topbar}>
+          <button className={styles.btnBack} onClick={() => navigate('/aulas')}>
+            <ChevronLeft size={16} /> Voltar
+          </button>
+        </div>
+        <BloqueioAssinante />
+      </div>
+    )
+  }
   if (isLoading) return <div className={styles.loading}>Carregando aula...</div>
   if (error) return <div className={styles.vazio}>Não foi possível abrir a aula: {error.message}</div>
 

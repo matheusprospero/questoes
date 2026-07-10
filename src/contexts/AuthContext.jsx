@@ -58,6 +58,7 @@ export function AuthProvider({ children }) {
     autenticado: !!session,
     papel: perfil?.papel ?? null,
     isAdmin: perfil?.papel === 'admin',
+    isAssinante: perfil?.assinante === true || perfil?.papel === 'admin',
     signIn,
     signInGoogle,
     signOut,

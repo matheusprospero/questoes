@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { listarAulas, deletarAula, alternarPublicada } from '../../services/aulas'
 import { useAuth } from '../../contexts/AuthContext'
+import BloqueioAssinante from '../../components/BloqueioAssinante'
 import toast from 'react-hot-toast'
 import {
   Plus, Search, GraduationCap, Eye, Pencil, Trash2, Globe, EyeOff, BookOpen,
@@ -12,10 +13,14 @@ import styles from './Aulas.module.css'
 export default function Aulas() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { isAdmin } = useAuth()
+  const { isAdmin, isAssinante } = useAuth()
   const [busca, setBusca] = useState('')
 
-  const { data: aulas = [], isLoading } = useQuery({ queryKey: ['aulas'], queryFn: listarAulas })
+  const { data: aulas = [], isLoading } = useQuery({
+    queryKey: ['aulas'],
+    queryFn: listarAulas,
+    enabled: isAssinante,
+  })
 
   const excluir = useMutation({
     mutationFn: (id) => deletarAula(id),
@@ -56,6 +61,10 @@ export default function Aulas() {
         )}
       </div>
 
+      {!isAssinante ? (
+        <BloqueioAssinante />
+      ) : (
+      <>
       <div className={styles.searchBar}>
         <div className={styles.searchWrap}>
           <Search size={15} className={styles.searchIcon} />
@@ -129,6 +138,8 @@ export default function Aulas() {
             </div>
           ))}
         </div>
+      )}
+      </>
       )}
     </div>
   )
