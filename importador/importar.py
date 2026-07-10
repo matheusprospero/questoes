@@ -190,7 +190,6 @@ def main():
             "tipo": q.get("tipo", "multipla_escolha"),
             "enunciado": enun,
             "comentario": q.get("comentario"),
-            "video_url": q.get("video_url"),
             "disciplina_id": disc,
             "assunto_id": get_assunto(disc, q["assunto"]) if q.get("assunto") else None,
             "banca_id": banca,
