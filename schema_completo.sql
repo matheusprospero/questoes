@@ -198,6 +198,7 @@ create table simulados (
   cabecalho     text,                       -- HTML do cabeçalho de impressão
   cfg_impressao jsonb not null default '{}',
   proposto      boolean not null default false, -- proposto pelo professor a todos
+  destaque      boolean not null default false, -- card de destaque/propaganda na página inicial
   criado_em     timestamptz not null default now()
 );
 

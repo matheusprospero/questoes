@@ -119,11 +119,38 @@ async function salvarQuestoes(simuladoId, questaoIds) {
 
 // Professor propõe (ou retira a proposta de) um simulado para todos os alunos
 export async function alternarProposto(id, proposto) {
+  // Retirar a proposta também tira o destaque (o aluno deixa de vê-lo)
+  const patch = proposto ? { proposto } : { proposto, destaque: false }
   const { error } = await supabase
     .from('simulados')
-    .update({ proposto })
+    .update(patch)
     .eq('id', id)
   if (error) throw error
+}
+
+// Destacar na página inicial (card de "propaganda"). Destacar já propõe a todos.
+export async function alternarDestaque(id, destaque) {
+  const patch = destaque ? { destaque: true, proposto: true } : { destaque: false }
+  const { error } = await supabase
+    .from('simulados')
+    .update(patch)
+    .eq('id', id)
+  if (error) throw error
+}
+
+// Simulados em destaque, visíveis a todos os alunos (para a página inicial)
+export async function listarSimuladosDestaque() {
+  const { data, error } = await supabase
+    .from('simulados')
+    .select('id, titulo, descricao, criado_em, simulado_questoes(count)')
+    .eq('proposto', true)
+    .eq('destaque', true)
+    .order('criado_em', { ascending: false })
+  if (error) throw error
+  return (data || []).map(s => ({
+    ...s,
+    total_questoes: s.simulado_questoes?.[0]?.count ?? 0,
+  }))
 }
 
 export async function deletarSimulado(id) {

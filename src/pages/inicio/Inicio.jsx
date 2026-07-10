@@ -4,9 +4,11 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
 import { listarQuestoes } from '../../services/questoes'
 import { listarRespostas } from '../../services/estudo'
+import { listarSimuladosDestaque } from '../../services/simulados'
 import {
   BookOpen, PlayCircle, BarChart2, ClipboardList,
   ArrowRight, Search, Pencil, ChevronRight, Compass,
+  Sparkles, Trophy, Play,
 } from 'lucide-react'
 import styles from './Inicio.module.css'
 
@@ -126,6 +128,7 @@ export default function Inicio() {
 
   const { data: questoes = [] } = useQuery({ queryKey: ['questoes', {}], queryFn: () => listarQuestoes({}) })
   const { data: respostas = [] } = useQuery({ queryKey: ['respostas'], queryFn: listarRespostas })
+  const { data: destaques = [] } = useQuery({ queryKey: ['simulados-destaque'], queryFn: listarSimuladosDestaque })
 
   // Últimos acessos: desempenho por disciplina, mais recente primeiro
   const acessos = useMemo(() => {
@@ -190,6 +193,40 @@ export default function Inicio() {
           <ArteBanner />
         </div>
       </section>
+
+      {/* ── Simulados em destaque (propaganda do professor) ── */}
+      {destaques.length > 0 && (
+        <section className={styles.destaques}>
+          {destaques.map(s => (
+            <div key={s.id} className={styles.destaqueCard}>
+              <div className={styles.destaqueBrilho} aria-hidden />
+              <div className={styles.destaqueConteudo}>
+                <span className={styles.destaqueTag}>
+                  <Sparkles size={13} /> Desafio do professor
+                </span>
+                <h3 className={styles.destaqueTitulo}>{s.titulo}</h3>
+                <p className={styles.destaqueTexto}>
+                  {s.descricao?.trim()
+                    ? s.descricao.slice(0, 140)
+                    : `Encare este simulado com ${s.total_questoes} questões e descubra como você se sai. Bora testar seus conhecimentos? 🚀`}
+                </p>
+                <div className={styles.destaqueRodape}>
+                  <span className={styles.destaqueQtd}>
+                    <ClipboardList size={14} /> {s.total_questoes} questões
+                  </span>
+                  <button className={styles.destaqueBtn}
+                    onClick={() => navigate(`/estudo?simulado=${s.id}`)}>
+                    <Play size={15} /> Resolver agora
+                  </button>
+                </div>
+              </div>
+              <div className={styles.destaqueTrofeu} aria-hidden>
+                <Trophy size={54} strokeWidth={1.4} />
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
 
       {/* ── Cards de recursos ── */}
       <section className={styles.recursos}>
