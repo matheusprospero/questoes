@@ -20,24 +20,37 @@ function normalizar(q) {
 // ── Listagem ─────────────────────────────────────────────────
 
 export async function listarQuestoes(filtros = {}) {
-  let query = supabase
-    .from('questoes')
-    .select(SELECT_QUESTAO)
-    .order('criado_em', { ascending: false })
+  // O Supabase/PostgREST devolve no máximo 1000 linhas por requisição.
+  // Como o banco já passou de 1000 questões, paginamos até trazer todas.
+  const PAGINA = 1000
+  let inicio = 0
+  const todas = []
 
-  if (filtros.tipo)          query = query.eq('tipo', filtros.tipo)
-  if (filtros.disciplina_id) query = query.eq('disciplina_id', filtros.disciplina_id)
-  if (filtros.assunto_id)    query = query.eq('assunto_id', filtros.assunto_id)
-  if (filtros.banca_id)      query = query.eq('banca_id', filtros.banca_id)
-  if (filtros.orgao_id)      query = query.eq('orgao_id', filtros.orgao_id)
-  if (filtros.cargo)         query = query.eq('cargo', filtros.cargo)
-  if (filtros.ano)           query = query.eq('ano', filtros.ano)
-  if (filtros.nivel)         query = query.eq('nivel', filtros.nivel)
-  if (filtros.dificuldade)   query = query.eq('dificuldade', filtros.dificuldade)
+  for (;;) {
+    let query = supabase
+      .from('questoes')
+      .select(SELECT_QUESTAO)
+      .order('criado_em', { ascending: false })
 
-  const { data, error } = await query
-  if (error) throw error
-  return data.map(normalizar)
+    if (filtros.tipo)          query = query.eq('tipo', filtros.tipo)
+    if (filtros.disciplina_id) query = query.eq('disciplina_id', filtros.disciplina_id)
+    if (filtros.assunto_id)    query = query.eq('assunto_id', filtros.assunto_id)
+    if (filtros.banca_id)      query = query.eq('banca_id', filtros.banca_id)
+    if (filtros.orgao_id)      query = query.eq('orgao_id', filtros.orgao_id)
+    if (filtros.cargo)         query = query.eq('cargo', filtros.cargo)
+    if (filtros.ano)           query = query.eq('ano', filtros.ano)
+    if (filtros.nivel)         query = query.eq('nivel', filtros.nivel)
+    if (filtros.dificuldade)   query = query.eq('dificuldade', filtros.dificuldade)
+
+    const { data, error } = await query.range(inicio, inicio + PAGINA - 1)
+    if (error) throw error
+
+    todas.push(...data)
+    if (data.length < PAGINA) break   // última página
+    inicio += PAGINA
+  }
+
+  return todas.map(normalizar)
 }
 
 export async function buscarQuestao(id) {
