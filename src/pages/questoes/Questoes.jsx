@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   listarQuestoes, excluirQuestao, marcarRevisada, listarDisciplinas, listarAssuntos,
   listarBancas, listarOrgaos, listarCargos, listarAnos,
-  resumoEnunciado, rotuloQuestao, gabaritoQuestao,
 } from '../../services/questoes'
 import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simulados'
 import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos'
@@ -453,10 +452,10 @@ export default function Questoes() {
                     {expandida ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </button>
                   <div className={styles.cardInfo} onClick={() => navigate(`/questoes/${q.id}`)}>
-                    <h3 className={styles.cardTitulo}>{resumoEnunciado(q.enunciado, 120) || rotuloQuestao(q)}</h3>
+                    <h3 className={styles.cardTitulo}>
+                      {[q.bancas?.nome, q.orgaos?.nome, q.cargo].filter(Boolean).join(' · ') || 'Questão'}
+                    </h3>
                     <div className={styles.cardMeta}>
-                      {q.bancas && <span className={styles.badge}>{q.bancas.nome}</span>}
-                      {q.orgaos && <span className={styles.badge}>{q.orgaos.nome}</span>}
                       {q.ano && <span className={styles.badge}>{q.ano}</span>}
                       {q.disciplinas && <span className={styles.badge}>{q.disciplinas.nome}</span>}
                       {q.assuntos && <span className={styles.badge}>{q.assuntos.nome}</span>}
