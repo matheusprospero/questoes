@@ -147,12 +147,25 @@ export function listarProvas(facetas) {
 export async function buscarQuestao(id) {
   const { data, error } = await supabase
     .from('questoes')
-    .select(SELECT_QUESTAO)
+    .select(`${SELECT_QUESTAO}, provas(id, orgao, ano, cargo, arquivo, gabarito)`)
     .eq('id', id)
     .single()
 
   if (error) throw error
   return normalizar(data)
+}
+
+// URLs assinadas (bucket privado "provas") — só o admin passa pela RLS.
+// Recebe {arquivo, gabarito} (caminhos) e devolve {provaUrl, gabaritoUrl}.
+export async function assinarProva({ arquivo, gabarito } = {}) {
+  const paths = [arquivo, gabarito].filter(Boolean)
+  if (!paths.length) return {}
+  const { data, error } = await supabase.storage
+    .from('provas')
+    .createSignedUrls(paths, 3600)
+  if (error) return {}
+  const url = (p) => data.find(d => d.path === p && !d.error)?.signedUrl ?? null
+  return { provaUrl: url(arquivo), gabaritoUrl: url(gabarito) }
 }
 
 // ── Criação / Edição / Exclusão ───────────────────────────────

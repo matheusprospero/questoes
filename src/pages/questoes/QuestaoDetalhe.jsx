@@ -2,12 +2,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   buscarQuestao, excluirQuestao, toggleFavorito, listarFavoritos, buscarVideoQuestao,
+  assinarProva,
 } from '../../services/questoes'
 import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simulados'
 import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos'
 import { useAuth } from '../../contexts/AuthContext'
 import VideoYouTube from '../../components/VideoYouTube'
-import { ChevronLeft, Pencil, Heart, CheckCircle, XCircle, Trash2, Youtube, Lock } from 'lucide-react'
+import { ChevronLeft, Pencil, Heart, CheckCircle, XCircle, Trash2, Youtube, Lock, FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import styles from './QuestaoDetalhe.module.css'
@@ -34,6 +35,12 @@ export default function QuestaoDetalhe() {
     queryKey: ['questao-video', id],
     queryFn: () => buscarVideoQuestao(id),
     enabled: !!questao?.tem_video,
+  })
+  // PDFs da prova de origem (bucket privado) — só o admin recebe questao.provas
+  const { data: prova = {} } = useQuery({
+    queryKey: ['prova-urls', questao?.provas?.id],
+    queryFn: () => assinarProva(questao.provas),
+    enabled: !!questao?.provas,
   })
 
   const { data: favoritos = [] } = useQuery({
@@ -155,6 +162,20 @@ export default function QuestaoDetalhe() {
             <div className={styles.meta}>
               <span>Cadastrada em {new Date(questao.criado_em).toLocaleDateString('pt-BR')}</span>
             </div>
+            {questao.provas && (prova.provaUrl || prova.gabaritoUrl) && (
+              <div className={styles.provaLinks}>
+                {prova.provaUrl && (
+                  <a href={prova.provaUrl} target="_blank" rel="noopener noreferrer">
+                    <FileText size={14} /> Prova original (PDF)
+                  </a>
+                )}
+                {prova.gabaritoUrl && (
+                  <a href={prova.gabaritoUrl} target="_blank" rel="noopener noreferrer">
+                    <FileText size={14} /> Gabarito oficial (PDF)
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Enunciado */}
