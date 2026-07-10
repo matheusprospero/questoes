@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   listarQuestoes, excluirQuestao, marcarRevisada, listarDisciplinas, listarAssuntos,
-  listarBancas, listarOrgaos, listarCargos, listarAnos,
+  listarBancas, listarOrgaos, listarFacetas, opcoesDisponiveis,
 } from '../../services/questoes'
 import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simulados'
 import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos'
@@ -16,6 +16,8 @@ import toast from 'react-hot-toast'
 import styles from './Questoes.module.css'
 
 const NIVEIS = { fundamental: 'Fundamental', medio: 'Médio', superior: 'Superior' }
+const NIVEL_ORDEM = { fundamental: 1, medio: 2, superior: 3 }
+const porNome = (a, b) => a.rotulo.localeCompare(b.rotulo, 'pt-BR')
 const TIPOS = { multipla_escolha: 'Múltipla escolha', certo_errado: 'Certo/Errado' }
 const DIFICULDADES = ['', 'Muito fácil', 'Fácil', 'Média', 'Difícil', 'Muito difícil']
 
@@ -55,8 +57,10 @@ export default function Questoes() {
   })
   const { data: bancas = [] } = useQuery({ queryKey: ['bancas'], queryFn: listarBancas })
   const { data: orgaos = [] } = useQuery({ queryKey: ['orgaos'], queryFn: listarOrgaos })
-  const { data: cargos = [] } = useQuery({ queryKey: ['cargos'], queryFn: listarCargos })
-  const { data: anos = [] } = useQuery({ queryKey: ['anos'], queryFn: listarAnos })
+
+  // Filtros dependentes: cada campo só oferece opções que ainda têm questões
+  const { data: facetas = [] } = useQuery({ queryKey: ['facetas'], queryFn: listarFacetas })
+  const disp = useMemo(() => opcoesDisponiveis(facetas, filtros), [facetas, filtros])
 
   const { data: simulados = [] } = useQuery({ queryKey: ['simulados'], queryFn: listarSimulados })
   const { data: cadernos = [] } = useQuery({ queryKey: ['cadernos'], queryFn: listarCadernos })
@@ -115,6 +119,17 @@ export default function Questoes() {
       if (key === 'disciplina_id') delete n.assunto_id
       return n
     })
+  }
+
+  // <option>s de um campo: só as opções com questões (dependentes), com contagem,
+  // garantindo que o valor já selecionado continue visível.
+  function opcoesCampo(campo, { labelFn = o => `${o.rotulo} (${o.total})`, sortFn = porNome } = {}) {
+    const lista = [...(disp[campo] || [])].sort(sortFn)
+    const sel = filtros[campo]
+    const nodes = lista.map(o => <option key={o.valor} value={o.valor}>{labelFn(o)}</option>)
+    if (sel && !lista.some(o => String(o.valor) === String(sel)))
+      nodes.unshift(<option key={sel} value={sel}>{rotuloFiltro(campo, sel)}</option>)
+    return nodes
   }
 
   function toggleExpandir(id) {
@@ -323,7 +338,7 @@ export default function Questoes() {
             <select className={styles.filtroSelect} value={filtros.disciplina_id ?? ''}
               onChange={e => setFiltro('disciplina_id', e.target.value)}>
               <option value="">Todas</option>
-              {disciplinas.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
+              {opcoesCampo('disciplina_id')}
             </select>
           </div>
           <div className={styles.filtroGrupo}>
@@ -333,7 +348,7 @@ export default function Questoes() {
               disabled={!filtros.disciplina_id}
               title={filtros.disciplina_id ? undefined : 'Escolha primeiro a disciplina'}>
               <option value="">{filtros.disciplina_id ? 'Todos' : 'Escolha a disciplina'}</option>
-              {assuntos.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
+              {opcoesCampo('assunto_id')}
             </select>
           </div>
           <div className={styles.filtroGrupo}>
@@ -341,7 +356,7 @@ export default function Questoes() {
             <select className={styles.filtroSelect} value={filtros.banca_id ?? ''}
               onChange={e => setFiltro('banca_id', e.target.value)}>
               <option value="">Todas</option>
-              {bancas.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
+              {opcoesCampo('banca_id')}
             </select>
           </div>
           <div className={styles.filtroGrupo}>
@@ -349,7 +364,7 @@ export default function Questoes() {
             <select className={styles.filtroSelect} value={filtros.orgao_id ?? ''}
               onChange={e => setFiltro('orgao_id', e.target.value)}>
               <option value="">Todos</option>
-              {orgaos.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+              {opcoesCampo('orgao_id')}
             </select>
           </div>
           <div className={`${styles.filtroGrupo} ${styles.filtroGrupoLargo}`}>
@@ -357,7 +372,7 @@ export default function Questoes() {
             <select className={styles.filtroSelect} value={filtros.cargo ?? ''}
               onChange={e => setFiltro('cargo', e.target.value)}>
               <option value="">Todos</option>
-              {cargos.map(c => <option key={c} value={c}>{c}</option>)}
+              {opcoesCampo('cargo')}
             </select>
           </div>
           <div className={styles.filtroGrupo}>
@@ -365,8 +380,7 @@ export default function Questoes() {
             <select className={styles.filtroSelect} value={filtros.tipo ?? ''}
               onChange={e => setFiltro('tipo', e.target.value)}>
               <option value="">Todos</option>
-              <option value="multipla_escolha">Múltipla escolha</option>
-              <option value="certo_errado">Certo / Errado</option>
+              {opcoesCampo('tipo', { labelFn: o => `${TIPOS[o.valor] ?? o.valor} (${o.total})`, sortFn: (a, b) => a.valor.localeCompare(b.valor) })}
             </select>
           </div>
           <div className={styles.filtroGrupo}>
@@ -374,9 +388,7 @@ export default function Questoes() {
             <select className={styles.filtroSelect} value={filtros.nivel ?? ''}
               onChange={e => setFiltro('nivel', e.target.value)}>
               <option value="">Todos</option>
-              <option value="fundamental">Fundamental</option>
-              <option value="medio">Médio</option>
-              <option value="superior">Superior</option>
+              {opcoesCampo('nivel', { labelFn: o => `${NIVEIS[o.valor] ?? o.valor} (${o.total})`, sortFn: (a, b) => NIVEL_ORDEM[a.valor] - NIVEL_ORDEM[b.valor] })}
             </select>
           </div>
           <div className={styles.filtroGrupo}>
@@ -384,9 +396,7 @@ export default function Questoes() {
             <select className={styles.filtroSelect} value={filtros.dificuldade ?? ''}
               onChange={e => setFiltro('dificuldade', e.target.value)}>
               <option value="">Qualquer</option>
-              {[1,2,3,4,5].map(n => (
-                <option key={n} value={n}>{DIFICULDADES[n]}</option>
-              ))}
+              {opcoesCampo('dificuldade', { labelFn: o => `${DIFICULDADES[o.valor] ?? o.valor} (${o.total})`, sortFn: (a, b) => a.valor - b.valor })}
             </select>
           </div>
           <div className={styles.filtroGrupo}>
@@ -394,7 +404,7 @@ export default function Questoes() {
             <select className={styles.filtroSelect} value={filtros.ano ?? ''}
               onChange={e => setFiltro('ano', e.target.value)}>
               <option value="">Todos</option>
-              {anos.map(a => <option key={a} value={a}>{a}</option>)}
+              {opcoesCampo('ano', { labelFn: o => `${o.rotulo} (${o.total})`, sortFn: (a, b) => b.valor - a.valor })}
             </select>
           </div>
         </div>

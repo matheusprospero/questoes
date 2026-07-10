@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
   listarQuestoes, listarDisciplinas, listarAssuntos, listarBancas, gabaritoQuestao, buscarVideoQuestao,
+  listarFacetas, opcoesDisponiveis, listarProvas,
 } from '../../services/questoes'
 import {
   registrarResposta, listarRespostas, idsUltimaErrada,
@@ -16,6 +17,11 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Estudo.module.css'
+
+const DIFIC = ['', 'Muito fácil', 'Fácil', 'Média', 'Difícil', 'Muito difícil']
+const TIPO_LABEL = { multipla_escolha: 'Múltipla escolha', certo_errado: 'Certo / Errado' }
+const porNome = (a, b) => a.rotulo.localeCompare(b.rotulo, 'pt-BR')
+const rotuloProva = (p) => [p.banca, p.orgao, p.cargo, p.ano].filter(Boolean).join(' · ')
 
 function embaralhar(arr) {
   const a = [...arr]
@@ -114,6 +120,46 @@ export default function Estudo() {
   })
   const { data: bancas = [] } = useQuery({ queryKey: ['bancas'], queryFn: listarBancas })
 
+  // Filtros dependentes + lista de provas
+  const { data: facetas = [] } = useQuery({ queryKey: ['facetas'], queryFn: listarFacetas })
+  const disp = useMemo(() => opcoesDisponiveis(facetas, filtros), [facetas, filtros])
+  const provas = useMemo(() => listarProvas(facetas), [facetas])
+
+  // Prova específica selecionada + disciplinas escolhidas dela (vazio = todas)
+  const [provaSel, setProvaSel] = useState('')
+  const [discProva, setDiscProva] = useState(new Set())
+  const provaObj = provas.find(p => p.chave === provaSel) || null
+  const disciplinasProva = useMemo(() => {
+    if (!provaObj) return []
+    const f = { orgao_id: provaObj.orgao_id, ano: provaObj.ano ?? undefined, cargo: provaObj.cargo ?? undefined }
+    return (opcoesDisponiveis(facetas, f).disciplina_id || []).slice().sort((a, b) => a.rotulo.localeCompare(b.rotulo, 'pt-BR'))
+  }, [provaObj, facetas])
+
+  function escolherProva(chave) {
+    setProvaSel(chave)
+    const p = provas.find(x => x.chave === chave)
+    if (p) {
+      const f = { orgao_id: p.orgao_id, ano: p.ano ?? undefined, cargo: p.cargo ?? undefined }
+      const ids = (opcoesDisponiveis(facetas, f).disciplina_id || []).map(d => d.valor)
+      setDiscProva(new Set(ids)) // começa com a prova inteira
+    } else {
+      setDiscProva(new Set())
+    }
+  }
+  function toggleDiscProva(id) {
+    setDiscProva(s => {
+      const n = new Set(s)
+      n.has(id) ? n.delete(id) : n.add(id)
+      return n
+    })
+  }
+
+  // <option>s dependentes (só valores com questões dado o resto dos filtros)
+  function opE(campo, labelFn = o => `${o.rotulo} (${o.total})`, sortFn = porNome) {
+    return [...(disp[campo] || [])].sort(sortFn).map(o =>
+      <option key={o.valor} value={o.valor}>{labelFn(o)}</option>)
+  }
+
   function setFiltro(key, val) {
     setFiltros(f => {
       const n = { ...f }
@@ -168,6 +214,23 @@ export default function Estudo() {
       setFase('resolvendo')
     } catch (err) {
       toast.error('Erro ao montar a sessão: ' + err.message)
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  // Resolver uma prova específica (inteira ou só as disciplinas escolhidas)
+  async function comecarProva() {
+    if (!provaObj) return
+    if (discProva.size === 0) { toast.error('Escolha pelo menos uma disciplina da prova.'); return }
+    setCarregando(true)
+    try {
+      let qs = await listarQuestoes({ orgao_id: provaObj.orgao_id, ano: provaObj.ano ?? undefined, cargo: provaObj.cargo ?? undefined })
+      qs = qs.filter(temGabarito).filter(q => discProva.has(q.disciplina_id))
+      if (qs.length === 0) { toast.error('Nenhuma questão com gabarito para essa seleção.'); return }
+      await comecar(qs, 'estudo')
+    } catch (err) {
+      toast.error('Erro ao montar a prova: ' + err.message)
     } finally {
       setCarregando(false)
     }
@@ -309,44 +372,72 @@ export default function Estudo() {
           </button>
         </div>
 
+        {/* Prova específica */}
         <div className={styles.configCard}>
-          <p className={styles.secTitulo}>Filtros da sessão</p>
+          <p className={styles.secTitulo}>Fazer uma prova específica</p>
+          <select className={styles.filtroSelect} value={provaSel}
+            onChange={e => escolherProva(e.target.value)} style={{ width: '100%' }}>
+            <option value="">Escolha uma prova…</option>
+            {provas.map(p => (
+              <option key={p.chave} value={p.chave}>{rotuloProva(p)} — {p.total} questões</option>
+            ))}
+          </select>
+
+          {provaObj && (
+            <div className={styles.provaBox}>
+              <p className={styles.provaHint}>
+                Marque as disciplinas que quer fazer — todas marcadas = prova inteira.
+              </p>
+              <div className={styles.provaChips}>
+                {disciplinasProva.map(d => (
+                  <button key={d.valor} type="button"
+                    className={`${styles.provaChip} ${discProva.has(d.valor) ? styles.provaChipOn : ''}`}
+                    onClick={() => toggleDiscProva(d.valor)}>
+                    {d.rotulo} ({d.total})
+                  </button>
+                ))}
+              </div>
+              <button className={styles.btnComecar} onClick={comecarProva} disabled={carregando}>
+                <Play size={16} /> {carregando ? 'Montando...'
+                  : `Resolver ${discProva.size >= disciplinasProva.length ? 'a prova inteira' : `${discProva.size} disciplina(s)`}`}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.configCard}>
+          <p className={styles.secTitulo}>Ou monte uma sessão livre</p>
           <div className={styles.filtrosGrid}>
             <select className={styles.filtroSelect} value={filtros.disciplina_id ?? ''}
               onChange={e => setFiltro('disciplina_id', e.target.value)}>
               <option value="">Todas as disciplinas</option>
-              {disciplinas.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
+              {opE('disciplina_id')}
             </select>
             <select className={styles.filtroSelect} value={filtros.assunto_id ?? ''}
               onChange={e => setFiltro('assunto_id', e.target.value)}
               disabled={!filtros.disciplina_id}>
               <option value="">{filtros.disciplina_id ? 'Todos os assuntos' : 'Assunto (escolha a disciplina)'}</option>
-              {assuntos.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
+              {opE('assunto_id')}
             </select>
             <select className={styles.filtroSelect} value={filtros.banca_id ?? ''}
               onChange={e => setFiltro('banca_id', e.target.value)}>
               <option value="">Todas as bancas</option>
-              {bancas.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
+              {opE('banca_id')}
             </select>
-            <input className={styles.filtroSelect} type="number" placeholder="Ano (ex: 2023)"
-              value={filtros.ano ?? ''}
-              onChange={e => setFiltro('ano', e.target.value)}
-              min="1990" max="2100"
-            />
+            <select className={styles.filtroSelect} value={filtros.ano ?? ''}
+              onChange={e => setFiltro('ano', e.target.value)}>
+              <option value="">Todos os anos</option>
+              {opE('ano', o => `${o.rotulo} (${o.total})`, (a, b) => b.valor - a.valor)}
+            </select>
             <select className={styles.filtroSelect} value={filtros.dificuldade ?? ''}
               onChange={e => setFiltro('dificuldade', e.target.value)}>
               <option value="">Qualquer dificuldade</option>
-              {[1,2,3,4,5].map(n => (
-                <option key={n} value={n}>
-                  {['','Muito fácil','Fácil','Média','Difícil','Muito difícil'][n]}
-                </option>
-              ))}
+              {opE('dificuldade', o => `${DIFIC[o.valor] ?? o.valor} (${o.total})`, (a, b) => a.valor - b.valor)}
             </select>
             <select className={styles.filtroSelect} value={filtros.tipo ?? ''}
               onChange={e => setFiltro('tipo', e.target.value)}>
               <option value="">Todos os tipos</option>
-              <option value="multipla_escolha">Múltipla escolha</option>
-              <option value="certo_errado">Certo / Errado</option>
+              {opE('tipo', o => `${TIPO_LABEL[o.valor] ?? o.valor} (${o.total})`, (a, b) => a.valor.localeCompare(b.valor))}
             </select>
           </div>
 

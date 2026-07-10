@@ -53,6 +53,97 @@ export async function listarQuestoes(filtros = {}) {
   return todas.map(normalizar)
 }
 
+// Só a classificação de todas as questões (leve) — para filtros dependentes e provas
+const SELECT_FACETA = `
+  id, disciplina_id, assunto_id, banca_id, orgao_id, cargo, ano, nivel, dificuldade, tipo,
+  disciplinas(id, nome, cor), assuntos(id, nome), bancas(id, nome), orgaos(id, nome)
+`
+export async function listarFacetas() {
+  const PAGINA = 1000
+  let inicio = 0
+  const todas = []
+  for (;;) {
+    const { data, error } = await supabase
+      .from('questoes')
+      .select(SELECT_FACETA)
+      .range(inicio, inicio + PAGINA - 1)
+    if (error) throw error
+    todas.push(...data)
+    if (data.length < PAGINA) break
+    inicio += PAGINA
+  }
+  return todas
+}
+
+// Como cada filtro casa com o campo da questão
+const CAMPO_MATCH = {
+  disciplina_id: (q, v) => String(q.disciplina_id) === String(v),
+  assunto_id:    (q, v) => String(q.assunto_id) === String(v),
+  banca_id:      (q, v) => String(q.banca_id) === String(v),
+  orgao_id:      (q, v) => String(q.orgao_id) === String(v),
+  cargo:         (q, v) => q.cargo === v,
+  ano:           (q, v) => String(q.ano) === String(v),
+  nivel:         (q, v) => q.nivel === v,
+  dificuldade:   (q, v) => String(q.dificuldade) === String(v),
+  tipo:          (q, v) => q.tipo === v,
+}
+
+// A questão passa em TODOS os filtros informados?
+export function questaoBate(q, filtros) {
+  return Object.entries(filtros).every(([k, v]) =>
+    !v || (CAMPO_MATCH[k] ? CAMPO_MATCH[k](q, v) : true))
+}
+
+function tally(list, campo) {
+  const m = new Map()
+  for (const q of list) {
+    let valor, rotulo, cor
+    switch (campo) {
+      case 'disciplina_id': if (!q.disciplinas) continue; valor = q.disciplinas.id; rotulo = q.disciplinas.nome; cor = q.disciplinas.cor; break
+      case 'assunto_id':    if (!q.assuntos)    continue; valor = q.assuntos.id;    rotulo = q.assuntos.nome; break
+      case 'banca_id':      if (!q.bancas)      continue; valor = q.bancas.id;      rotulo = q.bancas.nome; break
+      case 'orgao_id':      if (!q.orgaos)      continue; valor = q.orgaos.id;      rotulo = q.orgaos.nome; break
+      case 'cargo':         if (!q.cargo)          continue; valor = q.cargo; rotulo = q.cargo; break
+      case 'ano':           if (q.ano == null)     continue; valor = q.ano; rotulo = String(q.ano); break
+      case 'nivel':         if (!q.nivel)          continue; valor = q.nivel; rotulo = q.nivel; break
+      case 'dificuldade':   if (q.dificuldade == null) continue; valor = q.dificuldade; rotulo = String(q.dificuldade); break
+      case 'tipo':          if (!q.tipo)           continue; valor = q.tipo; rotulo = q.tipo; break
+      default: continue
+    }
+    const g = m.get(valor) ?? { valor, rotulo, cor, total: 0 }
+    g.total += 1
+    m.set(valor, g)
+  }
+  return [...m.values()]
+}
+
+// Para cada campo, as opções que ainda têm questões considerando os OUTROS filtros.
+export function opcoesDisponiveis(facetas, filtros) {
+  const res = {}
+  for (const campo of Object.keys(CAMPO_MATCH)) {
+    const outros = { ...filtros }; delete outros[campo]
+    res[campo] = tally(facetas.filter(q => questaoBate(q, outros)), campo)
+  }
+  return res
+}
+
+// Lista de "provas" (Órgão + Ano + Cargo) presentes no banco, com nº de questões
+export function listarProvas(facetas) {
+  const m = new Map()
+  for (const q of facetas) {
+    if (!q.orgaos) continue
+    const chave = `${q.orgao_id}|${q.ano ?? ''}|${q.cargo ?? ''}`
+    const g = m.get(chave) ?? {
+      chave, orgao_id: q.orgao_id, ano: q.ano ?? null, cargo: q.cargo ?? null,
+      orgao: q.orgaos.nome, banca: q.bancas?.nome ?? null, total: 0,
+    }
+    g.total += 1
+    m.set(chave, g)
+  }
+  return [...m.values()].sort((a, b) =>
+    (b.ano ?? 0) - (a.ano ?? 0) || a.orgao.localeCompare(b.orgao, 'pt-BR'))
+}
+
 export async function buscarQuestao(id) {
   const { data, error } = await supabase
     .from('questoes')
