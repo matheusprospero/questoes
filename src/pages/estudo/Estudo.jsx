@@ -4,10 +4,10 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
   listarQuestoes, listarDisciplinas, listarAssuntos, listarBancas, gabaritoQuestao,
 } from '../../services/questoes'
-import { registrarResposta, listarRespostas, idsUltimaErrada } from '../../services/estudo'
+import { registrarResposta, listarRespostas, idsUltimaErrada, montarRecomendadas } from '../../services/estudo'
 import VideoYouTube from '../../components/VideoYouTube'
 import {
-  Play, CheckCircle, XCircle, ChevronRight, RotateCcw, BarChart2, BookOpen, Youtube,
+  Play, CheckCircle, XCircle, ChevronRight, RotateCcw, BarChart2, BookOpen, Youtube, Sparkles,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Estudo.module.css'
@@ -35,7 +35,12 @@ export default function Estudo() {
   // fase: config | resolvendo | resultado
   const [fase, setFase] = useState('config')
   const [filtros, setFiltros] = useState({})
-  const [apenasErradas, setApenasErradas] = useState(searchParams.get('erradas') === '1')
+  // modo: todas | erradas (refazer o que errou) | similares (sugestões)
+  const [modo, setModo] = useState(
+    searchParams.get('erradas') === '1' ? 'erradas'
+    : searchParams.get('similares') === '1' ? 'similares'
+    : 'todas'
+  )
   const [quantidade, setQuantidade] = useState('')
 
   // sessão
@@ -71,21 +76,28 @@ export default function Estudo() {
       if (!questoes) {
         questoes = await listarQuestoes(filtros)
         questoes = questoes.filter(temGabarito)
+        const qtd = Number(quantidade)
 
-        if (apenasErradas) {
+        if (modo === 'erradas') {
           const respostas = await listarRespostas()
           const erradas = idsUltimaErrada(respostas)
           questoes = questoes.filter(q => erradas.has(q.id))
+          questoes = embaralhar(questoes)
+        } else if (modo === 'similares') {
+          const respostas = await listarRespostas()
+          // Já vem priorizado pelos assuntos com mais erros
+          questoes = montarRecomendadas(questoes, respostas, { limite: qtd > 0 ? qtd : 15 })
+        } else {
+          questoes = embaralhar(questoes)
         }
 
-        questoes = embaralhar(questoes)
-        const qtd = Number(quantidade)
         if (qtd > 0) questoes = questoes.slice(0, qtd)
       }
 
       if (questoes.length === 0) {
-        toast.error(apenasErradas
-          ? 'Nenhuma questão errada encontrada com esses filtros.'
+        toast.error(
+          modo === 'erradas' ? 'Nenhuma questão errada encontrada com esses filtros.'
+          : modo === 'similares' ? 'Sem sugestões por enquanto: erre algumas questões primeiro 😉 ou você já respondeu todas as similares.'
           : 'Nenhuma questão com gabarito encontrada com esses filtros.')
         return
       }
@@ -140,6 +152,25 @@ export default function Estudo() {
   function refazerErradasDaSessao() {
     const erradas = historico.filter(h => !h.acertou).map(h => h.questao)
     comecar(embaralhar(erradas))
+  }
+
+  // Sessão nova com questões inéditas dos assuntos que o usuário errou
+  // (as respostas da sessão atual já estão registradas no banco)
+  async function treinarSimilares() {
+    setCarregando(true)
+    try {
+      const [questoes, respostas] = await Promise.all([listarQuestoes({}), listarRespostas()])
+      const sugeridas = montarRecomendadas(questoes.filter(temGabarito), respostas, { limite: 15 })
+      if (sugeridas.length === 0) {
+        toast.error('Você já respondeu todas as questões similares disponíveis. 🎉')
+        return
+      }
+      await comecar(sugeridas)
+    } catch (err) {
+      toast.error('Erro ao montar sugestões: ' + err.message)
+    } finally {
+      setCarregando(false)
+    }
   }
 
   const acertos = historico.filter(h => h.acertou).length
@@ -200,14 +231,22 @@ export default function Estudo() {
           </div>
 
           <div className={styles.configOpcoes}>
-            <label className={styles.checkRow}>
-              <input type="checkbox" checked={apenasErradas}
-                onChange={e => setApenasErradas(e.target.checked)} />
-              <span>
-                <strong>Refazer apenas questões que errei</strong>
-                <span className={styles.checkHint}>Questões cuja última resposta foi errada</span>
-              </span>
-            </label>
+            <p className={styles.secTitulo}>Modo da sessão</p>
+            <div className={styles.modosGrid}>
+              {[
+                { valor: 'todas', titulo: 'Novas questões', hint: 'Todas as questões que passarem nos filtros', Icon: BookOpen },
+                { valor: 'erradas', titulo: 'Refazer erradas', hint: 'Exatamente as questões cuja última resposta foi errada', Icon: RotateCcw },
+                { valor: 'similares', titulo: 'Similares às erradas', hint: 'Sugestões inéditas dos assuntos em que você mais erra', Icon: Sparkles },
+              ].map(({ valor, titulo, hint, Icon }) => (
+                <button key={valor} type="button"
+                  className={`${styles.modoCard} ${modo === valor ? styles.modoCardAtivo : ''}`}
+                  onClick={() => setModo(valor)}>
+                  <Icon size={17} className={styles.modoIcone} />
+                  <span className={styles.modoTitulo}>{titulo}</span>
+                  <span className={styles.modoHint}>{hint}</span>
+                </button>
+              ))}
+            </div>
 
             <div className={styles.qtdRow}>
               <label className={styles.qtdLabel}>Quantidade de questões</label>
@@ -247,6 +286,11 @@ export default function Estudo() {
             {erradasSessao.length > 0 && (
               <button className={styles.btnComecar} onClick={refazerErradasDaSessao}>
                 <RotateCcw size={15} /> Refazer as {erradasSessao.length} erradas
+              </button>
+            )}
+            {erradasSessao.length > 0 && (
+              <button className={styles.btnGhost} onClick={treinarSimilares} disabled={carregando}>
+                <Sparkles size={15} /> {carregando ? 'Buscando...' : 'Treinar questões similares'}
               </button>
             )}
             <button className={styles.btnGhost} onClick={() => setFase('config')}>

@@ -35,7 +35,7 @@ const MODULOS = [
     icon: BookOpen,
     titulo: 'Resolver Questões',
     texto: 'O coração do estudo: responda questão por questão, receba a correção imediata e assista à resolução em vídeo.',
-    dica: 'Use "Refazer erradas" para revisar só o que você errou.',
+    dica: 'Use "Refazer erradas" e "Similares às erradas" para atacar seus pontos fracos.',
     cta: 'Começar a resolver',
     destaque: true,
   },

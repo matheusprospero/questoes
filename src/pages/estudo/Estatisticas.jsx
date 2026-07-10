@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   listarRespostas, agruparDesempenho, evolucaoMensal, questoesMaisErradas, idsUltimaErrada,
 } from '../../services/estudo'
-import { BarChart2, RotateCcw, BookOpen, TrendingUp, Target, XCircle, HelpCircle } from 'lucide-react'
+import { BarChart2, RotateCcw, BookOpen, TrendingUp, Target, XCircle, HelpCircle, Sparkles } from 'lucide-react'
 import styles from './Estatisticas.module.css'
 
 function corPct(pct) {
@@ -89,6 +89,11 @@ export default function Estatisticas() {
           {pendentesErradas > 0 && (
             <button className={styles.btnGhost} onClick={() => navigate('/estudo?erradas=1')}>
               <RotateCcw size={14} /> Refazer {pendentesErradas} errada(s)
+            </button>
+          )}
+          {pendentesErradas > 0 && (
+            <button className={styles.btnGhost} onClick={() => navigate('/estudo?similares=1')}>
+              <Sparkles size={14} /> Treinar similares
             </button>
           )}
           <button className={styles.btnPrimary} onClick={() => navigate('/estudo')}>

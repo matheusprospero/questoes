@@ -29,11 +29,34 @@
 }
 .filtroSelect:focus { border-color: var(--color-primary); }
 
-.configOpcoes { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
-.checkRow { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 13px; color: var(--text-primary); }
-.checkRow input { margin-top: 3px; }
-.checkRow span { display: flex; flex-direction: column; }
-.checkHint { font-size: 12px; color: var(--text-tertiary); font-weight: 400; }
+.configOpcoes { display: flex; flex-direction: column; gap: 14px; }
+
+/* Modo da sessão (novas / refazer erradas / similares) */
+.modosGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+.modoCard {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
+  padding: 14px; text-align: left;
+  font-family: var(--font-sans);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.modoCard:hover { border-color: var(--color-primary-mid); }
+.modoCardAtivo {
+  border-color: var(--color-primary);
+  background: var(--gradient-primary-soft);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+.modoIcone { color: var(--color-primary); }
+.modoTitulo { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.modoHint { font-size: 11.5px; color: var(--text-secondary); line-height: 1.4; }
+
 .qtdRow { display: flex; align-items: center; gap: 10px; }
 .qtdLabel { font-size: 13px; color: var(--text-secondary); }
 

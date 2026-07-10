@@ -44,6 +44,41 @@ export function idsUltimaErrada(respostas) {
   )
 }
 
+// Sugestões "similares às que errei": questões AINDA NÃO respondidas,
+// dos mesmos assuntos/disciplinas das questões cuja última resposta foi
+// errada. Quanto mais erros no assunto, maior a prioridade da sugestão.
+export function montarRecomendadas(questoes, respostas, { limite = 15 } = {}) {
+  // Última resposta por questão (lista vem ordenada por data asc)
+  const ultimaPorQuestao = new Map()
+  for (const r of respostas) ultimaPorQuestao.set(r.questao_id, r)
+  const respondidas = new Set(ultimaPorQuestao.keys())
+
+  // Peso de erro por assunto e por disciplina
+  const errosAssunto = new Map()
+  const errosDisciplina = new Map()
+  for (const r of ultimaPorQuestao.values()) {
+    if (r.acertou || !r.questoes) continue
+    const a = r.questoes.assuntos?.id
+    const d = r.questoes.disciplinas?.id
+    if (a) errosAssunto.set(a, (errosAssunto.get(a) ?? 0) + 1)
+    if (d) errosDisciplina.set(d, (errosDisciplina.get(d) ?? 0) + 1)
+  }
+
+  return questoes
+    .filter(q => !respondidas.has(q.id))
+    .map(q => ({
+      q,
+      // mesmo assunto pesa 3x mais que só mesma disciplina
+      score: (errosAssunto.get(q.assunto_id) ?? 0) * 3 +
+             (errosDisciplina.get(q.disciplina_id) ?? 0),
+      sorteio: Math.random(), // desempate aleatório estável para o sort
+    }))
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score || a.sorteio - b.sorteio)
+    .slice(0, limite)
+    .map(x => x.q)
+}
+
 // Agrupa respostas por uma chave (nome de disciplina/assunto/banca)
 export function agruparDesempenho(respostas, chaveFn) {
   const grupos = new Map()
