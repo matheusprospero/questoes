@@ -30,6 +30,7 @@ export async function listarQuestoes(filtros = {}) {
   if (filtros.assunto_id)    query = query.eq('assunto_id', filtros.assunto_id)
   if (filtros.banca_id)      query = query.eq('banca_id', filtros.banca_id)
   if (filtros.orgao_id)      query = query.eq('orgao_id', filtros.orgao_id)
+  if (filtros.cargo)         query = query.eq('cargo', filtros.cargo)
   if (filtros.ano)           query = query.eq('ano', filtros.ano)
   if (filtros.nivel)         query = query.eq('nivel', filtros.nivel)
   if (filtros.dificuldade)   query = query.eq('dificuldade', filtros.dificuldade)
@@ -203,6 +204,27 @@ export async function listarOrgaos() {
   const { data, error } = await supabase.from('orgaos').select('*').order('nome')
   if (error) throw error
   return data
+}
+
+// Cargos distintos presentes nas questões cadastradas (campo texto livre)
+export async function listarCargos() {
+  const { data, error } = await supabase
+    .from('questoes')
+    .select('cargo')
+    .not('cargo', 'is', null)
+  if (error) throw error
+  return [...new Set(data.map(r => r.cargo?.trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+}
+
+// Anos distintos presentes nas questões cadastradas (mais recentes primeiro)
+export async function listarAnos() {
+  const { data, error } = await supabase
+    .from('questoes')
+    .select('ano')
+    .not('ano', 'is', null)
+  if (error) throw error
+  return [...new Set(data.map(r => r.ano).filter(Boolean))].sort((a, b) => b - a)
 }
 
 export async function criarOrgao(nome) {

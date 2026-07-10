@@ -3,16 +3,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   listarQuestoes, excluirQuestao, listarDisciplinas, listarAssuntos,
-  listarBancas, listarOrgaos, resumoEnunciado, rotuloQuestao, gabaritoQuestao,
+  listarBancas, listarOrgaos, listarCargos, listarAnos,
+  resumoEnunciado, rotuloQuestao, gabaritoQuestao,
 } from '../../services/questoes'
 import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simulados'
 import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos'
 import { useAuth } from '../../contexts/AuthContext'
-import { Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronUp, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronUp, CheckCircle, XCircle, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Questoes.module.css'
 
 const NIVEIS = { fundamental: 'Fundamental', medio: 'Médio', superior: 'Superior' }
+const TIPOS = { multipla_escolha: 'Múltipla escolha', certo_errado: 'Certo/Errado' }
+const DIFICULDADES = ['', 'Muito fácil', 'Fácil', 'Média', 'Difícil', 'Muito difícil']
 
 export default function Questoes() {
   const navigate = useNavigate()
@@ -41,6 +44,8 @@ export default function Questoes() {
   })
   const { data: bancas = [] } = useQuery({ queryKey: ['bancas'], queryFn: listarBancas })
   const { data: orgaos = [] } = useQuery({ queryKey: ['orgaos'], queryFn: listarOrgaos })
+  const { data: cargos = [] } = useQuery({ queryKey: ['cargos'], queryFn: listarCargos })
+  const { data: anos = [] } = useQuery({ queryKey: ['anos'], queryFn: listarAnos })
 
   const { data: simulados = [] } = useQuery({ queryKey: ['simulados'], queryFn: listarSimulados })
   const { data: cadernos = [] } = useQuery({ queryKey: ['cadernos'], queryFn: listarCadernos })
@@ -115,6 +120,24 @@ export default function Questoes() {
     ].some(campo => campo?.toLowerCase().includes(termo))
   })
 
+  // Rótulo legível de cada filtro ativo (para os "chips")
+  function rotuloFiltro(key, val) {
+    switch (key) {
+      case 'disciplina_id': return disciplinas.find(d => String(d.id) === String(val))?.nome ?? 'Disciplina'
+      case 'assunto_id':    return assuntos.find(a => String(a.id) === String(val))?.nome ?? 'Assunto'
+      case 'banca_id':      return bancas.find(b => String(b.id) === String(val))?.nome ?? 'Banca'
+      case 'orgao_id':      return orgaos.find(o => String(o.id) === String(val))?.nome ?? 'Órgão'
+      case 'cargo':         return val
+      case 'tipo':          return TIPOS[val] ?? val
+      case 'nivel':         return NIVEIS[val] ?? val
+      case 'dificuldade':   return DIFICULDADES[val] ?? val
+      case 'ano':           return `Ano ${val}`
+      default:              return String(val)
+    }
+  }
+
+  const filtrosAtivos = Object.entries(filtros)
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -141,12 +164,28 @@ export default function Questoes() {
         </div>
         <button
           type="button"
-          className={`${styles.btnFiltro} ${mostrarFiltros ? styles.btnFiltroAtivo : ''}`}
+          className={`${styles.btnFiltro} ${(mostrarFiltros || filtrosAtivos.length) ? styles.btnFiltroAtivo : ''}`}
           onClick={() => setMostrarFiltros(v => !v)}
         >
-          Filtros <ChevronDown size={13} />
+          Filtros
+          {filtrosAtivos.length > 0 && <span className={styles.filtroBadge}>{filtrosAtivos.length}</span>}
+          <ChevronDown size={13} className={mostrarFiltros ? styles.chevronOpen : ''} />
         </button>
       </div>
+
+      {filtrosAtivos.length > 0 && (
+        <div className={styles.chipsRow}>
+          {filtrosAtivos.map(([key, val]) => (
+            <button key={key} className={styles.chip} onClick={() => setFiltro(key, '')} title="Remover filtro">
+              {rotuloFiltro(key, val)}
+              <X size={12} />
+            </button>
+          ))}
+          <button className={styles.chipLimpar} onClick={() => { setFiltros({}); setBuscaTexto('') }}>
+            Limpar tudo
+          </button>
+        </div>
+      )}
 
       {mostrarFiltros && (
         <div className={styles.filtrosPanel}>
@@ -171,6 +210,11 @@ export default function Questoes() {
             <option value="">Todos os órgãos</option>
             {orgaos.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
           </select>
+          <select className={styles.filtroSelect} value={filtros.cargo ?? ''}
+            onChange={e => setFiltro('cargo', e.target.value)}>
+            <option value="">Todos os cargos</option>
+            {cargos.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
           <select className={styles.filtroSelect} value={filtros.tipo ?? ''}
             onChange={e => setFiltro('tipo', e.target.value)}>
             <option value="">Todos os tipos</option>
@@ -193,15 +237,17 @@ export default function Questoes() {
               </option>
             ))}
           </select>
-          <input className={styles.filtroSelect} type="number" placeholder="Ano (ex: 2023)"
-            value={filtros.ano ?? ''}
-            onChange={e => setFiltro('ano', e.target.value)}
-            min="1990" max="2100"
-          />
-          <button className={styles.btnLimpar}
-            onClick={() => { setFiltros({}); setBuscaTexto('') }}>
-            Limpar
-          </button>
+          <select className={styles.filtroSelect} value={filtros.ano ?? ''}
+            onChange={e => setFiltro('ano', e.target.value)}>
+            <option value="">Todos os anos</option>
+            {anos.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+          {filtrosAtivos.length > 0 && (
+            <button className={styles.btnLimpar}
+              onClick={() => { setFiltros({}); setBuscaTexto('') }}>
+              Limpar
+            </button>
+          )}
         </div>
       )}
 
