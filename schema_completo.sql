@@ -43,6 +43,7 @@ create table perfis (
   nome      text,
   email     text,
   papel     text not null default 'aluno' check (papel in ('admin', 'aluno')),
+  assinante boolean not null default false,   -- acesso aos vídeos de resolução
   criado_em timestamptz not null default now()
 );
 
@@ -122,7 +123,7 @@ create table questoes (
                  check (tipo in ('multipla_escolha', 'certo_errado')),
   enunciado      text not null,           -- HTML do editor rico
   comentario     text,                    -- justificativa/comentário do gabarito (HTML)
-  video_url      text,                    -- resolução em vídeo (YouTube não listado)
+  tem_video      boolean not null default false, -- há resolução em vídeo (URL fica em questao_videos)
   disciplina_id  uuid references disciplinas(id) on delete set null,
   assunto_id     uuid references assuntos(id)    on delete set null,
   banca_id       uuid references bancas(id)      on delete set null,
@@ -153,6 +154,12 @@ create table questao_alternativas (
 );
 
 create index idx_alternativas_questao on questao_alternativas(questao_id);
+
+-- URL do vídeo de resolução (protegida: só admin/assinante lê — ver RLS)
+create table questao_videos (
+  questao_id uuid primary key references questoes(id) on delete cascade,
+  video_url  text not null
+);
 
 -- Mantém atualizado_em em dia
 create or replace function set_atualizado_em()
@@ -289,6 +296,7 @@ alter table bancas               enable row level security;
 alter table orgaos               enable row level security;
 alter table questoes             enable row level security;
 alter table questao_alternativas enable row level security;
+alter table questao_videos       enable row level security;
 alter table cadernos             enable row level security;
 alter table caderno_questoes     enable row level security;
 alter table simulados            enable row level security;
@@ -316,6 +324,16 @@ create policy "conteudo_select" on bancas               for select to authentica
 create policy "conteudo_select" on orgaos               for select to authenticated using (true);
 create policy "conteudo_select" on questoes             for select to authenticated using (true);
 create policy "conteudo_select" on questao_alternativas for select to authenticated using (true);
+
+-- Vídeo de resolução: admin gerencia; só admin/assinante lê a URL
+create or replace function eh_assinante(uid uuid)
+returns boolean language sql security definer set search_path = public as $$
+  select exists (select 1 from perfis where id = uid and (assinante = true or papel = 'admin'));
+$$;
+create policy "video_admin_all" on questao_videos for all to authenticated
+  using (is_admin()) with check (is_admin());
+create policy "video_leitura_assinante" on questao_videos for select to authenticated
+  using (eh_assinante(auth.uid()));
 
 create policy "conteudo_admin_insert" on disciplinas          for insert to authenticated with check (is_admin());
 create policy "conteudo_admin_insert" on assuntos             for insert to authenticated with check (is_admin());

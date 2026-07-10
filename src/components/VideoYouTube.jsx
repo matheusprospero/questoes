@@ -30,7 +30,7 @@ export default function VideoYouTube({ url, titulo = 'Resolução em vídeo' }) 
       background: '#000',
     }}>
       <iframe
-        src={`https://www.youtube-nocookie.com/embed/${id}?rel=0`}
+        src={`https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&iv_load_policy=3`}
         title={titulo}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen

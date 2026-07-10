@@ -67,22 +67,25 @@ export async function buscarQuestao(id) {
 // ── Criação / Edição / Exclusão ───────────────────────────────
 
 export async function criarQuestao(dados, alternativas) {
+  const { video_url, ...campos } = dados
   const { data: questao, error } = await supabase
     .from('questoes')
-    .insert(dados)
+    .insert({ ...campos, tem_video: !!video_url?.trim() })
     .select()
     .single()
 
   if (error) throw error
 
   await salvarAlternativas(questao.id, dados.tipo, alternativas)
+  await salvarVideo(questao.id, video_url)
   return questao
 }
 
 export async function atualizarQuestao(id, dados, alternativas) {
+  const { video_url, ...campos } = dados
   const { data: questao, error } = await supabase
     .from('questoes')
-    .update(dados)
+    .update({ ...campos, tem_video: !!video_url?.trim() })
     .eq('id', id)
     .select()
     .single()
@@ -90,7 +93,32 @@ export async function atualizarQuestao(id, dados, alternativas) {
   if (error) throw error
 
   await salvarAlternativas(id, dados.tipo, alternativas)
+  await salvarVideo(id, video_url)
   return questao
+}
+
+// A URL do vídeo mora em questao_videos (protegida por RLS: só admin/assinante lê)
+async function salvarVideo(questaoId, videoUrl) {
+  const url = videoUrl?.trim()
+  if (url) {
+    const { error } = await supabase
+      .from('questao_videos')
+      .upsert({ questao_id: questaoId, video_url: url }, { onConflict: 'questao_id' })
+    if (error) throw error
+  } else {
+    await supabase.from('questao_videos').delete().eq('questao_id', questaoId)
+  }
+}
+
+// Busca a URL do vídeo — retorna null se o usuário não for assinante (RLS)
+export async function buscarVideoQuestao(questaoId) {
+  const { data, error } = await supabase
+    .from('questao_videos')
+    .select('video_url')
+    .eq('questao_id', questaoId)
+    .maybeSingle()
+  if (error) throw error
+  return data?.video_url ?? null
 }
 
 async function salvarAlternativas(questaoId, tipo, alternativas) {

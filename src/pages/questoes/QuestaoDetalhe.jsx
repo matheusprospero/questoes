@@ -1,13 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  buscarQuestao, excluirQuestao, toggleFavorito, listarFavoritos,
+  buscarQuestao, excluirQuestao, toggleFavorito, listarFavoritos, buscarVideoQuestao,
 } from '../../services/questoes'
 import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simulados'
 import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos'
 import { useAuth } from '../../contexts/AuthContext'
 import VideoYouTube from '../../components/VideoYouTube'
-import { ChevronLeft, Pencil, Heart, CheckCircle, XCircle, Trash2, Youtube } from 'lucide-react'
+import { ChevronLeft, Pencil, Heart, CheckCircle, XCircle, Trash2, Youtube, Lock } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import styles from './QuestaoDetalhe.module.css'
@@ -28,6 +28,12 @@ export default function QuestaoDetalhe() {
   const { data: questao, isLoading } = useQuery({
     queryKey: ['questao', id],
     queryFn: () => buscarQuestao(id),
+  })
+  // URL do vídeo vem protegida — só volta para admin/assinante
+  const { data: videoUrl } = useQuery({
+    queryKey: ['questao-video', id],
+    queryFn: () => buscarVideoQuestao(id),
+    enabled: !!questao?.tem_video,
   })
 
   const { data: favoritos = [] } = useQuery({
@@ -198,13 +204,23 @@ export default function QuestaoDetalhe() {
           )}
 
           {/* Resolução em vídeo */}
-          {questao.video_url && (
+          {questao.tem_video && (
             <div className={styles.card}>
               <p className={styles.secTitulo}>
                 <Youtube size={13} style={{ verticalAlign: '-2px', marginRight: 6 }} />
                 Resolução em vídeo
               </p>
-              <VideoYouTube url={questao.video_url} />
+              {videoUrl ? (
+                <VideoYouTube url={videoUrl} />
+              ) : (
+                <div className={styles.videoBloqueado}>
+                  <Lock size={20} />
+                  <div>
+                    <strong>Disponível para assinantes</strong>
+                    <p>A resolução em vídeo desta questão é exclusiva para assinantes.</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

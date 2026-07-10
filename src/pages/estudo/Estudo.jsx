@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
-  listarQuestoes, listarDisciplinas, listarAssuntos, listarBancas, gabaritoQuestao,
+  listarQuestoes, listarDisciplinas, listarAssuntos, listarBancas, gabaritoQuestao, buscarVideoQuestao,
 } from '../../services/questoes'
 import {
   registrarResposta, listarRespostas, idsUltimaErrada,
@@ -172,6 +172,13 @@ export default function Estudo() {
   }
 
   const questaoAtual = sessao[indice]
+
+  // Vídeo (protegido) da questão atual, só após responder e se houver vídeo
+  const { data: videoAtual } = useQuery({
+    queryKey: ['questao-video', questaoAtual?.id],
+    queryFn: () => buscarVideoQuestao(questaoAtual.id),
+    enabled: !!(respondida && questaoAtual?.tem_video),
+  })
 
   async function responder() {
     if (selecionada === null) { toast.error('Escolha uma resposta'); return }
@@ -495,13 +502,19 @@ export default function Estudo() {
           </div>
         )}
 
-        {respondida && q.video_url && (
+        {respondida && q.tem_video && (
           <div className={styles.comentarioBox}>
             <p className={styles.comentarioTitulo}>
               <Youtube size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} />
               Resolução em vídeo
             </p>
-            <VideoYouTube url={q.video_url} />
+            {videoAtual ? (
+              <VideoYouTube url={videoAtual} />
+            ) : (
+              <p className={styles.videoBloqueado}>
+                🔒 Resolução em vídeo exclusiva para assinantes.
+              </p>
+            )}
           </div>
         )}
 

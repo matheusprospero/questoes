@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  criarQuestao, atualizarQuestao, buscarQuestao,
+  criarQuestao, atualizarQuestao, buscarQuestao, buscarVideoQuestao,
   listarDisciplinas, listarAssuntos, listarBancas, listarOrgaos,
   criarAssunto, criarBanca, criarOrgao,
 } from '../../services/questoes'
@@ -39,6 +39,12 @@ export default function QuestaoForm() {
     queryFn: () => buscarQuestao(id),
     enabled: isEdicao,
   })
+  // A URL do vídeo vem separada (tabela protegida); admin sempre consegue ler
+  const { data: videoUrl } = useQuery({
+    queryKey: ['questao-video', id],
+    queryFn: () => buscarVideoQuestao(id),
+    enabled: isEdicao,
+  })
 
   useEffect(() => {
     if (questaoExistente) {
@@ -46,7 +52,7 @@ export default function QuestaoForm() {
         tipo: questaoExistente.tipo,
         enunciado: questaoExistente.enunciado,
         comentario: questaoExistente.comentario || '',
-        video_url: questaoExistente.video_url || '',
+        video_url: videoUrl || '',
         disciplina_id: questaoExistente.disciplina_id || '',
         assunto_id: questaoExistente.assunto_id || '',
         banca_id: questaoExistente.banca_id || '',
@@ -66,7 +72,7 @@ export default function QuestaoForm() {
         })))
       }
     }
-  }, [questaoExistente])
+  }, [questaoExistente, videoUrl])
 
   const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
   const { data: assuntos = [] } = useQuery({
@@ -161,6 +167,7 @@ export default function QuestaoForm() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['questoes'] })
       queryClient.invalidateQueries({ queryKey: ['questao', data.id] })
+      queryClient.invalidateQueries({ queryKey: ['questao-video', data.id] })
       toast.success(isEdicao ? 'Questão atualizada!' : 'Questão criada!')
       navigate(`/questoes/${data.id}`)
     },

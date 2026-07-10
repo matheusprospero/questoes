@@ -1,20 +1,31 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { listarAlunos } from '../../services/alunos'
-import { Users, Copy, Download, Search } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { listarAlunos, definirAssinante } from '../../services/alunos'
+import { Users, Copy, Download, Search, Star } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Alunos.module.css'
 
 export default function Alunos() {
   const [busca, setBusca] = useState('')
+  const queryClient = useQueryClient()
 
   const { data: perfis = [], isLoading } = useQuery({
     queryKey: ['alunos'],
     queryFn: listarAlunos,
   })
 
+  const assinatura = useMutation({
+    mutationFn: ({ id, assinante }) => definirAssinante(id, assinante),
+    onSuccess: (_, { assinante }) => {
+      queryClient.invalidateQueries({ queryKey: ['alunos'] })
+      toast.success(assinante ? 'Assinante liberado — já vê os vídeos.' : 'Assinatura retirada.')
+    },
+    onError: (err) => toast.error('Erro: ' + err.message),
+  })
+
   const alunos = perfis.filter(p => p.papel !== 'admin')
   const emails = alunos.map(a => a.email).filter(Boolean)
+  const assinantes = alunos.filter(a => a.assinante).length
 
   const filtrados = perfis.filter(p => {
     const t = busca.toLowerCase()
@@ -28,11 +39,12 @@ export default function Alunos() {
   }
 
   function exportarCSV() {
-    const linhas = [['nome', 'email', 'papel', 'cadastro']]
+    const linhas = [['nome', 'email', 'papel', 'assinante', 'cadastro']]
     perfis.forEach(p => linhas.push([
       p.nome ?? '',
       p.email ?? '',
       p.papel ?? '',
+      p.assinante ? 'sim' : 'não',
       p.criado_em ? new Date(p.criado_em).toLocaleString('pt-BR') : '',
     ]))
     const csv = linhas.map(l => l.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n')
@@ -52,6 +64,7 @@ export default function Alunos() {
           <h1 className={styles.titulo}>Alunos</h1>
           <p className={styles.subtitulo}>
             {alunos.length} aluno(s) cadastrado(s){emails.length > 0 && ` · ${emails.length} com e-mail`}
+            {` · ${assinantes} assinante(s)`}
           </p>
         </div>
         <div className={styles.acoes}>
@@ -91,6 +104,7 @@ export default function Alunos() {
                 <th>Nome</th>
                 <th>E-mail</th>
                 <th>Papel</th>
+                <th>Assinante</th>
                 <th>Cadastro</th>
               </tr>
             </thead>
@@ -103,6 +117,19 @@ export default function Alunos() {
                     <span className={`${styles.badge} ${p.papel === 'admin' ? styles.badgeAdmin : ''}`}>
                       {p.papel === 'admin' ? 'Professor' : 'Aluno'}
                     </span>
+                  </td>
+                  <td>
+                    {p.papel === 'admin' ? (
+                      <span className={styles.assinanteFixo}>Acesso total</span>
+                    ) : (
+                      <button
+                        className={`${styles.assinanteBtn} ${p.assinante ? styles.assinanteOn : ''}`}
+                        onClick={() => assinatura.mutate({ id: p.id, assinante: !p.assinante })}
+                        disabled={assinatura.isPending}
+                        title={p.assinante ? 'Retirar acesso aos vídeos' : 'Liberar acesso aos vídeos'}>
+                        <Star size={13} /> {p.assinante ? 'Assinante' : 'Liberar'}
+                      </button>
+                    )}
                   </td>
                   <td>{p.criado_em ? new Date(p.criado_em).toLocaleDateString('pt-BR') : '—'}</td>
                 </tr>
