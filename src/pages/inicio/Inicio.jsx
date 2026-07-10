@@ -8,7 +8,7 @@ import { listarSimuladosDestaque } from '../../services/simulados'
 import {
   BookOpen, PlayCircle, BarChart2, ClipboardList,
   ArrowRight, Search, Pencil, ChevronRight, Compass,
-  Sparkles, Trophy, Play,
+  Sparkles, Trophy, Play, Lock,
 } from 'lucide-react'
 import styles from './Inicio.module.css'
 
@@ -97,6 +97,8 @@ const RECURSOS = [
     titulo: 'Resolução em Vídeo',
     texto: 'Assista às resoluções em vídeo e entenda cada questão na prática.',
     cta: 'Ver questões',
+    emBreve: true,
+    badge: 'Em breve · apenas assinantes',
   },
   {
     to: '/estatisticas',
@@ -231,13 +233,22 @@ export default function Inicio() {
       {/* ── Cards de recursos ── */}
       <section className={styles.recursos}>
         {RECURSOS.map(r => (
-          <div key={r.to} className={styles.recursoCard}>
+          <div key={r.to} className={`${styles.recursoCard} ${r.emBreve ? styles.recursoEmBreve : ''}`}>
             <div className={styles.recursoIcone}><r.icon size={22} /></div>
-            <h3 className={styles.recursoTitulo}>{r.titulo}</h3>
+            <h3 className={styles.recursoTitulo}>
+              {r.titulo}
+              {r.badge && <span className={styles.recursoBadge}>{r.badge}</span>}
+            </h3>
             <p className={styles.recursoTexto}>{r.texto}</p>
-            <Link to={r.to} className={styles.recursoCta}>
-              {r.cta} <ArrowRight size={14} />
-            </Link>
+            {r.emBreve ? (
+              <span className={styles.recursoCtaBloqueado}>
+                <Lock size={13} /> Em breve
+              </span>
+            ) : (
+              <Link to={r.to} className={styles.recursoCta}>
+                {r.cta} <ArrowRight size={14} />
+              </Link>
+            )}
           </div>
         ))}
       </section>

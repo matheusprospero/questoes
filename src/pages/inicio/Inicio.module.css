@@ -221,6 +221,45 @@
   font-size: 15.5px;
   font-weight: 800;
   color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.recursoBadge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fcd34d;
+  white-space: nowrap;
+}
+
+/* Card "em breve": levemente esmaecido e sem hover-elevação */
+.recursoEmBreve { opacity: 0.82; }
+.recursoEmBreve:hover {
+  transform: none;
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+.recursoEmBreve .recursoIcone {
+  background: var(--bg-subtle);
+  border-color: var(--border-default);
+  color: var(--text-tertiary);
+}
+
+.recursoCtaBloqueado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-tertiary);
 }
 
 .recursoTexto {
