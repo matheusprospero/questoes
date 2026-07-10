@@ -34,6 +34,7 @@ export default function Questoes() {
   const [buscaTexto, setBuscaTexto] = useState('')
   const [mostrarFiltros, setMostrarFiltros] = useState(true)
   const [verTodas, setVerTodas] = useState(false)
+  const [mostrarGabarito, setMostrarGabarito] = useState(false)
   const [expandidas, setExpandidas] = useState(new Set())
   const [questaoParaSimulado, setQuestaoParaSimulado] = useState(null)
   const [simuladoSelected, setSimuladoSelected] = useState(null)
@@ -371,6 +372,17 @@ export default function Questoes() {
         </div>
       )}
 
+      {!explorando && !isLoading && questoesFiltradas.length > 0 && (
+        <label className={styles.checkGabarito}>
+          <input
+            type="checkbox"
+            checked={mostrarGabarito}
+            onChange={e => setMostrarGabarito(e.target.checked)}
+          />
+          Mostrar alternativa correta
+        </label>
+      )}
+
       {!explorando && (isLoading ? (
         <div className={styles.loading}>Carregando questões...</div>
       ) : questoesFiltradas.length === 0 ? (
@@ -435,16 +447,17 @@ export default function Questoes() {
                       <div className={styles.alternativas}>
                         <p className={styles.label}>Alternativas:</p>
                         {q.alternativas.map(alt => (
-                          <div key={alt.id} className={`${styles.altItem} ${alt.correta ? styles.altCorreta : ''}`}>
+                          <div key={alt.id}
+                            className={`${styles.altItem} ${mostrarGabarito && alt.correta ? styles.altCorreta : ''}`}>
                             <span className={styles.altLetra}>{alt.letra})</span>
                             <span dangerouslySetInnerHTML={{ __html: alt.texto }} />
-                            {alt.correta && <CheckCircle size={14} className={styles.checkIcon} />}
+                            {mostrarGabarito && alt.correta && <CheckCircle size={14} className={styles.checkIcon} />}
                           </div>
                         ))}
                       </div>
                     )}
 
-                    {q.tipo === 'certo_errado' && (
+                    {q.tipo === 'certo_errado' && mostrarGabarito && (
                       <div className={styles.gabarito}>
                         <p className={styles.label}>Gabarito:</p>
                         <p style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
