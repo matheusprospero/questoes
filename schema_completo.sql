@@ -211,6 +211,29 @@ create table simulado_questoes (
   primary key (simulado_id, questao_id)
 );
 
+-- Aulas: teoria (blocos de texto/vídeo) + questões do mesmo tema
+create table aulas (
+  id            uuid primary key default gen_random_uuid(),
+  usuario_id    uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  titulo        text not null,
+  descricao     text,
+  disciplina_id uuid references disciplinas(id) on delete set null,
+  conteudo      jsonb not null default '[]',   -- blocos: [{tipo:'texto',html} | {tipo:'video',url,titulo}]
+  publicada     boolean not null default false,
+  criado_em     timestamptz not null default now(),
+  atualizado_em timestamptz not null default now()
+);
+
+create index idx_aulas_usuario    on aulas(usuario_id);
+create index idx_aulas_disciplina on aulas(disciplina_id);
+
+create table aula_questoes (
+  aula_id    uuid not null references aulas(id)    on delete cascade,
+  questao_id uuid not null references questoes(id) on delete cascade,
+  ordem      int not null default 0,
+  primary key (aula_id, questao_id)
+);
+
 create table favoritos (
   id         uuid primary key default gen_random_uuid(),
   usuario_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
@@ -250,6 +273,8 @@ alter table cadernos             enable row level security;
 alter table caderno_questoes     enable row level security;
 alter table simulados            enable row level security;
 alter table simulado_questoes    enable row level security;
+alter table aulas                enable row level security;
+alter table aula_questoes        enable row level security;
 alter table favoritos            enable row level security;
 alter table respostas            enable row level security;
 
@@ -333,6 +358,21 @@ create policy "leitura_itens_propostos" on simulado_questoes for select to authe
   using (exists (
     select 1 from simulados s
     where s.id = simulado_id and s.proposto = true and usuario_eh_admin(s.usuario_id)
+  ));
+
+-- Aulas: o professor gerencia as suas; alunos leem as publicadas
+create policy "dono_total" on aulas for all to authenticated
+  using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
+create policy "leitura_publicadas" on aulas for select to authenticated
+  using (publicada = true and usuario_eh_admin(usuario_id));
+
+create policy "dono_via_aula" on aula_questoes for all to authenticated
+  using (exists (select 1 from aulas a where a.id = aula_id and a.usuario_id = auth.uid()))
+  with check (exists (select 1 from aulas a where a.id = aula_id and a.usuario_id = auth.uid()));
+create policy "leitura_itens_publicadas" on aula_questoes for select to authenticated
+  using (exists (
+    select 1 from aulas a
+    where a.id = aula_id and a.publicada = true and usuario_eh_admin(a.usuario_id)
   ));
 
 -- ============================================================================

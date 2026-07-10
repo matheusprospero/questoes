@@ -9,6 +9,7 @@ import {
   montarRecomendadas, amostraDiversificada,
 } from '../../services/estudo'
 import { buscarSimulado } from '../../services/simulados'
+import { buscarAula } from '../../services/aulas'
 import VideoYouTube from '../../components/VideoYouTube'
 import {
   Play, CheckCircle, XCircle, ChevronRight, RotateCcw, BarChart2, BookOpen, Youtube, Sparkles,
@@ -79,6 +80,29 @@ export default function Estudo() {
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simuladoId])
+
+  // ?aula=<id> → resolve as questões daquela aula
+  const aulaId = searchParams.get('aula')
+  const [carregandoAula, setCarregandoAula] = useState(!!aulaId)
+  useEffect(() => {
+    if (!aulaId) return
+    ;(async () => {
+      try {
+        const aula = await buscarAula(aulaId)
+        const questoes = (aula.questoes || []).filter(temGabarito)
+        if (questoes.length === 0) {
+          toast.error('Esta aula não tem questões com gabarito para resolver.')
+          return
+        }
+        await comecar(questoes, 'estudo')
+      } catch (err) {
+        toast.error('Não foi possível abrir a aula: ' + err.message)
+      } finally {
+        setCarregandoAula(false)
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aulaId])
 
   const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
   const { data: assuntos = [] } = useQuery({
@@ -211,10 +235,12 @@ export default function Estudo() {
 
   // ══════════════ FASE: CONFIG ══════════════
   if (fase === 'config') {
-    if (carregandoSimulado) {
+    if (carregandoSimulado || carregandoAula) {
       return (
         <div className={styles.page}>
-          <div className={styles.carregandoSimulado}>Abrindo simulado...</div>
+          <div className={styles.carregandoSimulado}>
+            {carregandoAula ? 'Abrindo aula...' : 'Abrindo simulado...'}
+          </div>
         </div>
       )
     }

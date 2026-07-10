@@ -12,6 +12,9 @@ import SimuladoDetalhe from './pages/simulados/SimuladoDetalhe'
 import RelatorioSimulado from './pages/simulados/RelatorioSimulado'
 import Cadernos from './pages/cadernos/Cadernos'
 import CadernoDetalhe from './pages/cadernos/CadernoDetalhe'
+import Aulas from './pages/aulas/Aulas'
+import AulaForm from './pages/aulas/AulaForm'
+import AulaDetalhe from './pages/aulas/AulaDetalhe'
 import Favoritos from './pages/favoritos/Favoritos'
 import Estudo from './pages/estudo/Estudo'
 import Estatisticas from './pages/estudo/Estatisticas'
@@ -38,6 +41,10 @@ const router = createBrowserRouter([
       { path: 'simulados/:id/relatorio', element: <RotaProtegida somenteAdmin><RelatorioSimulado /></RotaProtegida> },
       { path: 'cadernos',             element: <Cadernos /> },
       { path: 'cadernos/:id',         element: <CadernoDetalhe /> },
+      { path: 'aulas',                element: <Aulas /> },
+      { path: 'aulas/nova',           element: <RotaProtegida somenteAdmin><AulaForm /></RotaProtegida> },
+      { path: 'aulas/:id',            element: <AulaDetalhe /> },
+      { path: 'aulas/:id/editar',     element: <RotaProtegida somenteAdmin><AulaForm /></RotaProtegida> },
       { path: 'favoritos',           element: <Favoritos /> },
       { path: 'estudo',              element: <Estudo /> },
       { path: 'estatisticas',        element: <Estatisticas /> },
