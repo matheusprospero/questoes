@@ -26,6 +26,18 @@
 .btnSecondary:hover { background: var(--bg-subtle); }
 .btnSecondary:disabled { opacity: 0.6; cursor: not-allowed; }
 
+.btnRevisada {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnRevisada:hover { background: var(--bg-subtle); border-color: #22c55e; color: #15803d; }
+.btnRevisadaOn {
+  background: #dcfce7; border-color: #22c55e; color: #15803d; font-weight: 600;
+}
+.btnRevisadaOn:hover { background: #bbf7d0; color: #166534; }
+
 .btnPrimary {
   display: flex; align-items: center; gap: 6px;
   padding: 8px 14px; font-size: 13px; font-weight: 500; font-family: var(--font-sans);

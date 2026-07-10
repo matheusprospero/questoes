@@ -137,5 +137,29 @@
 .imgBtn:hover:not(:disabled) { border-color: var(--color-primary); }
 .imgBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+.imgBtnAtivo {
+  border-color: var(--color-primary); background: var(--color-primary);
+  color: #fff;
+}
+.imgBtnAtivo:hover:not(:disabled) { border-color: var(--color-primary); }
+
+.imgStepper {
+  display: inline-flex; align-items: center; gap: 2px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+  padding: 1px;
+}
+.imgStepBtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 22px; padding: 0;
+  background: transparent; color: var(--text-primary);
+  border: none; border-radius: var(--radius-sm); cursor: pointer;
+}
+.imgStepBtn:hover { background: var(--color-primary-light); color: var(--color-primary-dark); }
+.imgStepValor {
+  min-width: 40px; text-align: center;
+  font-size: 11.5px; font-weight: 700; color: var(--text-primary);
+}
+
 .imgBtnDanger { color: var(--color-danger); }
 .imgBtnDanger:hover { background: var(--color-danger-bg); border-color: #fecaca; }

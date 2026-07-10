@@ -8,7 +8,7 @@ import {
 } from '../../services/questoes'
 import RichEditor from '../../components/RichEditor'
 import VideoYouTube, { extrairIdYouTube } from '../../components/VideoYouTube'
-import { Plus, Trash2, ChevronLeft, Save, CheckCircle, XCircle, Youtube } from 'lucide-react'
+import { Plus, Trash2, ChevronLeft, Save, CheckCircle, XCircle, Youtube, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './QuestaoForm.module.css'
 
@@ -29,6 +29,7 @@ export default function QuestaoForm() {
     tipo: 'multipla_escolha', enunciado: '', comentario: '', video_url: '',
     disciplina_id: '', assunto_id: '', banca_id: '', orgao_id: '',
     ano: '', cargo: '', nivel: '', dificuldade: 3, gabarito_certo: null,
+    revisada: false,
   })
   const [alternativas, setAlternativas] = useState(novasAlternativas())
 
@@ -55,6 +56,7 @@ export default function QuestaoForm() {
         nivel: questaoExistente.nivel || '',
         dificuldade: questaoExistente.dificuldade || 3,
         gabarito_certo: questaoExistente.gabarito_certo,
+        revisada: !!questaoExistente.revisada,
       })
       if (questaoExistente.alternativas?.length) {
         setAlternativas(questaoExistente.alternativas.map((a, i) => ({
@@ -147,6 +149,7 @@ export default function QuestaoForm() {
         nivel: form.nivel || null,
         dificuldade: form.dificuldade,
         gabarito_certo: form.tipo === 'certo_errado' ? form.gabarito_certo : null,
+        revisada: form.revisada,
       }
 
       if (isEdicao) {
@@ -190,6 +193,12 @@ export default function QuestaoForm() {
         </button>
         <h1 className={styles.titulo}>{isEdicao ? 'Editar questão' : 'Nova questão'}</h1>
         <div className={styles.topbarAcoes}>
+          <button type="button"
+            className={`${styles.btnRevisada} ${form.revisada ? styles.btnRevisadaOn : ''}`}
+            onClick={() => setForm(f => ({ ...f, revisada: !f.revisada }))}
+            title="Marca a questão como conferida (salva ao clicar em Salvar questão)">
+            <Check size={14} /> {form.revisada ? 'Revisada' : 'Marcar como revisada'}
+          </button>
           <button className={styles.btnPrimary}
             onClick={() => salvar.mutate()}
             disabled={salvar.isPending}>

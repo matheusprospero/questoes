@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { uploadImagem } from '../services/upload'
 import {
   Image, Bold, Italic, List, ChevronDown, ChevronUp,
-  RefreshCw, Trash2, AlignCenter,
+  RefreshCw, Trash2, AlignCenter, Minus, Plus,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './RichEditor.module.css'
@@ -86,6 +86,7 @@ export default function RichEditor({ value = '', onChange, label = '', placehold
   const [mostraSimbolos, setMostraSimbolos] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [imgSel, setImgSel] = useState(null) // <img> selecionada para edição
+  const [imgLargura, setImgLargura] = useState(25) // largura % da imagem selecionada
   const lastSelection = useRef(null)
   const isFocused = useRef(false)
 
@@ -161,6 +162,8 @@ export default function RichEditor({ value = '', onChange, label = '', placehold
       limparSelecaoImg()
       e.target.classList.add(styles.imgSelecionada)
       setImgSel(e.target)
+      const m = /(\d+(?:\.\d+)?)%/.exec(e.target.style.width || '')
+      setImgLargura(m ? Math.round(Number(m[1])) : 100)
     } else if (imgSel) {
       limparSelecaoImg()
       setImgSel(null)
@@ -172,7 +175,17 @@ export default function RichEditor({ value = '', onChange, label = '', placehold
     imgSel.style.width = pct ? `${pct}%` : ''
     imgSel.style.maxWidth = '100%'
     imgSel.style.height = 'auto'
+    setImgLargura(pct ?? 100)
     emitir()
+  }
+
+  // Ajuste fino da largura pelo stepper (+/-), limitado a 5–100%
+  function ajustarLargura(delta) {
+    if (!imgSel) return
+    const atual = /(\d+(?:\.\d+)?)%/.exec(imgSel.style.width || '')
+    const base = atual ? Number(atual[1]) : imgLargura
+    const nova = Math.min(100, Math.max(5, Math.round(base + delta)))
+    larguraImg(nova)
   }
 
   function centralizarImg() {
@@ -288,13 +301,27 @@ export default function RichEditor({ value = '', onChange, label = '', placehold
       {imgSel && (
         <div className={styles.imgBar}>
           <span className={styles.imgBarLabel}>Imagem selecionada — largura:</span>
-          {[25, 50, 75, 100].map(p => (
-            <button key={p} type="button" className={styles.imgBtn}
+          {[10, 25, 50, 75, 100].map(p => (
+            <button key={p} type="button"
+              className={`${styles.imgBtn} ${imgLargura === p ? styles.imgBtnAtivo : ''}`}
               onMouseDown={e => e.preventDefault()}
               onClick={() => larguraImg(p)}>
               {p}%
             </button>
           ))}
+          <div className={styles.imgStepper}>
+            <button type="button" className={styles.imgStepBtn}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => ajustarLargura(-5)} title="Diminuir 5%">
+              <Minus size={12} />
+            </button>
+            <span className={styles.imgStepValor}>{imgLargura}%</span>
+            <button type="button" className={styles.imgStepBtn}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => ajustarLargura(5)} title="Aumentar 5%">
+              <Plus size={12} />
+            </button>
+          </div>
           <button type="button" className={styles.imgBtn}
             onMouseDown={e => e.preventDefault()}
             onClick={() => larguraImg(null)}>
