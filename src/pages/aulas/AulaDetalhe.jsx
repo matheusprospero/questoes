@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
 import { buscarAula } from '../../services/aulas'
@@ -5,6 +6,7 @@ import { resumoEnunciado, rotuloQuestao } from '../../services/questoes'
 import { useAuth } from '../../contexts/AuthContext'
 import VideoYouTube from '../../components/VideoYouTube'
 import BloqueioAssinante from '../../components/BloqueioAssinante'
+import QuestaoResolver from '../../components/QuestaoResolver'
 import {
   ChevronLeft, Pencil, Play, GraduationCap, PlayCircle,
 } from 'lucide-react'
@@ -17,6 +19,7 @@ export default function AulaDetalhe() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { isAdmin, isAssinante } = useAuth()
+  const [resolvendo, setResolvendo] = useState(false)
 
   const { data: aula, isLoading, error } = useQuery({
     queryKey: ['aula', id],
@@ -87,31 +90,38 @@ export default function AulaDetalhe() {
       )}
 
       {/* Questões */}
-      {aula.questoes.length > 0 && (
+      {questoesResolviveis.length > 0 && (
         <section className={styles.questoesSec}>
-          <div className={styles.questoesHead}>
-            <h2 className={styles.secaoTitulo}>Questões do tema</h2>
-            {questoesResolviveis.length > 0 && (
-              <button className={styles.btnResolver} onClick={() => navigate(`/estudo?aula=${id}`)}>
+          <h2 className={styles.secaoTitulo}>Questões do tema</h2>
+
+          {resolvendo ? (
+            <QuestaoResolver
+              questoes={questoesResolviveis}
+              contexto={{ assunto_id: aula.assunto_id, disciplina_id: aula.disciplina_id }}
+            />
+          ) : (
+            <div className={styles.resolverIntro}>
+              <p className={styles.resolverIntroTexto}>
+                Teste o que você aprendeu: responda <strong>{questoesResolviveis.length} questão(ões)</strong> deste
+                tema, sem ver o gabarito, e confira seu desempenho no final.
+              </p>
+              <button className={styles.btnResolver} onClick={() => setResolvendo(true)}>
                 <Play size={15} /> Resolver as {questoesResolviveis.length} questões
               </button>
-            )}
-          </div>
-          <p className={styles.questoesHint}>
-            Clique em “Resolver” para responder as questões sem ver o gabarito e conferir seu desempenho no final.
-          </p>
+            </div>
+          )}
 
-          <div className={styles.lista}>
-            {aula.questoes.map((q, i) => (
-              <div key={q.id}
-                className={`${styles.qLinha} ${isAdmin ? styles.qLinhaAdmin : ''}`}
-                onClick={isAdmin ? () => navigate(`/questoes/${q.id}`) : undefined}
-                title={isAdmin ? 'Ver questão (revisão)' : undefined}>
-                <span className={styles.qNum}>{i + 1}</span>
-                <span className={styles.qResumo}>{resumoEnunciado(q.enunciado, 120) || rotuloQuestao(q)}</span>
-              </div>
-            ))}
-          </div>
+          {isAdmin && !resolvendo && (
+            <div className={styles.lista}>
+              {aula.questoes.map((q, i) => (
+                <div key={q.id} className={`${styles.qLinha} ${styles.qLinhaAdmin}`}
+                  onClick={() => navigate(`/questoes/${q.id}`)} title="Ver questão (revisão)">
+                  <span className={styles.qNum}>{i + 1}</span>
+                  <span className={styles.qResumo}>{resumoEnunciado(q.enunciado, 120) || rotuloQuestao(q)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
     </div>
