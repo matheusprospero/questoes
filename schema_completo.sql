@@ -225,12 +225,14 @@ create table respostas (
   resposta      text not null,             -- letra (A-E) ou 'C'/'E' no certo_errado
   acertou       boolean not null,
   origem        text not null default 'estudo' check (origem in ('estudo', 'simulado')),
+  simulado_id   uuid references simulados(id) on delete set null, -- de qual simulado veio (relatório)
   respondido_em timestamptz not null default now()
 );
 
-create index idx_respostas_usuario on respostas(usuario_id);
-create index idx_respostas_questao on respostas(questao_id);
-create index idx_respostas_data    on respostas(respondido_em);
+create index idx_respostas_usuario  on respostas(usuario_id);
+create index idx_respostas_questao  on respostas(questao_id);
+create index idx_respostas_data     on respostas(respondido_em);
+create index idx_respostas_simulado on respostas(simulado_id);
 
 -- ============================================================================
 -- RLS
@@ -298,6 +300,15 @@ create policy "dono_total" on favoritos for all to authenticated
   using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
 create policy "dono_total" on respostas for all to authenticated
   using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
+
+-- Professor lê as respostas dos simulados que ele criou (para o relatório)
+create policy "prof_le_respostas_simulado" on respostas for select to authenticated
+  using (
+    simulado_id is not null and exists (
+      select 1 from simulados s
+      where s.id = respostas.simulado_id and s.usuario_id = auth.uid()
+    )
+  );
 
 -- Itens de caderno/simulado: acesso via dono do pai
 create policy "dono_via_caderno" on caderno_questoes for all to authenticated

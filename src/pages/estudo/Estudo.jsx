@@ -165,6 +165,7 @@ export default function Estudo() {
         resposta: selecionada,
         acertou,
         origem: origemSessao,
+        simulado_id: origemSessao === 'simulado' ? simuladoId : null,
       })
       queryClient.invalidateQueries({ queryKey: ['respostas'] })
     } catch (err) {

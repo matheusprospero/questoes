@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { listarSimulados, deletarSimulado, criarSimulado, buscarSimulado, alternarProposto } from '../../services/simulados'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
-import { Plus, Search, Eye, Pencil, Trash2, FileText, Copy, Play, Megaphone } from 'lucide-react'
+import { Plus, Search, Eye, Pencil, Trash2, FileText, Copy, Play, Megaphone, BarChart3 } from 'lucide-react'
 import GuiaUso from '../../components/GuiaUso'
 import styles from './Simulados.module.css'
 
@@ -177,6 +177,13 @@ export default function Simulados() {
                           disabled={propor.isPending}
                           title={s.proposto ? 'Retirar proposta (só você verá)' : 'Propor para todos os alunos'}>
                           <Megaphone size={15} />
+                        </button>
+                      )}
+                      {isAdmin && s.proposto && (
+                        <button className={styles.iconBtn}
+                          onClick={() => navigate(`/simulados/${s.id}/relatorio`)}
+                          title="Relatório de desempenho dos alunos">
+                          <BarChart3 size={15} />
                         </button>
                       )}
                       <button className={styles.iconBtn} onClick={() => navigate(`/estudo?simulado=${s.id}`)} title="Resolver online">

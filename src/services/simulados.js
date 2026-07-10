@@ -131,6 +131,105 @@ export async function deletarSimulado(id) {
   if (error) throw error
 }
 
+// ── Relatório de desempenho (simulados propostos) ─────────────
+// Agrega as respostas dos alunos ligadas a este simulado (respostas.simulado_id).
+// Só o dono (professor) consegue ler as respostas dos outros (RLS).
+export async function relatorioSimulado(id) {
+  const simulado = await buscarSimulado(id)
+
+  const { data: respostas, error } = await supabase
+    .from('respostas')
+    .select('usuario_id, questao_id, resposta, acertou, respondido_em')
+    .eq('simulado_id', id)
+  if (error) throw error
+
+  // Nomes/e-mails dos participantes (admin lê perfis)
+  const idsAlunos = [...new Set((respostas || []).map(r => r.usuario_id))]
+  let perfis = []
+  if (idsAlunos.length) {
+    const { data } = await supabase
+      .from('perfis')
+      .select('id, nome, email')
+      .in('id', idsAlunos)
+    perfis = data || []
+  }
+  const perfilPor = new Map(perfis.map(p => [p.id, p]))
+
+  const gabaritoLetra = (q) =>
+    q.tipo === 'certo_errado'
+      ? (q.gabarito_certo ? 'C' : 'E')
+      : (q.alternativas.find(a => a.correta)?.letra ?? null)
+
+  // ── Por questão ──
+  const porQuestao = simulado.questoes.map((q, i) => {
+    const doQ = (respostas || []).filter(r => r.questao_id === q.id)
+    const distribuicao = {}
+    for (const r of doQ) distribuicao[r.resposta] = (distribuicao[r.resposta] || 0) + 1
+    const acertos = doQ.filter(r => r.acertou).length
+    const total = doQ.length
+    const maisMarcada = Object.entries(distribuicao)
+      .sort((a, b) => b[1] - a[1])[0] // [letra, count] ou undefined
+    return {
+      numero: i + 1,
+      id: q.id,
+      enunciado: q.enunciado,
+      tipo: q.tipo,
+      disciplina: q.disciplinas?.nome ?? null,
+      alternativas: q.alternativas,
+      letraCorreta: gabaritoLetra(q),
+      total,
+      acertos,
+      erros: total - acertos,
+      taxaAcerto: total ? Math.round((acertos / total) * 100) : null,
+      distribuicao,
+      maisMarcada: maisMarcada ? { letra: maisMarcada[0], qtd: maisMarcada[1] } : null,
+    }
+  })
+
+  // ── Por aluno ──
+  const porAlunoMap = new Map()
+  for (const r of (respostas || [])) {
+    const g = porAlunoMap.get(r.usuario_id) ?? { id: r.usuario_id, respondidas: 0, acertos: 0, ultima: null }
+    g.respondidas += 1
+    if (r.acertou) g.acertos += 1
+    if (!g.ultima || r.respondido_em > g.ultima) g.ultima = r.respondido_em
+    porAlunoMap.set(r.usuario_id, g)
+  }
+  const totalQuestoes = simulado.questoes.length
+  const porAluno = [...porAlunoMap.values()].map(a => {
+    const perfil = perfilPor.get(a.id)
+    return {
+      ...a,
+      nome: perfil?.nome || 'Aluno',
+      email: perfil?.email || '',
+      taxa: a.respondidas ? Math.round((a.acertos / a.respondidas) * 100) : 0,
+      completou: totalQuestoes ? a.respondidas >= totalQuestoes : false,
+    }
+  }).sort((a, b) => b.taxa - a.taxa || b.respondidas - a.respondidas)
+
+  // ── Totais ──
+  const totalRespostas = (respostas || []).length
+  const totalAcertos = (respostas || []).filter(r => r.acertou).length
+  const comStats = porQuestao.filter(q => q.total > 0)
+  const maisDificeis = [...comStats].sort((a, b) => a.taxaAcerto - b.taxaAcerto).slice(0, 3)
+  const maisFaceis = [...comStats].sort((a, b) => b.taxaAcerto - a.taxaAcerto).slice(0, 3)
+
+  return {
+    simulado: { id: simulado.id, titulo: simulado.titulo, proposto: simulado.proposto },
+    totalQuestoes,
+    participantes: idsAlunos.length,
+    concluintes: porAluno.filter(a => a.completou).length,
+    totalRespostas,
+    totalAcertos,
+    totalErros: totalRespostas - totalAcertos,
+    taxaAcertoGeral: totalRespostas ? Math.round((totalAcertos / totalRespostas) * 100) : null,
+    porQuestao,
+    porAluno,
+    maisDificeis,
+    maisFaceis,
+  }
+}
+
 export async function adicionarQuestaoSimulado(simuladoId, questaoId) {
   const { data: maxOrdem } = await supabase
     .from('simulado_questoes')

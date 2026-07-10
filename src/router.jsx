@@ -9,6 +9,7 @@ import QuestaoDetalhe from './pages/questoes/QuestaoDetalhe'
 import Simulados from './pages/simulados/Simulados'
 import SimuladoForm from './pages/simulados/SimuladoForm'
 import SimuladoDetalhe from './pages/simulados/SimuladoDetalhe'
+import RelatorioSimulado from './pages/simulados/RelatorioSimulado'
 import Cadernos from './pages/cadernos/Cadernos'
 import CadernoDetalhe from './pages/cadernos/CadernoDetalhe'
 import Favoritos from './pages/favoritos/Favoritos'
@@ -32,8 +33,9 @@ const router = createBrowserRouter([
       { path: 'questoes/:id/editar', element: <RotaProtegida somenteAdmin><QuestaoForm /></RotaProtegida> },
       { path: 'simulados',            element: <Simulados /> },
       { path: 'simulados/novo',       element: <SimuladoForm /> },
-      { path: 'simulados/:id',        element: <SimuladoDetalhe /> },
-      { path: 'simulados/:id/editar', element: <SimuladoForm /> },
+      { path: 'simulados/:id',           element: <SimuladoDetalhe /> },
+      { path: 'simulados/:id/editar',    element: <SimuladoForm /> },
+      { path: 'simulados/:id/relatorio', element: <RotaProtegida somenteAdmin><RelatorioSimulado /></RotaProtegida> },
       { path: 'cadernos',             element: <Cadernos /> },
       { path: 'cadernos/:id',         element: <CadernoDetalhe /> },
       { path: 'favoritos',           element: <Favoritos /> },

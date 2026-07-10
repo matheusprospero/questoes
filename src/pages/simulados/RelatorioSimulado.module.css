@@ -1,0 +1,129 @@
+.page { max-width: 1000px; margin: 0 auto; }
+
+.topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.btnBack {
+  display: flex; align-items: center; gap: 4px;
+  padding: 7px 12px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnBack:hover { background: var(--bg-subtle); }
+.titulo { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; flex: 1; }
+.btnExport {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  background: var(--color-primary); color: #fff;
+  border: none; border-radius: var(--radius-md); cursor: pointer;
+}
+.btnExport:hover { background: var(--color-primary-dark); }
+
+.loading, .vazio {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 60px 20px; color: var(--text-tertiary); text-align: center;
+}
+.vazio p { color: var(--text-secondary); font-weight: 500; margin: 0; }
+.vazioHint { font-size: 12.5px; max-width: 460px; }
+
+/* KPIs */
+.kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px;
+}
+.kpi {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 16px; background: var(--bg-surface);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.kpiIcon { color: var(--color-primary); }
+.kpiValor { font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1.1; }
+.kpiLabel { font-size: 12px; color: var(--text-secondary); }
+
+/* Destaques */
+.destaques { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
+.destaqueCard {
+  padding: 16px; background: var(--bg-surface);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+}
+.destaqueTitulo {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 0 0 10px;
+}
+.destaqueLista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.destaqueLista li {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--text-secondary);
+}
+.pill {
+  flex-shrink: 0; font-size: 11px; font-weight: 700; padding: 2px 7px;
+  border-radius: var(--radius-full); color: #fff;
+}
+.pillErro { background: #dc2626; }
+.pillOk { background: #16a34a; }
+.semDado { font-size: 12.5px; color: var(--text-tertiary); margin: 0; }
+
+/* Seções */
+.secaoTitulo { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 4px 0 12px; }
+
+/* Tabela de alunos */
+.tabelaWrap {
+  overflow-x: auto; margin-bottom: 26px;
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+}
+.tabela { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
+.tabela th {
+  text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--text-tertiary); border-bottom: 1px solid var(--border-subtle);
+}
+.tabela td { padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); }
+.tabela tr:last-child td { border-bottom: none; }
+.tdPos { font-weight: 700; color: var(--text-tertiary); }
+.alunoNome { font-weight: 500; color: var(--text-primary); }
+.alunoEmail { font-size: 11.5px; color: var(--text-tertiary); }
+.taxaBadge { font-weight: 700; padding: 2px 8px; border-radius: var(--radius-full); }
+.taxaBadge[data-nivel="alto"]  { background: #dcfce7; color: #15803d; }
+.taxaBadge[data-nivel="medio"] { background: #fef9c3; color: #a16207; }
+.taxaBadge[data-nivel="baixo"] { background: #fee2e2; color: #b91c1c; }
+.statusOk { color: #15803d; font-weight: 500; }
+.statusParcial { color: var(--text-tertiary); }
+
+/* Questões */
+.questoes { display: flex; flex-direction: column; gap: 12px; }
+.qCard {
+  padding: 14px 16px; background: var(--bg-surface);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+}
+.qHead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.qNum { font-weight: 700; color: var(--color-primary); font-size: 13px; }
+.qEnun { flex: 1; font-size: 13px; color: var(--text-primary); min-width: 200px; }
+.qDisc {
+  font-size: 11px; padding: 2px 8px; border-radius: var(--radius-full);
+  background: var(--bg-subtle); color: var(--text-secondary);
+}
+.qMeta {
+  display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0 10px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.qTaxa { font-weight: 600; color: var(--text-primary); }
+.qGab strong, .qMeta strong { color: var(--text-primary); }
+
+.barras { display: flex; flex-direction: column; gap: 5px; }
+.barraRow { display: flex; align-items: center; gap: 8px; }
+.barraLetra {
+  flex-shrink: 0; width: 20px; text-align: center;
+  font-size: 12px; font-weight: 700; color: var(--text-secondary);
+}
+.barraLetraOk { color: #15803d; }
+.barraTrilho {
+  flex: 1; height: 16px; background: var(--bg-subtle);
+  border-radius: var(--radius-full); overflow: hidden;
+}
+.barraFill { height: 100%; background: var(--color-primary-mid); border-radius: var(--radius-full); min-width: 2px; }
+.barraFillOk { background: #22c55e; }
+.barraVal { flex-shrink: 0; width: 76px; font-size: 11.5px; color: var(--text-tertiary); text-align: right; }
+
+@media (max-width: 720px) {
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .destaques { grid-template-columns: 1fr; }
+}

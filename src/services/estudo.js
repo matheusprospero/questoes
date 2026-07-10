@@ -2,12 +2,13 @@ import { supabase } from './supabase'
 
 // ── Registro de respostas ─────────────────────────────────────
 
-export async function registrarResposta({ questao_id, resposta, acertou, origem = 'estudo' }) {
+export async function registrarResposta({ questao_id, resposta, acertou, origem = 'estudo', simulado_id = null }) {
   const { error } = await supabase.from('respostas').insert({
     questao_id,
     resposta,
     acertou,
     origem,
+    simulado_id,
   })
   if (error) throw error
 }
