@@ -411,14 +411,16 @@ export default function Questoes() {
             />
             Mostrar alternativa correta
           </label>
-          <label className={styles.checkGabarito}>
-            <input
-              type="checkbox"
-              checked={soComImagem}
-              onChange={e => setSoComImagem(e.target.checked)}
-            />
-            <ImageIcon size={13} /> Só questões com imagem
-          </label>
+          {isAdmin && (
+            <label className={styles.checkGabarito}>
+              <input
+                type="checkbox"
+                checked={soComImagem}
+                onChange={e => setSoComImagem(e.target.checked)}
+              />
+              <ImageIcon size={13} /> Só questões com imagem
+            </label>
+          )}
           {modoRevisao && (
             <label className={styles.checkGabarito}>
               <input
