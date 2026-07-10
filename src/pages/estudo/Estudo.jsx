@@ -84,6 +84,7 @@ export default function Estudo() {
   // ?aula=<id> → resolve as questões daquela aula
   const aulaId = searchParams.get('aula')
   const [carregandoAula, setCarregandoAula] = useState(!!aulaId)
+  const [aulaCtx, setAulaCtx] = useState(null) // { titulo, assunto_id, disciplina_id }
   useEffect(() => {
     if (!aulaId) return
     ;(async () => {
@@ -94,6 +95,7 @@ export default function Estudo() {
           toast.error('Esta aula não tem questões com gabarito para resolver.')
           return
         }
+        setAulaCtx({ titulo: aula.titulo, assunto_id: aula.assunto_id, disciplina_id: aula.disciplina_id })
         await comecar(questoes, 'estudo')
       } catch (err) {
         toast.error('Não foi possível abrir a aula: ' + err.message)
@@ -217,6 +219,26 @@ export default function Estudo() {
   function refazerErradasDaSessao() {
     const erradas = historico.filter(h => !h.acertou).map(h => h.questao)
     comecar(embaralhar(erradas))
+  }
+
+  // Mais questões do assunto/disciplina da aula (prioriza as ainda não feitas na sessão)
+  async function treinarMaisDoAssunto() {
+    if (!aulaCtx) return
+    setCarregando(true)
+    try {
+      const filtro = aulaCtx.assunto_id ? { assunto_id: aulaCtx.assunto_id }
+        : aulaCtx.disciplina_id ? { disciplina_id: aulaCtx.disciplina_id } : {}
+      const questoes = (await listarQuestoes(filtro)).filter(temGabarito)
+      const feitas = new Set(historico.map(h => h.questao.id))
+      const inedita = questoes.filter(q => !feitas.has(q.id))
+      const base = inedita.length > 0 ? inedita : questoes
+      if (base.length === 0) { toast.error('Nenhuma questão deste assunto disponível.'); return }
+      await comecar(embaralhar(base))
+    } catch (err) {
+      toast.error('Erro ao montar as questões: ' + err.message)
+    } finally {
+      setCarregando(false)
+    }
   }
 
   // Sessão nova com questões inéditas dos assuntos que o usuário errou
@@ -357,6 +379,11 @@ export default function Estudo() {
           </p>
 
           <div className={styles.resultadoBotoes}>
+            {aulaCtx && (
+              <button className={styles.btnComecar} onClick={treinarMaisDoAssunto} disabled={carregando}>
+                <BookOpen size={15} /> {carregando ? 'Buscando...' : `Mais questões ${aulaCtx.assunto_id ? 'deste assunto' : 'deste tema'}`}
+              </button>
+            )}
             {erradasSessao.length > 0 && (
               <button className={styles.btnComecar} onClick={refazerErradasDaSessao}>
                 <RotateCcw size={15} /> Refazer as {erradasSessao.length} erradas
@@ -412,6 +439,9 @@ export default function Estudo() {
           <span className={styles.progressoTexto}>
             {origemSessao === 'simulado' && tituloSimulado && (
               <span className={styles.tagSimulado}>{tituloSimulado}</span>
+            )}
+            {aulaCtx && origemSessao !== 'simulado' && (
+              <span className={styles.tagSimulado}>{aulaCtx.titulo}</span>
             )}
             Questão <strong>{indice + 1}</strong> de {sessao.length}
           </span>

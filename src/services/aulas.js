@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 const SELECT_AULA = `
   *,
   disciplinas(id, nome, cor),
+  assuntos(id, nome),
   aula_questoes(
     ordem,
     questoes(
@@ -63,6 +64,7 @@ function payloadAula(dados) {
     titulo: dados.titulo?.trim(),
     descricao: dados.descricao?.trim() || null,
     disciplina_id: dados.disciplina_id || null,
+    assunto_id: dados.assunto_id || null,
     conteudo: dados.conteudo || [],
   }
 }

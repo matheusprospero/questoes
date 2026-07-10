@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
 import { buscarAula } from '../../services/aulas'
@@ -7,8 +6,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import VideoYouTube from '../../components/VideoYouTube'
 import BloqueioAssinante from '../../components/BloqueioAssinante'
 import {
-  ChevronLeft, Pencil, Play, ChevronDown, ChevronUp, CheckCircle, XCircle,
-  GraduationCap, PlayCircle,
+  ChevronLeft, Pencil, Play, GraduationCap, PlayCircle,
 } from 'lucide-react'
 import styles from './AulaDetalhe.module.css'
 
@@ -19,21 +17,12 @@ export default function AulaDetalhe() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { isAdmin, isAssinante } = useAuth()
-  const [expandida, setExpandida] = useState(new Set())
 
   const { data: aula, isLoading, error } = useQuery({
     queryKey: ['aula', id],
     queryFn: () => buscarAula(id),
     enabled: isAssinante,
   })
-
-  function toggle(qid) {
-    setExpandida(s => {
-      const n = new Set(s)
-      n.has(qid) ? n.delete(qid) : n.add(qid)
-      return n
-    })
-  }
 
   if (!isAssinante) {
     return (
@@ -76,6 +65,7 @@ export default function AulaDetalhe() {
               {aula.disciplinas.nome}
             </span>
           )}
+          {aula.assuntos && <span className={styles.metaChip}>{aula.assuntos.nome}</span>}
           <span className={styles.metaChip}>{aula.questoes.length} questões</span>
         </div>
       </header>
@@ -107,49 +97,20 @@ export default function AulaDetalhe() {
               </button>
             )}
           </div>
+          <p className={styles.questoesHint}>
+            Clique em “Resolver” para responder as questões sem ver o gabarito e conferir seu desempenho no final.
+          </p>
 
           <div className={styles.lista}>
-            {aula.questoes.map((q, i) => {
-              const aberta = expandida.has(q.id)
-              const correta = q.alternativas?.find(a => a.correta)
-              return (
-                <div key={q.id} className={styles.qCard}>
-                  <button className={styles.qHead} onClick={() => toggle(q.id)}>
-                    <span className={styles.qNum}>{i + 1}</span>
-                    <span className={styles.qResumo}>{resumoEnunciado(q.enunciado, 110) || rotuloQuestao(q)}</span>
-                    {aberta ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  </button>
-                  {aberta && (
-                    <div className={styles.qBody}>
-                      <div className={styles.enunciado} dangerouslySetInnerHTML={{ __html: q.enunciado }} />
-                      {q.tipo === 'multipla_escolha' ? (
-                        <div className={styles.alternativas}>
-                          {q.alternativas.map(alt => (
-                            <div key={alt.id} className={`${styles.alt} ${alt.correta ? styles.altOk : ''}`}>
-                              <span className={styles.altLetra}>{alt.letra})</span>
-                              <span dangerouslySetInnerHTML={{ __html: alt.texto }} />
-                              {alt.correta && <CheckCircle size={14} className={styles.altIcon} />}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className={styles.gabCe}>
-                          Gabarito: {q.gabarito_certo
-                            ? <><CheckCircle size={15} className={styles.iconOk} /> Certo</>
-                            : <><XCircle size={15} className={styles.iconErr} /> Errado</>}
-                        </p>
-                      )}
-                      {q.comentario && (
-                        <div className={styles.comentario}>
-                          <p className={styles.comentLabel}>Comentário</p>
-                          <div dangerouslySetInnerHTML={{ __html: q.comentario }} />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+            {aula.questoes.map((q, i) => (
+              <div key={q.id}
+                className={`${styles.qLinha} ${isAdmin ? styles.qLinhaAdmin : ''}`}
+                onClick={isAdmin ? () => navigate(`/questoes/${q.id}`) : undefined}
+                title={isAdmin ? 'Ver questão (revisão)' : undefined}>
+                <span className={styles.qNum}>{i + 1}</span>
+                <span className={styles.qResumo}>{resumoEnunciado(q.enunciado, 120) || rotuloQuestao(q)}</span>
+              </div>
+            ))}
           </div>
         </section>
       )}

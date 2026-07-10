@@ -225,6 +225,7 @@ create table aulas (
   titulo        text not null,
   descricao     text,
   disciplina_id uuid references disciplinas(id) on delete set null,
+  assunto_id    uuid references assuntos(id)    on delete set null,
   conteudo      jsonb not null default '[]',   -- blocos: [{tipo:'texto',html} | {tipo:'video',url,titulo}]
   publicada     boolean not null default false,
   criado_em     timestamptz not null default now(),
@@ -233,6 +234,7 @@ create table aulas (
 
 create index idx_aulas_usuario    on aulas(usuario_id);
 create index idx_aulas_disciplina on aulas(disciplina_id);
+create index idx_aulas_assunto    on aulas(assunto_id);
 
 create table aula_questoes (
   aula_id    uuid not null references aulas(id)    on delete cascade,

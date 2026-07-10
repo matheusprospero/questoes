@@ -72,46 +72,18 @@
 .btnResolver:hover { background: var(--color-primary-dark); }
 
 .lista { display: flex; flex-direction: column; gap: 8px; }
-.qCard {
-  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-  background: var(--bg-surface); overflow: hidden;
+.questoesHint { font-size: 12.5px; color: var(--text-tertiary); margin: -6px 0 14px; }
+
+.qLinha {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  background: var(--bg-surface);
 }
-.qHead {
-  width: 100%; display: flex; align-items: center; gap: 10px; text-align: left;
-  padding: 12px 14px; background: transparent; border: none; cursor: pointer; color: inherit;
-}
-.qHead:hover { background: var(--bg-subtle); }
+.qLinhaAdmin { cursor: pointer; }
+.qLinhaAdmin:hover { border-color: var(--color-primary-mid); background: var(--bg-subtle); }
 .qNum {
   flex-shrink: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700; color: #fff; background: var(--color-primary);
   border-radius: var(--radius-full);
 }
 .qResumo { flex: 1; font-size: 13.5px; color: var(--text-primary); }
-
-.qBody { padding: 4px 16px 16px; border-top: 1px solid var(--border-subtle); }
-.enunciado { font-size: 14px; line-height: 1.6; color: var(--text-primary); margin: 14px 0; }
-.enunciado :global(img) { max-width: 100%; height: auto; border-radius: var(--radius-md); }
-
-.alternativas { display: flex; flex-direction: column; gap: 6px; }
-.alt {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-  font-size: 13.5px; color: var(--text-primary);
-}
-.altOk { background: #dcfce7; border-color: #86efac; }
-.altLetra { font-weight: 700; }
-.altIcon { color: #16a34a; margin-left: auto; }
-
-.gabCe { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
-.iconOk { color: #16a34a; }
-.iconErr { color: #dc2626; }
-
-.comentario {
-  margin-top: 14px; padding: 12px 14px;
-  background: var(--bg-subtle); border-radius: var(--radius-md);
-  font-size: 13.5px; line-height: 1.6; color: var(--text-secondary);
-}
-.comentLabel {
-  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
-  color: var(--text-tertiary); margin: 0 0 6px;
-}

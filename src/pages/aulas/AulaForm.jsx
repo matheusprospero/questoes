@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { criarAula, atualizarAula, buscarAula } from '../../services/aulas'
 import {
-  listarQuestoes, listarDisciplinas, resumoEnunciado, rotuloQuestao,
+  listarQuestoes, listarDisciplinas, listarAssuntos, resumoEnunciado, rotuloQuestao,
 } from '../../services/questoes'
 import RichEditor from '../../components/RichEditor'
 import VideoYouTube, { extrairIdYouTube } from '../../components/VideoYouTube'
@@ -20,7 +20,7 @@ export default function AulaForm() {
   const queryClient = useQueryClient()
   const isEdicao = !!id
 
-  const [form, setForm] = useState({ titulo: '', descricao: '', disciplina_id: '' })
+  const [form, setForm] = useState({ titulo: '', descricao: '', disciplina_id: '', assunto_id: '' })
   const [blocos, setBlocos] = useState([])       // [{tipo:'texto',html} | {tipo:'video',url,titulo}]
   const [questaoIds, setQuestaoIds] = useState([]) // ordem preservada
   const [buscaQuestao, setBuscaQuestao] = useState('')
@@ -37,6 +37,7 @@ export default function AulaForm() {
         titulo: aulaExistente.titulo || '',
         descricao: aulaExistente.descricao || '',
         disciplina_id: aulaExistente.disciplina_id || '',
+        assunto_id: aulaExistente.assunto_id || '',
       })
       setBlocos(aulaExistente.conteudo || [])
       setQuestaoIds((aulaExistente.questoes || []).map(q => q.id))
@@ -44,6 +45,11 @@ export default function AulaForm() {
   }, [aulaExistente])
 
   const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
+  const { data: assuntos = [] } = useQuery({
+    queryKey: ['assuntos', form.disciplina_id],
+    queryFn: () => listarAssuntos(form.disciplina_id),
+    enabled: !!form.disciplina_id,
+  })
   const { data: questoes = [] } = useQuery({ queryKey: ['questoes', {}], queryFn: () => listarQuestoes({}) })
 
   const salvar = useMutation({
@@ -133,22 +139,33 @@ export default function AulaForm() {
             onChange={e => setForm(f => ({ ...f, titulo: e.target.value }))}
           />
         </div>
+        <div className={styles.field}>
+          <label className={styles.label}>Descrição (opcional)</label>
+          <input className={styles.input}
+            placeholder="Um resumo curto do que o aluno vai aprender"
+            value={form.descricao}
+            onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
+          />
+        </div>
         <div className={styles.fieldRow}>
-          <div className={styles.field} style={{ flex: 2 }}>
-            <label className={styles.label}>Descrição (opcional)</label>
-            <input className={styles.input}
-              placeholder="Um resumo curto do que o aluno vai aprender"
-              value={form.descricao}
-              onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
-            />
-          </div>
           <div className={styles.field} style={{ flex: 1 }}>
             <label className={styles.label}>Disciplina</label>
             <select className={styles.input}
               value={form.disciplina_id}
-              onChange={e => setForm(f => ({ ...f, disciplina_id: e.target.value }))}>
+              onChange={e => setForm(f => ({ ...f, disciplina_id: e.target.value, assunto_id: '' }))}>
               <option value="">Selecione...</option>
               {disciplinas.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
+            </select>
+          </div>
+          <div className={styles.field} style={{ flex: 1 }}>
+            <label className={styles.label}>Assunto</label>
+            <select className={styles.input}
+              value={form.assunto_id}
+              onChange={e => setForm(f => ({ ...f, assunto_id: e.target.value }))}
+              disabled={!form.disciplina_id}
+              title={form.disciplina_id ? undefined : 'Escolha a disciplina antes'}>
+              <option value="">{form.disciplina_id ? 'Selecione...' : 'Escolha a disciplina'}</option>
+              {assuntos.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
             </select>
           </div>
         </div>
