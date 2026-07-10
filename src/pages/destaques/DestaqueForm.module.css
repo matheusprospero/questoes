@@ -1,0 +1,75 @@
+.page { max-width: 720px; margin: 0 auto; }
+
+.topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.btnBack {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 7px 12px; font-size: 13px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.btnBack:hover { background: var(--bg-subtle); }
+.titulo { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; flex: 1; }
+.btnPrimary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 16px; font-size: 13px; font-weight: 600; font-family: var(--font-sans);
+  background: var(--color-primary); color: #fff;
+  border: none; border-radius: var(--radius-md); cursor: pointer;
+}
+.btnPrimary:hover:not(:disabled) { background: var(--color-primary-dark); }
+.btnPrimary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.previewWrap { margin-bottom: 18px; }
+.previewLabel {
+  display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--text-tertiary); margin-bottom: 8px;
+}
+
+.card {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.label {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; font-weight: 600; color: var(--text-secondary);
+}
+.hint { font-size: 11.5px; color: var(--text-tertiary); }
+.hint code {
+  font-family: monospace; background: var(--bg-subtle); padding: 1px 5px; border-radius: 4px;
+}
+
+.input, .textarea {
+  width: 100%; padding: 9px 12px; font-size: 13.5px; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary);
+}
+.input:focus, .textarea:focus { outline: none; border-color: var(--color-primary); }
+.textarea { resize: vertical; line-height: 1.5; }
+
+.tipos { display: flex; gap: 8px; flex-wrap: wrap; }
+.tipoBtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 14px; font-size: 13px; font-weight: 600; font-family: var(--font-sans);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-secondary); cursor: pointer;
+}
+.tipoBtn:hover { border-color: var(--color-primary-mid); }
+.tipoBtnOn {
+  background: var(--color-primary-light); color: var(--color-primary);
+  border-color: var(--color-primary-mid);
+}
+
+.modelos { display: flex; gap: 8px; flex-wrap: wrap; }
+.modeloBtn {
+  padding: 6px 12px; font-size: 12.5px; font-weight: 600; font-family: var(--font-sans);
+  border: 1px dashed var(--color-primary-mid); border-radius: var(--radius-full);
+  background: var(--color-primary-light); color: var(--color-primary); cursor: pointer;
+}
+.modeloBtn:hover { background: var(--color-primary-mid); }
+
+.checkAtivo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-secondary); cursor: pointer; margin-top: 4px;
+}
+.checkAtivo input { accent-color: var(--color-primary); cursor: pointer; }

@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   HelpCircle, ClipboardList, Layers, Heart, Home,
-  LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap
+  LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
 
@@ -88,6 +88,7 @@ export default function AppLayout() {
         {isAdmin && (
           <div>
             <div className={styles.navSection}>Gestão</div>
+            <NavItem to="/destaques" label="Destaques" Icon={Sparkles} />
             <NavItem to="/alunos" label="Alunos" Icon={Users} />
           </div>
         )}

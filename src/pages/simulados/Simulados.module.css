@@ -175,15 +175,3 @@
   border-color: var(--color-primary-mid) !important;
 }
 
-.badgeDestaque {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11px; font-weight: 700;
-  padding: 3px 9px; border-radius: var(--radius-full);
-  background: #fef3c7; color: #b45309; border: 1px solid #fcd34d;
-}
-
-.iconBtnDestaque {
-  background: #fef3c7 !important;
-  color: #b45309 !important;
-  border-color: #fcd34d !important;
-}

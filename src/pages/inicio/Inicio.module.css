@@ -120,65 +120,11 @@
 }
 
 /* ── Cards de recursos ────────────────────────────── */
-/* ── Simulados em destaque (propaganda) ── */
+/* ── Cards em destaque (propaganda) ── */
 .destaques {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: 14px;
-}
-
-.destaqueCard {
-  position: relative; overflow: hidden;
-  display: flex; align-items: center; gap: 12px;
-  padding: 22px 24px;
-  border-radius: var(--radius-lg);
-  background:
-    radial-gradient(420px 220px at 100% 0%, rgba(251, 191, 36, 0.22), transparent 60%),
-    linear-gradient(135deg, #4c1d95 0%, #6d28d9 55%, #7c3aed 100%);
-  color: #fff;
-  box-shadow: var(--shadow-md);
-}
-.destaqueBrilho {
-  position: absolute; inset: 0;
-  background: radial-gradient(300px 160px at 10% 120%, rgba(56, 189, 248, 0.18), transparent 60%);
-  pointer-events: none;
-}
-.destaqueConteudo { position: relative; flex: 1; z-index: 1; }
-.destaqueTag {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em;
-  padding: 4px 10px; border-radius: var(--radius-full);
-  background: rgba(251, 191, 36, 0.22); color: #fde68a;
-  border: 1px solid rgba(251, 191, 36, 0.45);
-}
-.destaqueTitulo {
-  font-size: 19px; font-weight: 800; margin: 10px 0 6px;
-  font-family: var(--font-display, inherit); line-height: 1.2;
-}
-.destaqueTexto { font-size: 13.5px; line-height: 1.5; color: rgba(255, 255, 255, 0.85); margin: 0; }
-.destaqueRodape {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 16px;
-}
-.destaqueQtd {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 12.5px; font-weight: 600; color: rgba(255, 255, 255, 0.9);
-}
-.destaqueBtn {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 9px 18px; font-size: 13.5px; font-weight: 700; font-family: var(--font-sans);
-  background: #fff; color: #6d28d9;
-  border: none; border-radius: var(--radius-full); cursor: pointer;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
-  transition: transform 0.12s;
-}
-.destaqueBtn:hover { transform: translateY(-1px); }
-.destaqueTrofeu {
-  position: relative; z-index: 1; flex-shrink: 0;
-  color: rgba(253, 224, 71, 0.9);
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.25));
-}
-@media (max-width: 520px) {
-  .destaqueTrofeu { display: none; }
 }
 
 .recursos {

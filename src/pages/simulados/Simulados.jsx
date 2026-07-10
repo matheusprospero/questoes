@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { listarSimulados, deletarSimulado, criarSimulado, buscarSimulado, alternarProposto, alternarDestaque } from '../../services/simulados'
+import { listarSimulados, deletarSimulado, criarSimulado, buscarSimulado, alternarProposto } from '../../services/simulados'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
-import { Plus, Search, Eye, Pencil, Trash2, FileText, Copy, Play, Megaphone, BarChart3, Sparkles } from 'lucide-react'
+import { Plus, Search, Eye, Pencil, Trash2, FileText, Copy, Play, Megaphone, BarChart3 } from 'lucide-react'
 import GuiaUso from '../../components/GuiaUso'
 import styles from './Simulados.module.css'
 
@@ -36,18 +36,6 @@ export default function Simulados() {
       toast.success(proposto
         ? 'Simulado proposto! Todos os alunos já podem vê-lo.'
         : 'Proposta retirada — o simulado voltou a ser só seu.')
-    },
-    onError: (err) => toast.error('Erro: ' + err.message),
-  })
-
-  const destacar = useMutation({
-    mutationFn: ({ id, destaque }) => alternarDestaque(id, destaque),
-    onSuccess: (_, { destaque }) => {
-      queryClient.invalidateQueries({ queryKey: ['simulados'] })
-      queryClient.invalidateQueries({ queryKey: ['simulados-destaque'] })
-      toast.success(destaque
-        ? 'Simulado em destaque na página inicial dos alunos!'
-        : 'Destaque removido da página inicial.')
     },
     onError: (err) => toast.error('Erro: ' + err.message),
   })
@@ -191,15 +179,6 @@ export default function Simulados() {
                           <Megaphone size={15} />
                         </button>
                       )}
-                      {isAdmin && (
-                        <button
-                          className={`${styles.iconBtn} ${s.destaque ? styles.iconBtnDestaque : ''}`}
-                          onClick={() => destacar.mutate({ id: s.id, destaque: !s.destaque })}
-                          disabled={destacar.isPending}
-                          title={s.destaque ? 'Remover destaque da página inicial' : 'Destacar na página inicial (vira propaganda p/ os alunos)'}>
-                          <Sparkles size={15} />
-                        </button>
-                      )}
                       {isAdmin && s.proposto && (
                         <button className={styles.iconBtn}
                           onClick={() => navigate(`/simulados/${s.id}/relatorio`)}
@@ -238,11 +217,6 @@ export default function Simulados() {
                     {s.proposto && (
                       <span className={styles.badgeProposto}>
                         <Megaphone size={11} /> Proposto aos alunos
-                      </span>
-                    )}
-                    {s.destaque && (
-                      <span className={styles.badgeDestaque}>
-                        <Sparkles size={11} /> Em destaque
                       </span>
                     )}
                   </div>
