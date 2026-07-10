@@ -8,10 +8,9 @@
       // exista fisicamente (ex.: F5 em /questoes/estudo). Guardamos a rota
       // pedida e voltamos ao index, que a restaura via history.replaceState.
       (function () {
-        var base = '/questoes';
-        var rota = location.pathname.slice(base.length) + location.search + location.hash;
+        var rota = location.pathname + location.search + location.hash;
         sessionStorage.setItem('redirect', rota);
-        location.replace(base + '/');
+        location.replace('/');
       })();
     </script>
   </head>
