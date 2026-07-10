@@ -11,7 +11,7 @@ import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos
 import { useAuth } from '../../contexts/AuthContext'
 import {
   Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, X, BookOpen, Landmark, LayoutGrid,
+  CheckCircle, XCircle, X, BookOpen, Landmark, LayoutGrid, Image as ImageIcon,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Questoes.module.css'
@@ -35,6 +35,7 @@ export default function Questoes() {
   const [mostrarFiltros, setMostrarFiltros] = useState(true)
   const [verTodas, setVerTodas] = useState(false)
   const [mostrarGabarito, setMostrarGabarito] = useState(false)
+  const [soComImagem, setSoComImagem] = useState(false)
   const [expandidas, setExpandidas] = useState(new Set())
   const [questaoParaSimulado, setQuestaoParaSimulado] = useState(null)
   const [simuladoSelected, setSimuladoSelected] = useState(null)
@@ -114,7 +115,11 @@ export default function Questoes() {
     setExpandidas(novas)
   }
 
+  const questaoTemImagem = (q) =>
+    q.enunciado?.includes('<img') || (q.alternativas || []).some(a => a.texto?.includes('<img'))
+
   const questoesFiltradas = questoes.filter(q => {
+    if (soComImagem && !questaoTemImagem(q)) return false
     if (!buscaTexto) return true
     const termo = buscaTexto.toLowerCase()
     return [
@@ -149,7 +154,7 @@ export default function Questoes() {
   const filtrosAtivos = Object.entries(filtros)
 
   // Tela de exploração: sem filtro, sem busca e sem "ver todas" → cards
-  const explorando = filtrosAtivos.length === 0 && !buscaTexto && !verTodas
+  const explorando = filtrosAtivos.length === 0 && !buscaTexto && !verTodas && !soComImagem
 
   // Contagens para os cards (quando explorando, "questoes" = banco inteiro)
   const contagens = useMemo(() => {
@@ -266,9 +271,16 @@ export default function Questoes() {
             </div>
           </div>
 
-          <button className={styles.expVerTodas} onClick={() => setVerTodas(true)}>
-            <LayoutGrid size={15} /> Ver todas as {questoes.length} questões
-          </button>
+          <div className={styles.expAcoes}>
+            <button className={styles.expVerTodas} onClick={() => setVerTodas(true)}>
+              <LayoutGrid size={15} /> Ver todas as {questoes.length} questões
+            </button>
+            {isAdmin && (
+              <button className={styles.expRevisar} onClick={() => setSoComImagem(true)}>
+                <ImageIcon size={15} /> Revisar questões com imagem
+              </button>
+            )}
+          </div>
         </div>
         )
       )}
@@ -372,15 +384,25 @@ export default function Questoes() {
         </div>
       )}
 
-      {!explorando && !isLoading && questoesFiltradas.length > 0 && (
-        <label className={styles.checkGabarito}>
-          <input
-            type="checkbox"
-            checked={mostrarGabarito}
-            onChange={e => setMostrarGabarito(e.target.checked)}
-          />
-          Mostrar alternativa correta
-        </label>
+      {!explorando && !isLoading && (
+        <div className={styles.checkRow}>
+          <label className={styles.checkGabarito}>
+            <input
+              type="checkbox"
+              checked={mostrarGabarito}
+              onChange={e => setMostrarGabarito(e.target.checked)}
+            />
+            Mostrar alternativa correta
+          </label>
+          <label className={styles.checkGabarito}>
+            <input
+              type="checkbox"
+              checked={soComImagem}
+              onChange={e => setSoComImagem(e.target.checked)}
+            />
+            <ImageIcon size={13} /> Só questões com imagem
+          </label>
+        </div>
       )}
 
       {!explorando && (isLoading ? (

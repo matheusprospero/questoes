@@ -140,7 +140,7 @@ export default function RichEditor({ value = '', onChange, label = '', placehold
 
   function inserirImagem(url) {
     editorRef.current?.focus()
-    const img = `<img src="${url}" style="max-width:100%;height:auto;margin:6px 0;border-radius:6px;display:block;" />`
+    const img = `<img src="${url}" style="width:25%;max-width:100%;height:auto;margin:6px 0;border-radius:6px;display:block;" />`
     const sel = window.getSelection()
     if (lastSelection.current) {
       sel.removeAllRanges()

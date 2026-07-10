@@ -105,7 +105,7 @@ def upload_imagem(caminho_local, caminho_storage):
 # ── Importação ───────────────────────────────────────────────────────────────
 
 IMG_HTML = ('<p><img src="{url}" alt="figura da questão" '
-            'style="max-width:100%;height:auto;display:block;margin:10px 0" /></p>')
+            'style="width:25%;max-width:100%;height:auto;display:block;margin:10px 0" /></p>')
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
