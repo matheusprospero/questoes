@@ -11,16 +11,29 @@ export async function listarDestaques() {
   return data || []
 }
 
-// Apenas os ativos — para a página inicial dos alunos
+// Apenas os que estão no ar agora — para a página inicial dos alunos
+// (ativo + dentro da janela publicar_em … expira_em)
 export async function listarDestaquesAtivos() {
+  const agora = new Date().toISOString()
   const { data, error } = await supabase
     .from('destaques')
     .select('*')
     .eq('ativo', true)
+    .or(`publicar_em.is.null,publicar_em.lte.${agora}`)
+    .or(`expira_em.is.null,expira_em.gt.${agora}`)
     .order('ordem', { ascending: true })
     .order('criado_em', { ascending: true })
   if (error) throw error
   return data || []
+}
+
+// Situação de um destaque para a tela de gestão
+export function statusDestaque(d) {
+  if (!d.ativo) return 'oculto'
+  const agora = Date.now()
+  if (d.expira_em && new Date(d.expira_em).getTime() <= agora) return 'expirado'
+  if (d.publicar_em && new Date(d.publicar_em).getTime() > agora) return 'agendado'
+  return 'no_ar'
 }
 
 export async function buscarDestaque(id) {
@@ -39,6 +52,8 @@ function payload(dados) {
     cta_texto: dados.cta_texto?.trim() || null,
     link: dados.tipo === 'livre' ? (dados.link?.trim() || null) : null,
     ativo: dados.ativo ?? true,
+    publicar_em: dados.publicar_em || null,
+    expira_em: dados.expira_em || null,
   }
 }
 

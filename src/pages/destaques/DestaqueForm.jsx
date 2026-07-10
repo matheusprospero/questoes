@@ -5,9 +5,21 @@ import { criarDestaque, atualizarDestaque, buscarDestaque } from '../../services
 import { listarSimulados } from '../../services/simulados'
 import { listarAulas } from '../../services/aulas'
 import CardDestaque from '../../components/CardDestaque'
-import { ChevronLeft, Save, Sparkles, ClipboardList, GraduationCap, Link2, Wand2 } from 'lucide-react'
+import { ChevronLeft, Save, Sparkles, ClipboardList, GraduationCap, Link2, Wand2, CalendarClock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './DestaqueForm.module.css'
+
+// Conversão entre ISO (banco) e o valor do <input type="datetime-local"> (hora local)
+function isoParaLocal(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const off = d.getTimezoneOffset() * 60000
+  return new Date(d.getTime() - off).toISOString().slice(0, 16)
+}
+function localParaIso(local) {
+  if (!local) return null
+  return new Date(local).toISOString()
+}
 
 // Sugestões de texto prontas (o professor clica e preenche o card)
 const MODELOS = [
@@ -58,6 +70,7 @@ export default function DestaqueForm() {
   const [form, setForm] = useState({
     tipo: 'simulado', ref_id: '', etiqueta: 'Desafio do professor',
     titulo: '', texto: '', cta_texto: 'Resolver agora', link: '', ativo: true,
+    publicar_em: '', expira_em: '', // strings do input datetime-local
   })
 
   const { data: existente } = useQuery({
@@ -74,6 +87,8 @@ export default function DestaqueForm() {
         cta_texto: existente.cta_texto || '',
         link: existente.link || '',
         ativo: existente.ativo ?? true,
+        publicar_em: isoParaLocal(existente.publicar_em),
+        expira_em: isoParaLocal(existente.expira_em),
       })
     }
   }, [existente])
@@ -107,7 +122,14 @@ export default function DestaqueForm() {
       if (!form.titulo.trim()) throw new Error('Dê um título ao card')
       if (form.tipo !== 'livre' && !form.ref_id) throw new Error('Escolha o simulado/aula que o card vai abrir')
       if (form.tipo === 'livre' && !form.link.trim()) throw new Error('Informe o link de destino do card livre')
-      return isEdicao ? atualizarDestaque(id, form) : criarDestaque(form)
+      if (form.publicar_em && form.expira_em && new Date(form.expira_em) <= new Date(form.publicar_em))
+        throw new Error('A data de saída precisa ser depois da data de publicação')
+      const dados = {
+        ...form,
+        publicar_em: localParaIso(form.publicar_em),
+        expira_em: localParaIso(form.expira_em),
+      }
+      return isEdicao ? atualizarDestaque(id, dados) : criarDestaque(dados)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['destaques'] })
@@ -209,9 +231,25 @@ export default function DestaqueForm() {
             value={form.cta_texto} onChange={e => set({ cta_texto: e.target.value })} />
         </div>
 
+        {/* Agendamento */}
+        <div className={styles.agenda}>
+          <div className={styles.field}>
+            <label className={styles.label}><CalendarClock size={13} /> Publicar em (opcional)</label>
+            <input type="datetime-local" className={styles.input}
+              value={form.publicar_em} onChange={e => set({ publicar_em: e.target.value })} />
+            <span className={styles.hint}>Deixe vazio para entrar no ar assim que ativar.</span>
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}><CalendarClock size={13} /> Sair do ar em (opcional)</label>
+            <input type="datetime-local" className={styles.input}
+              value={form.expira_em} onChange={e => set({ expira_em: e.target.value })} />
+            <span className={styles.hint}>Deixe vazio para ficar no ar por tempo indeterminado.</span>
+          </div>
+        </div>
+
         <label className={styles.checkAtivo}>
           <input type="checkbox" checked={form.ativo} onChange={e => set({ ativo: e.target.checked })} />
-          Mostrar este card na página inicial dos alunos
+          Card ativo (se desmarcar, não aparece mesmo dentro do prazo)
         </label>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
-  listarDestaques, alternarDestaqueAtivo, deletarDestaque, trocarOrdem,
+  listarDestaques, alternarDestaqueAtivo, deletarDestaque, trocarOrdem, statusDestaque,
 } from '../../services/destaques'
 import CardDestaque from '../../components/CardDestaque'
 import {
@@ -13,6 +13,13 @@ import styles from './Destaques.module.css'
 
 const ICONE_TIPO = { simulado: ClipboardList, aula: GraduationCap, livre: Link2 }
 const LABEL_TIPO = { simulado: 'Simulado', aula: 'Aula', livre: 'Card livre' }
+const STATUS = {
+  no_ar:    { label: 'No ar',    cls: 'statusNoAr' },
+  agendado: { label: 'Agendado', cls: 'statusAgendado' },
+  expirado: { label: 'Expirado', cls: 'statusExpirado' },
+  oculto:   { label: 'Oculto',   cls: 'statusOculto' },
+}
+const fmtData = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
 export default function Destaques() {
   const navigate = useNavigate()
@@ -66,6 +73,7 @@ export default function Destaques() {
         <div className={styles.lista}>
           {destaques.map((d, i) => {
             const IconeTipo = ICONE_TIPO[d.tipo] || Link2
+            const st = STATUS[statusDestaque(d)]
             return (
               <div key={d.id} className={`${styles.item} ${!d.ativo ? styles.itemInativo : ''}`}>
                 <div className={styles.ordem}>
@@ -85,9 +93,13 @@ export default function Destaques() {
 
                 <div className={styles.meta}>
                   <span className={styles.tipoTag}><IconeTipo size={12} /> {LABEL_TIPO[d.tipo]}</span>
-                  <span className={d.ativo ? styles.statusOn : styles.statusOff}>
-                    {d.ativo ? 'Publicado' : 'Oculto'}
-                  </span>
+                  <span className={`${styles.status} ${styles[st.cls]}`}>{st.label}</span>
+                  {(d.publicar_em || d.expira_em) && (
+                    <span className={styles.agendaInfo}>
+                      {d.publicar_em && <>de {fmtData(d.publicar_em)}</>}
+                      {d.expira_em && <> até {fmtData(d.expira_em)}</>}
+                    </span>
+                  )}
                   <div className={styles.acoes}>
                     <button className={`${styles.iconBtn} ${d.ativo ? styles.iconBtnOn : ''}`}
                       onClick={() => ativar.mutate({ id: d.id, ativo: !d.ativo })}

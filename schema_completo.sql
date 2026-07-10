@@ -246,6 +246,8 @@ create table destaques (
   cta_texto  text,
   link       text,
   ativo      boolean not null default true,
+  publicar_em timestamptz,             -- entra no ar a partir de (null = já)
+  expira_em   timestamptz,             -- sai do ar em (null = nunca)
   ordem      int not null default 0,
   criado_em  timestamptz not null default now()
 );
