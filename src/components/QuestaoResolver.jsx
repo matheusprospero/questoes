@@ -5,7 +5,7 @@ import { listarQuestoes, buscarVideoQuestao, gabaritoQuestao } from '../services
 import VideoYouTube from './VideoYouTube'
 import {
   CheckCircle, XCircle, ChevronRight, ChevronDown, ChevronUp,
-  RotateCcw, BookOpen, Youtube,
+  RotateCcw, BookOpen, Youtube, Eye,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './QuestaoResolver.module.css'
@@ -97,6 +97,7 @@ export default function QuestaoResolver({ questoes, contexto }) {
   const [sessao, setSessao] = useState(questoes)
   const [indice, setIndice] = useState(0)
   const [selecionada, setSelecionada] = useState(null)
+  const [revelado, setRevelado] = useState(false) // aluno pediu para ver o gabarito
   const [historico, setHistorico] = useState([])
   const [fase, setFase] = useState('resolvendo') // resolvendo | resultado
   const [carregando, setCarregando] = useState(false)
@@ -104,11 +105,19 @@ export default function QuestaoResolver({ questoes, contexto }) {
   const q = sessao[indice]
   const acertos = historico.filter(h => h.acertou).length
 
+  // Vídeo (protegido) da questão atual — só quando o aluno revela o gabarito
+  const { data: videoAtual } = useQuery({
+    queryKey: ['questao-video', q?.id, 'resolver'],
+    queryFn: () => buscarVideoQuestao(q.id),
+    enabled: !!(revelado && q?.tem_video),
+  })
+
   function iniciar(lista) {
-    setSessao(lista); setIndice(0); setSelecionada(null); setHistorico([]); setFase('resolvendo')
+    setSessao(lista); setIndice(0); setSelecionada(null); setRevelado(false)
+    setHistorico([]); setFase('resolvendo')
   }
 
-  // Marca a resposta e vai para a próxima (sem mostrar o gabarito)
+  // Marca a resposta e vai para a próxima
   async function avancar() {
     if (selecionada === null) { toast.error('Marque uma alternativa'); return }
     const acertou = selecionada === letraGabarito(q)
@@ -120,7 +129,7 @@ export default function QuestaoResolver({ questoes, contexto }) {
       toast.error('Erro ao registrar resposta: ' + err.message)
     }
     if (indice + 1 >= sessao.length) setFase('resultado')
-    else { setIndice(i => i + 1); setSelecionada(null) }
+    else { setIndice(i => i + 1); setSelecionada(null); setRevelado(false) }
   }
 
   function refazerErradas() {
@@ -182,9 +191,11 @@ export default function QuestaoResolver({ questoes, contexto }) {
     )
   }
 
-  // ── Modo prova (sem gabarito) ──
+  // ── Resolvendo (o aluno decide se quer ver o gabarito) ──
   if (!q) return null
   const ehUltima = indice + 1 >= sessao.length
+  const respostaCerta = letraGabarito(q)
+  const acertouAtual = selecionada === respostaCerta
 
   return (
     <div className={styles.wrap}>
@@ -207,28 +218,70 @@ export default function QuestaoResolver({ questoes, contexto }) {
 
       {q.tipo === 'multipla_escolha' ? (
         <div className={styles.opcoes}>
-          {q.alternativas.map(alt => (
-            <button key={alt.id}
-              className={`${styles.opcao} ${alt.letra === selecionada ? styles.selecionada : ''}`}
-              onClick={() => setSelecionada(alt.letra)}>
-              <span className={styles.opcaoLetra}>{alt.letra}</span>
-              <span dangerouslySetInnerHTML={{ __html: alt.texto }} />
-            </button>
-          ))}
+          {q.alternativas.map(alt => {
+            let estado = ''
+            if (revelado) {
+              if (alt.letra === respostaCerta) estado = styles.certa
+              else if (alt.letra === selecionada) estado = styles.errada
+            } else if (alt.letra === selecionada) estado = styles.selecionada
+            return (
+              <button key={alt.id} className={`${styles.opcao} ${estado}`}
+                onClick={() => !revelado && setSelecionada(alt.letra)} disabled={revelado}>
+                <span className={styles.opcaoLetra}>{alt.letra}</span>
+                <span dangerouslySetInnerHTML={{ __html: alt.texto }} />
+              </button>
+            )
+          })}
         </div>
       ) : (
         <div className={styles.opcoesCE}>
-          {[{ v: 'C', l: 'Certo', I: CheckCircle }, { v: 'E', l: 'Errado', I: XCircle }].map(({ v, l, I }) => (
-            <button key={v}
-              className={`${styles.opcaoCE} ${v === selecionada ? styles.selecionada : ''}`}
-              onClick={() => setSelecionada(v)}>
-              <I size={17} /> {l}
-            </button>
-          ))}
+          {[{ v: 'C', l: 'Certo', I: CheckCircle }, { v: 'E', l: 'Errado', I: XCircle }].map(({ v, l, I }) => {
+            let estado = ''
+            if (revelado) {
+              if (v === respostaCerta) estado = styles.certa
+              else if (v === selecionada) estado = styles.errada
+            } else if (v === selecionada) estado = styles.selecionada
+            return (
+              <button key={v} className={`${styles.opcaoCE} ${estado}`}
+                onClick={() => !revelado && setSelecionada(v)} disabled={revelado}>
+                <I size={17} /> {l}
+              </button>
+            )
+          })}
         </div>
       )}
 
+      {revelado && (
+        <>
+          <div className={acertouAtual ? styles.feedbackOk : styles.feedbackErro}>
+            {acertouAtual
+              ? <><CheckCircle size={16} /> Você acertou! Gabarito: <strong>{respostaCerta}</strong></>
+              : <><XCircle size={16} /> Resposta certa: <strong>{respostaCerta}</strong></>}
+          </div>
+          {q.comentario && (
+            <div className={styles.comentario}>
+              <p className={styles.comentTitulo}>Comentário</p>
+              <div dangerouslySetInnerHTML={{ __html: q.comentario }} />
+            </div>
+          )}
+          {q.tem_video && (
+            <div className={styles.comentario}>
+              <p className={styles.comentTitulo}>
+                <Youtube size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Resolução em vídeo
+              </p>
+              {videoAtual ? <VideoYouTube url={videoAtual} />
+                : <p className={styles.videoBloqueado}>🔒 Resolução em vídeo exclusiva para assinantes.</p>}
+            </div>
+          )}
+        </>
+      )}
+
       <div className={styles.acoes}>
+        {!revelado && (
+          <button className={styles.btnGhost} onClick={() => setRevelado(true)} disabled={selecionada === null}>
+            <Eye size={15} /> Ver gabarito
+          </button>
+        )}
         <button className={styles.btnPrimario} onClick={avancar} disabled={selecionada === null}>
           {ehUltima ? 'Finalizar' : 'Próxima'} <ChevronRight size={15} />
         </button>

@@ -216,6 +216,30 @@ export default function Estudo() {
     }
   }
 
+  // Modo prova (simulado): registra a resposta e avança SEM mostrar o gabarito
+  async function avancarProva() {
+    if (selecionada === null) { toast.error('Marque uma alternativa'); return }
+    const gabarito = questaoAtual.tipo === 'certo_errado'
+      ? (questaoAtual.gabarito_certo ? 'C' : 'E')
+      : (questaoAtual.alternativas.find(a => a.correta)?.letra ?? null)
+    const acertou = selecionada === gabarito
+    setHistorico(h => [...h, { questao: questaoAtual, resposta: selecionada, acertou }])
+    try {
+      await registrarResposta({
+        questao_id: questaoAtual.id,
+        resposta: selecionada,
+        acertou,
+        origem: origemSessao,
+        simulado_id: origemSessao === 'simulado' ? simuladoId : null,
+      })
+      queryClient.invalidateQueries({ queryKey: ['respostas'] })
+    } catch (err) {
+      toast.error('Erro ao registrar resposta: ' + err.message)
+    }
+    if (indice + 1 >= sessao.length) setFase('resultado')
+    else { setIndice(i => i + 1); setSelecionada(null); setRespondida(false) }
+  }
+
   function refazerErradasDaSessao() {
     const erradas = historico.filter(h => !h.acertou).map(h => h.questao)
     comecar(embaralhar(erradas))
@@ -556,7 +580,13 @@ export default function Estudo() {
           }}>
             Encerrar
           </button>
-          {!respondida ? (
+          {origemSessao === 'simulado' ? (
+            <button className={styles.btnComecar}
+              onClick={avancarProva}
+              disabled={selecionada === null}>
+              {indice + 1 >= sessao.length ? 'Finalizar' : 'Próxima questão'} <ChevronRight size={15} />
+            </button>
+          ) : !respondida ? (
             <button className={styles.btnComecar}
               onClick={responder}
               disabled={selecionada === null}>
