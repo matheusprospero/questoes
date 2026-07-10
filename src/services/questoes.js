@@ -103,6 +103,15 @@ export async function excluirQuestao(id) {
   if (error) throw error
 }
 
+// Marca/desmarca a questão como revisada (usado na revisão das imagens)
+export async function marcarRevisada(id, revisada) {
+  const { error } = await supabase
+    .from('questoes')
+    .update({ revisada })
+    .eq('id', id)
+  if (error) throw error
+}
+
 // ── Favoritos ─────────────────────────────────────────────────
 
 export async function toggleFavorito(questaoId, favoritoId) {

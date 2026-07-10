@@ -135,7 +135,17 @@
 .status_em_revisao { background: #F59E0B; }
 .status_publicado { background: #10B981; }
 
+.badgeRevisada {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; padding: 3px 8px; border-radius: var(--radius-full);
+  background: #dcfce7; color: #15803d; font-weight: 500;
+}
+
 .cardAcoes { display: flex; gap: 4px; flex-shrink: 0; }
+.iconBtnRevisada {
+  border-color: #22c55e; background: #dcfce7; color: #15803d;
+}
+.iconBtnRevisada:hover { background: #bbf7d0; color: #166534; }
 .iconBtn {
   width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
   border: 1px solid var(--border-subtle); border-radius: var(--radius-md);

@@ -132,6 +132,7 @@ create table questoes (
   nivel          text check (nivel in ('fundamental', 'medio', 'superior')),
   dificuldade    int not null default 3 check (dificuldade between 1 and 5),
   gabarito_certo boolean,                 -- só para certo_errado: true = Certo, false = Errado
+  revisada       boolean not null default false, -- conferida pelo admin (ex.: revisão das imagens)
   criado_em      timestamptz not null default now(),
   atualizado_em  timestamptz not null default now()
 );

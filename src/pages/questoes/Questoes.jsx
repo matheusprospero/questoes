@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  listarQuestoes, excluirQuestao, listarDisciplinas, listarAssuntos,
+  listarQuestoes, excluirQuestao, marcarRevisada, listarDisciplinas, listarAssuntos,
   listarBancas, listarOrgaos, listarCargos, listarAnos,
   resumoEnunciado, rotuloQuestao, gabaritoQuestao,
 } from '../../services/questoes'
@@ -11,7 +11,7 @@ import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos
 import { useAuth } from '../../contexts/AuthContext'
 import {
   Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, X, BookOpen, Landmark, LayoutGrid, Image as ImageIcon,
+  CheckCircle, XCircle, X, BookOpen, Landmark, LayoutGrid, Image as ImageIcon, Check,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Questoes.module.css'
@@ -36,6 +36,7 @@ export default function Questoes() {
   const [verTodas, setVerTodas] = useState(false)
   const [mostrarGabarito, setMostrarGabarito] = useState(false)
   const [soComImagem, setSoComImagem] = useState(false)
+  const [ocultarRevisadas, setOcultarRevisadas] = useState(true)
   const [expandidas, setExpandidas] = useState(new Set())
   const [questaoParaSimulado, setQuestaoParaSimulado] = useState(null)
   const [simuladoSelected, setSimuladoSelected] = useState(null)
@@ -68,6 +69,15 @@ export default function Questoes() {
       toast.success('Questão excluída.')
     },
     onError: (err) => toast.error('Erro ao excluir: ' + err.message),
+  })
+
+  const revisar = useMutation({
+    mutationFn: ({ id, revisada }) => marcarRevisada(id, revisada),
+    onSuccess: (_data, { revisada }) => {
+      queryClient.invalidateQueries({ queryKey: ['questoes'] })
+      toast.success(revisada ? 'Marcada como revisada.' : 'Marcação removida.')
+    },
+    onError: (err) => toast.error('Erro ao marcar: ' + err.message),
   })
 
   const addSimulado = useMutation({
@@ -118,8 +128,15 @@ export default function Questoes() {
   const questaoTemImagem = (q) =>
     q.enunciado?.includes('<img') || (q.alternativas || []).some(a => a.texto?.includes('<img'))
 
+  // No modo "revisar imagens", esconde as já revisadas para o admin ir zerando a pilha
+  const modoRevisao = soComImagem && isAdmin
+  const revisadasOcultas = modoRevisao && ocultarRevisadas
+    ? questoes.filter(q => questaoTemImagem(q) && q.revisada).length
+    : 0
+
   const questoesFiltradas = questoes.filter(q => {
     if (soComImagem && !questaoTemImagem(q)) return false
+    if (modoRevisao && ocultarRevisadas && q.revisada) return false
     if (!buscaTexto) return true
     const termo = buscaTexto.toLowerCase()
     return [
@@ -402,6 +419,17 @@ export default function Questoes() {
             />
             <ImageIcon size={13} /> Só questões com imagem
           </label>
+          {modoRevisao && (
+            <label className={styles.checkGabarito}>
+              <input
+                type="checkbox"
+                checked={ocultarRevisadas}
+                onChange={e => setOcultarRevisadas(e.target.checked)}
+              />
+              <Check size={13} /> Ocultar já revisadas
+              {revisadasOcultas > 0 && <span className={styles.badge}>{revisadasOcultas}</span>}
+            </label>
+          )}
         </div>
       )}
 
@@ -434,9 +462,21 @@ export default function Questoes() {
                         {q.tipo === 'multipla_escolha' ? 'Múltipla escolha' : 'Certo/Errado'}
                       </span>
                       {q.nivel && <span className={styles.badge}>{NIVEIS[q.nivel]}</span>}
+                      {isAdmin && q.revisada && (
+                        <span className={styles.badgeRevisada}><Check size={11} /> Revisada</span>
+                      )}
                     </div>
                   </div>
                   <div className={styles.cardAcoes}>
+                    {isAdmin && modoRevisao && (
+                      <button
+                        className={`${styles.iconBtn} ${q.revisada ? styles.iconBtnRevisada : ''}`}
+                        onClick={() => revisar.mutate({ id: q.id, revisada: !q.revisada })}
+                        disabled={revisar.isPending}
+                        title={q.revisada ? 'Desmarcar revisada' : 'Marcar como revisada'}>
+                        <Check size={15} />
+                      </button>
+                    )}
                     {isAdmin && (
                       <button className={styles.iconBtn} onClick={() => navigate(`/questoes/${q.id}/editar`)} title="Editar">
                         <Pencil size={15} />
