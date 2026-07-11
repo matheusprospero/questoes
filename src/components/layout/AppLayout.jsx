@@ -3,9 +3,10 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
 import { contarReportsAbertos } from '../../services/feedback'
+import { temaAtual, definirTema } from '../../theme'
 import {
   HelpCircle, ClipboardList, Layers, Heart, Home,
-  LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles, Flag
+  LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles, Flag, Moon, Sun
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
 
@@ -55,6 +56,11 @@ export default function AppLayout() {
   const { usuario, perfil, isAdmin, signOut } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [tema, setTema] = useState(temaAtual())
+  function alternarTema() {
+    const novo = tema === 'escuro' ? 'claro' : 'escuro'
+    setTema(novo); definirTema(novo)
+  }
 
   const { data: reportsAbertos = 0 } = useQuery({
     queryKey: ['reports-abertos'],
@@ -112,6 +118,14 @@ export default function AppLayout() {
             <div className={styles.userRole}>{isAdmin ? 'Professor' : 'Aluno'}</div>
           </div>
         </NavLink>
+        <button
+          className={styles.signOutBtn}
+          onClick={alternarTema}
+          title={tema === 'escuro' ? 'Modo claro' : 'Modo escuro'}
+          aria-label="Alternar tema"
+        >
+          {tema === 'escuro' ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
         <button
           className={styles.signOutBtn}
           onClick={handleSignOut}

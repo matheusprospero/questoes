@@ -69,6 +69,35 @@
   --shadow-primary:       0 8px 24px rgba(79, 70, 229, 0.28);
 }
 
+/* ── Modo escuro ── */
+:root[data-theme="dark"] {
+  --color-primary-light:  rgba(99, 102, 241, 0.18);
+  --color-primary-mid:    rgba(129, 140, 248, 0.45);
+  --gradient-primary-soft: linear-gradient(135deg, rgba(79,70,229,0.18) 0%, rgba(124,58,237,0.12) 100%);
+
+  --color-success-bg:     rgba(16, 185, 129, 0.16);
+  --color-warning-bg:     rgba(180, 83, 9, 0.20);
+  --color-danger-bg:      rgba(220, 38, 38, 0.16);
+  --color-info-bg:        rgba(99, 102, 241, 0.18);
+
+  --bg-page:              #0e1017;
+  --bg-surface:           #191c27;
+  --bg-subtle:            #232734;
+
+  --text-primary:         #eceef6;
+  --text-secondary:       #b3b9cc;
+  --text-tertiary:        #7b8199;
+
+  --border-subtle:        rgba(255, 255, 255, 0.08);
+  --border-default:       rgba(255, 255, 255, 0.14);
+  --border-strong:        rgba(255, 255, 255, 0.26);
+
+  --shadow-sm:            0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md:            0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg:            0 20px 48px rgba(0, 0, 0, 0.55);
+  color-scheme: dark;
+}
+
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './contexts/AuthContext'
 import AppRouter from './router'
+import './theme' // aplica o tema salvo (claro/escuro)
 import './styles/global.css'
 
 const queryClient = new QueryClient({
