@@ -3,7 +3,7 @@
   background: rgba(23, 25, 60, 0.42); padding: 16px;
 }
 .modal {
-  width: 100%; max-width: 480px; max-height: 88vh;
+  width: 100%; max-width: 720px; max-height: 90vh;
   display: flex; flex-direction: column;
   background: var(--bg-surface); border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg); overflow: hidden;
