@@ -58,13 +58,15 @@ export async function contarRevisoesHoje() {
 export async function montarMetaDoDia(cfg = {}) {
   const meta = Math.max(1, Number(cfg.metaDiaria) || 20)
   const obj = cfg.objetivo || {}
+  const scopeDiscs = new Set(Object.keys(cfg.porDisciplina || {}).map(String))
+  const scopeAssuntos = new Set((obj.assuntos || []).map(String))
   const baseFiltro = {}
   if (obj.banca_id) baseFiltro.banca_id = obj.banca_id
-  if (obj.cargo) baseFiltro.cargo = obj.cargo
-  // Questão dentro do objetivo?
+  // Questão dentro do objetivo (banca + disciplinas + assuntos escolhidos)?
   const noObjetivo = (q) =>
     (!obj.banca_id || String(q.banca_id) === String(obj.banca_id)) &&
-    (!obj.cargo || q.cargo === obj.cargo)
+    (scopeDiscs.size === 0 || scopeDiscs.has(String(q.disciplina_id))) &&
+    (scopeAssuntos.size === 0 || scopeAssuntos.has(String(q.assunto_id)))
 
   const [revisaoRaw, respostas, todasRaw] = await Promise.all([
     questoesParaRevisar().catch(() => []),
@@ -72,7 +74,7 @@ export async function montarMetaDoDia(cfg = {}) {
     listarQuestoes(baseFiltro),
   ])
   const revisao = revisaoRaw.filter(temGab).filter(noObjetivo)
-  const todas = todasRaw.filter(temGab)
+  const todas = todasRaw.filter(temGab).filter(noObjetivo)
   const respondidas = new Set(respostas.map(r => r.questao_id))
 
   const sel = []

@@ -162,10 +162,12 @@ export default function Inicio() {
     return m
   }, [respostas])
 
-  const metasDisc = Object.entries(cfg.porDisciplina || {}).map(([id, goal]) => {
-    const d = disciplinas.find(x => String(x.id) === String(id))
-    return { id, nome: d?.nome || 'Disciplina', cor: d?.cor, goal, feito: hojePorDisc[id] || 0 }
-  })
+  const metasDisc = Object.entries(cfg.porDisciplina || {})
+    .filter(([, goal]) => Number(goal) > 0)
+    .map(([id, goal]) => {
+      const d = disciplinas.find(x => String(x.id) === String(id))
+      return { id, nome: d?.nome || 'Disciplina', cor: d?.cor, goal: Number(goal), feito: hojePorDisc[id] || 0 }
+    })
 
   // Últimos acessos: desempenho por disciplina, mais recente primeiro
   const acessos = useMemo(() => {
