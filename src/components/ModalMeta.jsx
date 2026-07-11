@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Target, Flame, X, Crosshair } from 'lucide-react'
+import { Target, Flame, X, Crosshair, ChevronDown, ChevronUp } from 'lucide-react'
 import styles from './ModalMeta.module.css'
 
 export const CFG_META_DEFAULT = { metaDiaria: 20, metaDias: 7, objetivo: { banca_id: null, assuntos: [] }, porDisciplina: {} }
@@ -36,6 +36,8 @@ export default function ModalMeta({ cfgInicial, facetas = [], onFechar, onSalvar
     const o = {}; for (const [k, v] of Object.entries(cfgInicial.porDisciplina || {})) o[String(k)] = Number(v) || 0; return o
   })
   const [assuntos, setAssuntos] = useState(() => new Set((cfgInicial.objetivo?.assuntos || []).map(String)))
+  const [abertos, setAbertos] = useState(() => new Set())
+  const toggleGrupo = (id) => setAbertos(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
 
   const bancas = useMemo(() => distintos(facetas, 'bancas'), [facetas])
   const facBanca = useMemo(() => facetas.filter(q => !banca || String(q.banca_id) === String(banca)), [facetas, banca])
@@ -109,23 +111,31 @@ export default function ModalMeta({ cfgInicial, facetas = [], onFechar, onSalvar
             ) : assuntosPorDisc.length > 0 && (
               <>
                 <span className={styles.blocoLabel}>Assuntos (opcional)</span>
-                {assuntosPorDisc.map(g => (
-                  <div key={g.disc.id} className={styles.grupoAssunto}>
-                    <div className={styles.grupoTitulo}>
-                      <span className={styles.chipCor} style={{ background: g.disc.cor || 'var(--color-primary)' }} />
-                      {g.disc.nome}
+                {assuntosPorDisc.map(g => {
+                  const aberto = abertos.has(g.disc.id)
+                  const nSel = g.itens.filter(a => assuntos.has(a.id)).length
+                  return (
+                    <div key={g.disc.id} className={styles.grupoAssunto}>
+                      <button type="button" className={styles.grupoTitulo} onClick={() => toggleGrupo(g.disc.id)}>
+                        {aberto ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        <span className={styles.chipCor} style={{ background: g.disc.cor || 'var(--color-primary)' }} />
+                        {g.disc.nome}
+                        <span className={styles.grupoContagem}>{nSel > 0 ? `${nSel} selecionado(s)` : `${g.itens.length}`}</span>
+                      </button>
+                      {aberto && (
+                        <div className={styles.chips}>
+                          {g.itens.map(a => (
+                            <button key={a.id} type="button"
+                              className={`${styles.chipMini} ${assuntos.has(a.id) ? styles.chipOn : ''}`}
+                              onClick={() => toggleAssunto(a.id)}>
+                              {a.nome} ({a.total})
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className={styles.chips}>
-                      {g.itens.map(a => (
-                        <button key={a.id} type="button"
-                          className={`${styles.chipMini} ${assuntos.has(a.id) ? styles.chipOn : ''}`}
-                          onClick={() => toggleAssunto(a.id)}>
-                          {a.nome} ({a.total})
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </>
             )}
           </div>
