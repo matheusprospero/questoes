@@ -11,6 +11,40 @@ export async function registrarResposta({ questao_id, resposta, acertou, origem 
     simulado_id,
   })
   if (error) throw error
+  // Agenda a revisão espaçada (não bloqueia; ignora se a função ainda não existir)
+  supabase.rpc('registrar_revisao', { p_questao: questao_id, p_acertou: acertou }).then(() => {}, () => {})
+}
+
+// ── Revisão espaçada ──────────────────────────────────────────
+const SELECT_Q_REVISAO = `
+  questao_id, proxima_em,
+  questoes(*, disciplinas(id, nome, cor), assuntos(id, nome), bancas(id, nome), orgaos(id, nome),
+    questao_alternativas(id, letra, texto, correta, ordem))
+`
+export async function questoesParaRevisar() {
+  const hoje = new Date().toLocaleDateString('en-CA')
+  const { data, error } = await supabase
+    .from('revisoes')
+    .select(SELECT_Q_REVISAO)
+    .lte('proxima_em', hoje)
+    .order('proxima_em', { ascending: true })
+  if (error) throw error
+  return (data || [])
+    .filter(r => r.questoes)
+    .map(r => ({
+      ...r.questoes,
+      alternativas: r.questoes.questao_alternativas?.slice().sort((a, b) => a.ordem - b.ordem) ?? [],
+    }))
+}
+
+export async function contarRevisoesHoje() {
+  const hoje = new Date().toLocaleDateString('en-CA')
+  const { count, error } = await supabase
+    .from('revisoes')
+    .select('questao_id', { count: 'exact', head: true })
+    .lte('proxima_em', hoje)
+  if (error) return 0
+  return count ?? 0
 }
 
 // Todas as respostas, com a classificação da questão (para estatísticas)

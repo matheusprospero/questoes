@@ -7,7 +7,7 @@ import {
 } from '../../services/questoes'
 import {
   registrarResposta, listarRespostas, idsUltimaErrada,
-  montarRecomendadas, amostraDiversificada,
+  montarRecomendadas, amostraDiversificada, questoesParaRevisar,
 } from '../../services/estudo'
 import { buscarSimulado } from '../../services/simulados'
 import { buscarAula } from '../../services/aulas'
@@ -87,6 +87,25 @@ export default function Estudo() {
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simuladoId])
+
+  // ?revisao=1 → revisão espaçada do dia
+  const revisaoParam = searchParams.get('revisao')
+  const [carregandoRevisao, setCarregandoRevisao] = useState(!!revisaoParam)
+  useEffect(() => {
+    if (!revisaoParam) return
+    ;(async () => {
+      try {
+        const qs = (await questoesParaRevisar()).filter(temGabarito)
+        if (qs.length === 0) { toast('Você não tem questões para revisar hoje. 🎉'); return }
+        await comecar(embaralhar(qs), 'estudo')
+      } catch (err) {
+        toast.error('Erro ao montar a revisão: ' + err.message)
+      } finally {
+        setCarregandoRevisao(false)
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revisaoParam])
 
   // ?aula=<id> → resolve as questões daquela aula
   const aulaId = searchParams.get('aula')
@@ -352,11 +371,11 @@ export default function Estudo() {
 
   // ══════════════ FASE: CONFIG ══════════════
   if (fase === 'config') {
-    if (carregandoSimulado || carregandoAula) {
+    if (carregandoSimulado || carregandoAula || carregandoRevisao) {
       return (
         <div className={styles.page}>
           <div className={styles.carregandoSimulado}>
-            {carregandoAula ? 'Abrindo aula...' : 'Abrindo simulado...'}
+            {carregandoRevisao ? 'Montando sua revisão...' : carregandoAula ? 'Abrindo aula...' : 'Abrindo simulado...'}
           </div>
         </div>
       )

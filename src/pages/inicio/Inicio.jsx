@@ -3,12 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
 import { listarQuestoes } from '../../services/questoes'
-import { listarRespostas, calcularOfensiva } from '../../services/estudo'
+import { listarRespostas, calcularOfensiva, contarRevisoesHoje } from '../../services/estudo'
 import { listarDestaquesAtivos, destinoDestaque } from '../../services/destaques'
 import CardDestaque from '../../components/CardDestaque'
 import {
   BookOpen, PlayCircle, BarChart2, ClipboardList,
-  ArrowRight, Search, Pencil, ChevronRight, Compass, Lock, Flame, Target,
+  ArrowRight, Search, Pencil, ChevronRight, Compass, Lock, Flame, Target, RotateCcw,
 } from 'lucide-react'
 import styles from './Inicio.module.css'
 
@@ -131,6 +131,7 @@ export default function Inicio() {
   const { data: questoes = [] } = useQuery({ queryKey: ['questoes', {}], queryFn: () => listarQuestoes({}) })
   const { data: respostas = [] } = useQuery({ queryKey: ['respostas'], queryFn: listarRespostas })
   const { data: destaques = [] } = useQuery({ queryKey: ['destaques-ativos'], queryFn: listarDestaquesAtivos })
+  const { data: revisoesHoje = 0 } = useQuery({ queryKey: ['revisoes-hoje'], queryFn: contarRevisoesHoje })
 
   function abrirDestaque(d) {
     const destino = destinoDestaque(d)
@@ -234,6 +235,12 @@ export default function Inicio() {
             {ofensiva.hoje} / {meta} questões {ofensiva.hoje >= meta ? '— concluída! 🎉' : ''}
           </div>
         </div>
+        {revisoesHoje > 0 && (
+          <button className={styles.ofRevisao} onClick={() => navigate('/estudo?revisao=1')}>
+            <RotateCcw size={16} />
+            <span><strong>{revisoesHoje}</strong> para revisar hoje</span>
+          </button>
+        )}
       </section>
 
       {/* ── Cards em destaque (propaganda do professor) ── */}
