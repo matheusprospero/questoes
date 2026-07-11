@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   listarRespostas, agruparDesempenho, evolucaoMensal, questoesMaisErradas, idsUltimaErrada,
+  maestriaPorAssunto,
 } from '../../services/estudo'
-import { BarChart2, RotateCcw, BookOpen, TrendingUp, Target, XCircle, HelpCircle, Sparkles } from 'lucide-react'
+import { BarChart2, RotateCcw, BookOpen, TrendingUp, Target, XCircle, HelpCircle, Sparkles, Award } from 'lucide-react'
 import styles from './Estatisticas.module.css'
 
 function corPct(pct) {
@@ -78,6 +79,12 @@ export default function Estatisticas() {
   const maisErradas = questoesMaisErradas(respostas, 10)
   const maxMes = Math.max(...evolucao.map(e => e.total), 1)
 
+  // Maestria por assunto (com volume mínimo de 3 respostas)
+  const maestria = maestriaPorAssunto(respostas).filter(a => a.total >= 3)
+  const dominados = maestria.filter(a => a.pct >= 80).length
+  const emProgresso = maestria.filter(a => a.pct >= 60 && a.pct < 80).length
+  const aReforcar = maestria.filter(a => a.pct < 60).sort((a, b) => a.pct - b.pct).slice(0, 6)
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -127,6 +134,37 @@ export default function Estatisticas() {
           <span className={styles.cardLabel}>Últimos 30 dias ({recentes.length})</span>
         </div>
       </div>
+
+      {/* Maestria por assunto */}
+      {maestria.length > 0 && (
+        <div className={styles.card} style={{ marginBottom: 16 }}>
+          <p className={styles.secTitulo}><Award size={13} /> Sua maestria por assunto</p>
+          <div className={styles.maestriaTiles}>
+            <div className={styles.maestriaTile} data-nivel="alto">
+              <span className={styles.maestriaNum}>{dominados}</span>
+              <span className={styles.maestriaLabel}>Dominados (≥80%)</span>
+            </div>
+            <div className={styles.maestriaTile} data-nivel="medio">
+              <span className={styles.maestriaNum}>{emProgresso}</span>
+              <span className={styles.maestriaLabel}>Em progresso (60–79%)</span>
+            </div>
+            <div className={styles.maestriaTile} data-nivel="baixo">
+              <span className={styles.maestriaNum}>{aReforcar.length}</span>
+              <span className={styles.maestriaLabel}>A reforçar (&lt;60%)</span>
+            </div>
+          </div>
+          {aReforcar.length > 0 && (
+            <div className={styles.reforcar}>
+              <span className={styles.reforcarTitulo}>Foque nestes assuntos:</span>
+              {aReforcar.map(a => (
+                <span key={a.id} className={styles.reforcarChip}>
+                  {a.nome} <strong>{a.pct}%</strong>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className={styles.grid}>
         {/* Evolução mensal */}

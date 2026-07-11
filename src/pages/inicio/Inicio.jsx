@@ -1,14 +1,14 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
 import { listarQuestoes } from '../../services/questoes'
-import { listarRespostas } from '../../services/estudo'
+import { listarRespostas, calcularOfensiva } from '../../services/estudo'
 import { listarDestaquesAtivos, destinoDestaque } from '../../services/destaques'
 import CardDestaque from '../../components/CardDestaque'
 import {
   BookOpen, PlayCircle, BarChart2, ClipboardList,
-  ArrowRight, Search, Pencil, ChevronRight, Compass, Lock,
+  ArrowRight, Search, Pencil, ChevronRight, Compass, Lock, Flame, Target,
 } from 'lucide-react'
 import styles from './Inicio.module.css'
 
@@ -139,6 +139,16 @@ export default function Inicio() {
     else navigate(destino)
   }
 
+  // Ofensiva (streak) + meta diária (localStorage)
+  const ofensiva = useMemo(() => calcularOfensiva(respostas), [respostas])
+  const [meta, setMeta] = useState(() => Number(localStorage.getItem('meta-diaria')) || 20)
+  function ajustarMeta() {
+    const v = window.prompt('Sua meta de questões por dia:', String(meta))
+    const n = Number(v)
+    if (n > 0) { localStorage.setItem('meta-diaria', String(n)); setMeta(n) }
+  }
+  const pctMeta = Math.min(100, Math.round((ofensiva.hoje / meta) * 100))
+
   // Últimos acessos: desempenho por disciplina, mais recente primeiro
   const acessos = useMemo(() => {
     const grupos = new Map()
@@ -200,6 +210,29 @@ export default function Inicio() {
         </div>
         <div className={styles.heroArte}>
           <ArteBanner />
+        </div>
+      </section>
+
+      {/* ── Ofensiva + meta diária ── */}
+      <section className={styles.ofensiva}>
+        <div className={styles.ofStreak}>
+          <Flame size={26} className={ofensiva.streak > 0 ? styles.ofFlameOn : styles.ofFlameOff} />
+          <div>
+            <div className={styles.ofNum}>{ofensiva.streak}</div>
+            <div className={styles.ofLabel}>{ofensiva.streak === 1 ? 'dia seguido' : 'dias seguidos'}</div>
+          </div>
+        </div>
+        <div className={styles.ofMeta}>
+          <div className={styles.ofMetaTopo}>
+            <span className={styles.ofMetaTitulo}><Target size={14} /> Meta de hoje</span>
+            <button className={styles.ofAjustar} onClick={ajustarMeta}>ajustar</button>
+          </div>
+          <div className={styles.ofBarra}>
+            <div className={styles.ofBarraFill} style={{ width: `${pctMeta}%` }} />
+          </div>
+          <div className={styles.ofMetaTexto}>
+            {ofensiva.hoje} / {meta} questões {ofensiva.hoje >= meta ? '— concluída! 🎉' : ''}
+          </div>
         </div>
       </section>
 

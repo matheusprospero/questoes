@@ -167,6 +167,35 @@ export function evolucaoMensal(respostas) {
     })
 }
 
+// Ofensiva (streak): dias seguidos com pelo menos uma questão + total de hoje
+const diaLocal = (iso) => new Date(iso).toLocaleDateString('en-CA') // YYYY-MM-DD
+export function calcularOfensiva(respostas) {
+  const dias = new Set(respostas.map(r => diaLocal(r.respondido_em)))
+  const hojeStr = new Date().toLocaleDateString('en-CA')
+  const hoje = respostas.filter(r => diaLocal(r.respondido_em) === hojeStr).length
+  let streak = 0
+  const d = new Date()
+  if (!dias.has(d.toLocaleDateString('en-CA'))) d.setDate(d.getDate() - 1) // ontem ainda mantém
+  while (dias.has(d.toLocaleDateString('en-CA'))) { streak++; d.setDate(d.getDate() - 1) }
+  return { streak, hoje, diasAtivos: dias.size }
+}
+
+// Maestria por assunto: [{ id, nome, disciplina, total, acertos, pct }]
+export function maestriaPorAssunto(respostas) {
+  const m = new Map()
+  for (const r of respostas) {
+    const a = r.questoes?.assuntos
+    if (!a) continue
+    const g = m.get(a.id) ?? { id: a.id, nome: a.nome, disciplina: r.questoes?.disciplinas?.nome ?? null, total: 0, acertos: 0 }
+    g.total += 1
+    if (r.acertou) g.acertos += 1
+    m.set(a.id, g)
+  }
+  return [...m.values()]
+    .map(g => ({ ...g, pct: Math.round((g.acertos / g.total) * 100) }))
+    .sort((a, b) => b.total - a.total)
+}
+
 // Questões mais erradas: [{ questao, erros, total }]
 export function questoesMaisErradas(respostas, limite = 10) {
   const porQuestao = new Map()

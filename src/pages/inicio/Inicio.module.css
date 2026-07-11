@@ -120,6 +120,25 @@
 }
 
 /* ── Cards de recursos ────────────────────────────── */
+/* ── Ofensiva + meta ── */
+.ofensiva {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 16px 20px; border-radius: var(--radius-lg);
+  background: var(--bg-surface); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);
+}
+.ofStreak { display: flex; align-items: center; gap: 12px; }
+.ofFlameOn { color: #f97316; }
+.ofFlameOff { color: var(--text-tertiary); }
+.ofNum { font-size: 26px; font-weight: 800; line-height: 1; color: var(--text-primary); }
+.ofLabel { font-size: 11.5px; color: var(--text-tertiary); }
+.ofMeta { flex: 1; min-width: 200px; }
+.ofMetaTopo { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.ofMetaTitulo { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+.ofAjustar { background: none; border: none; font-size: 11.5px; color: var(--color-primary); cursor: pointer; font-family: var(--font-sans); }
+.ofBarra { height: 9px; background: var(--bg-subtle); border-radius: var(--radius-full); overflow: hidden; }
+.ofBarraFill { height: 100%; background: linear-gradient(90deg, #f97316, #fb923c); border-radius: var(--radius-full); transition: width 0.3s; }
+.ofMetaTexto { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+
 /* ── Cards em destaque (propaganda) ── */
 .destaques {
   display: grid;
