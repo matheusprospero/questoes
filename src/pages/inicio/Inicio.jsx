@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
 import { listarQuestoes } from '../../services/questoes'
 import { listarRespostas, calcularOfensiva, contarRevisoesHoje } from '../../services/estudo'
+import { listarDisciplinas } from '../../services/questoes'
+import ModalMeta, { lerCfgMeta, salvarCfgMeta } from '../../components/ModalMeta'
 import { listarDestaquesAtivos, destinoDestaque } from '../../services/destaques'
 import CardDestaque from '../../components/CardDestaque'
 import {
@@ -140,15 +142,29 @@ export default function Inicio() {
     else navigate(destino)
   }
 
-  // Ofensiva (streak) + meta diária (localStorage)
+  // Ofensiva (streak) + metas (localStorage)
   const ofensiva = useMemo(() => calcularOfensiva(respostas), [respostas])
-  const [meta, setMeta] = useState(() => Number(localStorage.getItem('meta-diaria')) || 20)
-  function ajustarMeta() {
-    const v = window.prompt('Sua meta de questões por dia:', String(meta))
-    const n = Number(v)
-    if (n > 0) { localStorage.setItem('meta-diaria', String(n)); setMeta(n) }
-  }
-  const pctMeta = Math.min(100, Math.round((ofensiva.hoje / meta) * 100))
+  const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
+  const [cfg, setCfg] = useState(lerCfgMeta)
+  const [modalMeta, setModalMeta] = useState(false)
+  const pctMeta = Math.min(100, Math.round((ofensiva.hoje / (cfg.metaDiaria || 1)) * 100))
+
+  // Questões de hoje por disciplina
+  const hojePorDisc = useMemo(() => {
+    const hojeStr = new Date().toLocaleDateString('en-CA')
+    const m = {}
+    for (const r of respostas) {
+      if (new Date(r.respondido_em).toLocaleDateString('en-CA') !== hojeStr) continue
+      const d = r.questoes?.disciplinas
+      if (d) m[d.id] = (m[d.id] || 0) + 1
+    }
+    return m
+  }, [respostas])
+
+  const metasDisc = Object.entries(cfg.porDisciplina || {}).map(([id, goal]) => {
+    const d = disciplinas.find(x => String(x.id) === String(id))
+    return { id, nome: d?.nome || 'Disciplina', cor: d?.cor, goal, feito: hojePorDisc[id] || 0 }
+  })
 
   // Últimos acessos: desempenho por disciplina, mais recente primeiro
   const acessos = useMemo(() => {
@@ -214,34 +230,59 @@ export default function Inicio() {
         </div>
       </section>
 
-      {/* ── Ofensiva + meta diária ── */}
+      {/* ── Ofensiva + metas ── */}
       <section className={styles.ofensiva}>
-        <div className={styles.ofStreak}>
-          <Flame size={26} className={ofensiva.streak > 0 ? styles.ofFlameOn : styles.ofFlameOff} />
-          <div>
-            <div className={styles.ofNum}>{ofensiva.streak}</div>
-            <div className={styles.ofLabel}>{ofensiva.streak === 1 ? 'dia seguido' : 'dias seguidos'}</div>
+        <div className={styles.ofTopo}>
+          <div className={styles.ofStreak}>
+            <Flame size={26} className={ofensiva.streak > 0 ? styles.ofFlameOn : styles.ofFlameOff} />
+            <div>
+              <div className={styles.ofNum}>{ofensiva.streak}</div>
+              <div className={styles.ofLabel}>
+                {ofensiva.streak === 1 ? 'dia seguido' : 'dias seguidos'}
+                {cfg.metaDias > 0 && <> · meta {cfg.metaDias}{ofensiva.streak >= cfg.metaDias ? ' ✅' : ''}</>}
+              </div>
+            </div>
           </div>
+          <div className={styles.ofMeta}>
+            <div className={styles.ofMetaTopo}>
+              <span className={styles.ofMetaTitulo}><Target size={14} /> Meta de hoje</span>
+              <button className={styles.ofAjustar} onClick={() => setModalMeta(true)}>ajustar metas</button>
+            </div>
+            <div className={styles.ofBarra}>
+              <div className={styles.ofBarraFill} style={{ width: `${pctMeta}%` }} />
+            </div>
+            <div className={styles.ofMetaTexto}>
+              {ofensiva.hoje} / {cfg.metaDiaria} questões {ofensiva.hoje >= cfg.metaDiaria ? '— concluída! 🎉' : ''}
+            </div>
+          </div>
+          {revisoesHoje > 0 && (
+            <button className={styles.ofRevisao} onClick={() => navigate('/estudo?revisao=1')}>
+              <RotateCcw size={16} />
+              <span><strong>{revisoesHoje}</strong> para revisar hoje</span>
+            </button>
+          )}
         </div>
-        <div className={styles.ofMeta}>
-          <div className={styles.ofMetaTopo}>
-            <span className={styles.ofMetaTitulo}><Target size={14} /> Meta de hoje</span>
-            <button className={styles.ofAjustar} onClick={ajustarMeta}>ajustar</button>
+
+        {metasDisc.length > 0 && (
+          <div className={styles.ofDiscs}>
+            {metasDisc.map(m => (
+              <div key={m.id} className={`${styles.ofDiscChip} ${m.feito >= m.goal ? styles.ofDiscOk : ''}`}>
+                <span className={styles.ofDiscCor} style={{ background: m.cor || 'var(--color-primary)' }} />
+                {m.nome} <strong>{m.feito}/{m.goal}</strong>
+              </div>
+            ))}
           </div>
-          <div className={styles.ofBarra}>
-            <div className={styles.ofBarraFill} style={{ width: `${pctMeta}%` }} />
-          </div>
-          <div className={styles.ofMetaTexto}>
-            {ofensiva.hoje} / {meta} questões {ofensiva.hoje >= meta ? '— concluída! 🎉' : ''}
-          </div>
-        </div>
-        {revisoesHoje > 0 && (
-          <button className={styles.ofRevisao} onClick={() => navigate('/estudo?revisao=1')}>
-            <RotateCcw size={16} />
-            <span><strong>{revisoesHoje}</strong> para revisar hoje</span>
-          </button>
         )}
       </section>
+
+      {modalMeta && (
+        <ModalMeta
+          cfgInicial={cfg}
+          disciplinas={disciplinas}
+          onFechar={() => setModalMeta(false)}
+          onSalvar={(novo) => { salvarCfgMeta(novo); setCfg(novo); setModalMeta(false) }}
+        />
+      )}
 
       {/* ── Cards em destaque (propaganda do professor) ── */}
       {destaques.length > 0 && (

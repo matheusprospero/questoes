@@ -122,10 +122,22 @@
 /* ── Cards de recursos ────────────────────────────── */
 /* ── Ofensiva + meta ── */
 .ofensiva {
-  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  display: flex; flex-direction: column; gap: 14px;
   padding: 16px 20px; border-radius: var(--radius-lg);
   background: var(--bg-surface); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);
 }
+.ofTopo { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.ofDiscs { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
+.ofDiscChip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-secondary);
+  padding: 5px 11px; border-radius: var(--radius-full);
+  background: var(--bg-subtle); border: 1px solid var(--border-subtle);
+}
+.ofDiscChip strong { color: var(--text-primary); }
+.ofDiscOk { background: color-mix(in srgb, #16a34a 14%, transparent); }
+.ofDiscOk strong { color: #15803d; }
+.ofDiscCor { width: 8px; height: 8px; border-radius: 2px; }
 .ofStreak { display: flex; align-items: center; gap: 12px; }
 .ofFlameOn { color: #f97316; }
 .ofFlameOff { color: var(--text-tertiary); }
