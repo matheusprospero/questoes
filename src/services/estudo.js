@@ -57,12 +57,21 @@ export async function contarRevisoesHoje() {
 // fracos + questões novas para completar a meta. Retorna { questoes, resumo }.
 export async function montarMetaDoDia(cfg = {}) {
   const meta = Math.max(1, Number(cfg.metaDiaria) || 20)
+  const obj = cfg.objetivo || {}
+  const baseFiltro = {}
+  if (obj.banca_id) baseFiltro.banca_id = obj.banca_id
+  if (obj.cargo) baseFiltro.cargo = obj.cargo
+  // Questão dentro do objetivo?
+  const noObjetivo = (q) =>
+    (!obj.banca_id || String(q.banca_id) === String(obj.banca_id)) &&
+    (!obj.cargo || q.cargo === obj.cargo)
+
   const [revisaoRaw, respostas, todasRaw] = await Promise.all([
     questoesParaRevisar().catch(() => []),
     listarRespostas(),
-    listarQuestoes({}),
+    listarQuestoes(baseFiltro),
   ])
-  const revisao = revisaoRaw.filter(temGab)
+  const revisao = revisaoRaw.filter(temGab).filter(noObjetivo)
   const todas = todasRaw.filter(temGab)
   const respondidas = new Set(respostas.map(r => r.questao_id))
 

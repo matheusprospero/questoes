@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
 import { listarQuestoes } from '../../services/questoes'
 import { listarRespostas, calcularOfensiva, contarRevisoesHoje } from '../../services/estudo'
-import { listarDisciplinas } from '../../services/questoes'
+import { listarDisciplinas, listarFacetas } from '../../services/questoes'
 import ModalMeta, { lerCfgMeta, salvarCfgMeta } from '../../components/ModalMeta'
 import { listarDestaquesAtivos, destinoDestaque } from '../../services/destaques'
 import CardDestaque from '../../components/CardDestaque'
@@ -145,6 +145,7 @@ export default function Inicio() {
   // Ofensiva (streak) + metas (localStorage)
   const ofensiva = useMemo(() => calcularOfensiva(respostas), [respostas])
   const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
+  const { data: facetas = [] } = useQuery({ queryKey: ['facetas'], queryFn: listarFacetas })
   const [cfg, setCfg] = useState(lerCfgMeta)
   const [modalMeta, setModalMeta] = useState(false)
   const pctMeta = Math.min(100, Math.round((ofensiva.hoje / (cfg.metaDiaria || 1)) * 100))
@@ -283,7 +284,7 @@ export default function Inicio() {
       {modalMeta && (
         <ModalMeta
           cfgInicial={cfg}
-          disciplinas={disciplinas}
+          facetas={facetas}
           onFechar={() => setModalMeta(false)}
           onSalvar={(novo) => { salvarCfgMeta(novo); setCfg(novo); setModalMeta(false) }}
         />
