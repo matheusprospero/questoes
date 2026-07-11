@@ -48,6 +48,8 @@
 .secaoTitulo { font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0 0 12px; }
 .vazio { font-size: 12.5px; color: var(--text-tertiary); margin: 0 0 10px; }
 .dica { font-size: 12px; color: var(--text-tertiary); margin: 12px 0 0; }
+.avisoMeta { font-size: 12px; color: var(--color-warning); margin: 12px 0 0; }
+.avisoMeta strong, .dica strong { color: var(--text-primary); }
 .blocoLabel { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin: 14px 0 0; }
 
 /* Assuntos agrupados por disciplina */

@@ -56,7 +56,9 @@ export async function contarRevisoesHoje() {
 // Monta a "meta do dia": revisão vencida + metas por disciplina + pontos
 // fracos + questões novas para completar a meta. Retorna { questoes, resumo }.
 export async function montarMetaDoDia(cfg = {}) {
-  const meta = Math.max(1, Number(cfg.metaDiaria) || 20)
+  // A meta do dia é o MAIOR valor entre o total e a soma das metas por disciplina
+  const somaDisc = Object.values(cfg.porDisciplina || {}).reduce((a, b) => a + (Number(b) || 0), 0)
+  const meta = Math.max(1, Number(cfg.metaDiaria) || 0, somaDisc)
   const obj = cfg.objetivo || {}
   const scopeDiscs = new Set(Object.keys(cfg.porDisciplina || {}).map(String))
   const scopeAssuntos = new Set((obj.assuntos || []).map(String))

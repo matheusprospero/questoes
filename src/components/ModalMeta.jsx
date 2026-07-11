@@ -68,6 +68,8 @@ export default function ModalMeta({ cfgInicial, facetas = [], onFechar, onSalvar
   }
 
   const comGoal = Object.keys(porDisc).map(id => disciplinas.find(d => d.id === id)).filter(Boolean)
+  const somaDisc = Object.values(porDisc).reduce((a, b) => a + (Number(b) || 0), 0)
+  const metaEfetiva = Math.max(Number(metaDiaria) || 0, somaDisc)
 
   return (
     <div className={styles.overlay} onClick={onFechar}>
@@ -152,6 +154,12 @@ export default function ModalMeta({ cfgInicial, facetas = [], onFechar, onSalvar
                     <span className={styles.qDia}>q/dia</span>
                   </div>
                 ))}
+                <p className={somaDisc > (Number(metaDiaria) || 0) ? styles.avisoMeta : styles.dica}>
+                  Soma por disciplina: <strong>{somaDisc}</strong> q/dia.
+                  {somaDisc > (Number(metaDiaria) || 0)
+                    ? ` Sua meta do dia será ${metaEfetiva} (o maior valor).`
+                    : ` O restante (${Math.max(0, metaEfetiva - somaDisc)}) vem de revisão e pontos fracos.`}
+                </p>
               </div>
             )}
           </div>

@@ -148,7 +148,9 @@ export default function Inicio() {
   const { data: facetas = [] } = useQuery({ queryKey: ['facetas'], queryFn: listarFacetas })
   const [cfg, setCfg] = useState(lerCfgMeta)
   const [modalMeta, setModalMeta] = useState(false)
-  const pctMeta = Math.min(100, Math.round((ofensiva.hoje / (cfg.metaDiaria || 1)) * 100))
+  const somaDisc = Object.values(cfg.porDisciplina || {}).reduce((a, b) => a + (Number(b) || 0), 0)
+  const metaEfetiva = Math.max(Number(cfg.metaDiaria) || 0, somaDisc) || 1
+  const pctMeta = Math.min(100, Math.round((ofensiva.hoje / metaEfetiva) * 100))
 
   // Questões de hoje por disciplina
   const hojePorDisc = useMemo(() => {
@@ -255,7 +257,7 @@ export default function Inicio() {
               <div className={styles.ofBarraFill} style={{ width: `${pctMeta}%` }} />
             </div>
             <div className={styles.ofMetaTexto}>
-              {ofensiva.hoje} / {cfg.metaDiaria} questões {ofensiva.hoje >= cfg.metaDiaria ? '— concluída! 🎉' : ''}
+              {ofensiva.hoje} / {metaEfetiva} questões {ofensiva.hoje >= metaEfetiva ? '— concluída! 🎉' : ''}
             </div>
           </div>
           <div className={styles.ofAcoes}>
