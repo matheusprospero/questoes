@@ -1,4 +1,10 @@
 import { supabase } from './supabase'
+import { listarQuestoes } from './questoes'
+
+const temGab = (q) => q.tipo === 'certo_errado'
+  ? (q.gabarito_certo !== null && q.gabarito_certo !== undefined)
+  : (q.alternativas || []).some(a => a.correta)
+const misturar = (a) => [...a].sort(() => Math.random() - 0.5)
 
 // ── Registro de respostas ─────────────────────────────────────
 
@@ -45,6 +51,56 @@ export async function contarRevisoesHoje() {
     .lte('proxima_em', hoje)
   if (error) return 0
   return count ?? 0
+}
+
+// Monta a "meta do dia": revisão vencida + metas por disciplina + pontos
+// fracos + questões novas para completar a meta. Retorna { questoes, resumo }.
+export async function montarMetaDoDia(cfg = {}) {
+  const meta = Math.max(1, Number(cfg.metaDiaria) || 20)
+  const [revisaoRaw, respostas, todasRaw] = await Promise.all([
+    questoesParaRevisar().catch(() => []),
+    listarRespostas(),
+    listarQuestoes({}),
+  ])
+  const revisao = revisaoRaw.filter(temGab)
+  const todas = todasRaw.filter(temGab)
+  const respondidas = new Set(respostas.map(r => r.questao_id))
+
+  const sel = []
+  const usados = new Set()
+  const add = (q) => { if (q && !usados.has(q.id) && sel.length < meta) { usados.add(q.id); sel.push(q); return true } return false }
+
+  const resumo = { revisao: 0, disciplinas: 0, fracos: 0, novas: 0 }
+
+  // 1) Revisão vencida (prioridade)
+  for (const q of revisao) { if (add(q)) resumo.revisao++ }
+
+  // 2) Metas por disciplina (completa o que falta de cada uma)
+  for (const [discId, goal] of Object.entries(cfg.porDisciplina || {})) {
+    const jaNa = sel.filter(q => String(q.disciplina_id) === String(discId)).length
+    let faltam = Math.max(0, Number(goal) - jaNa)
+    const cand = todas.filter(q => String(q.disciplina_id) === String(discId) && !usados.has(q.id))
+    const ordenadas = [...misturar(cand.filter(q => !respondidas.has(q.id))), ...misturar(cand.filter(q => respondidas.has(q.id)))]
+    for (const q of ordenadas) { if (faltam <= 0) break; if (add(q)) { faltam--; resumo.disciplinas++ } }
+  }
+
+  // 3) Pontos fracos (assuntos onde mais erra), inéditas
+  if (sel.length < meta) {
+    const fracos = montarRecomendadas(todas.filter(q => !usados.has(q.id)), respostas, { limite: meta - sel.length })
+    for (const q of fracos) { if (add(q)) resumo.fracos++ }
+  }
+
+  // 4) Completa com questões novas variadas
+  if (sel.length < meta) {
+    const novas = amostraDiversificada(todas.filter(q => !usados.has(q.id) && !respondidas.has(q.id)), meta - sel.length)
+    for (const q of novas) { if (add(q)) resumo.novas++ }
+  }
+  // 5) Se ainda faltar, qualquer não usada
+  if (sel.length < meta) {
+    for (const q of misturar(todas.filter(q => !usados.has(q.id)))) { if (!add(q)) break }
+  }
+
+  return { questoes: misturar(sel), resumo }
 }
 
 // Todas as respostas, com a classificação da questão (para estatísticas)

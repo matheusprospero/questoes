@@ -255,12 +255,17 @@ export default function Inicio() {
               {ofensiva.hoje} / {cfg.metaDiaria} questões {ofensiva.hoje >= cfg.metaDiaria ? '— concluída! 🎉' : ''}
             </div>
           </div>
-          {revisoesHoje > 0 && (
-            <button className={styles.ofRevisao} onClick={() => navigate('/estudo?revisao=1')}>
-              <RotateCcw size={16} />
-              <span><strong>{revisoesHoje}</strong> para revisar hoje</span>
+          <div className={styles.ofAcoes}>
+            <button className={styles.ofMetaBtn} onClick={() => navigate('/estudo?meta=1')}>
+              <Target size={16} /> Começar meta do dia
             </button>
-          )}
+            {revisoesHoje > 0 && (
+              <button className={styles.ofRevisao} onClick={() => navigate('/estudo?revisao=1')}>
+                <RotateCcw size={16} />
+                <span><strong>{revisoesHoje}</strong> para revisar</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {metasDisc.length > 0 && (

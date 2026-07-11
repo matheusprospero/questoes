@@ -7,8 +7,9 @@ import {
 } from '../../services/questoes'
 import {
   registrarResposta, listarRespostas, idsUltimaErrada,
-  montarRecomendadas, amostraDiversificada, questoesParaRevisar,
+  montarRecomendadas, amostraDiversificada, questoesParaRevisar, montarMetaDoDia,
 } from '../../services/estudo'
+import { lerCfgMeta } from '../../components/ModalMeta'
 import { buscarSimulado } from '../../services/simulados'
 import { buscarAula } from '../../services/aulas'
 import VideoYouTube from '../../components/VideoYouTube'
@@ -106,6 +107,31 @@ export default function Estudo() {
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revisaoParam])
+
+  // ?meta=1 → monta a "meta do dia" automaticamente
+  const metaParam = searchParams.get('meta')
+  const [carregandoMeta, setCarregandoMeta] = useState(!!metaParam)
+  useEffect(() => {
+    if (!metaParam) return
+    ;(async () => {
+      try {
+        const { questoes, resumo } = await montarMetaDoDia(lerCfgMeta())
+        const qs = questoes.filter(temGabarito)
+        if (qs.length === 0) { toast.error('Não há questões com gabarito para montar a meta.'); return }
+        const partes = []
+        if (resumo.revisao) partes.push(`${resumo.revisao} de revisão`)
+        if (resumo.disciplinas) partes.push(`${resumo.disciplinas} das metas`)
+        if (resumo.fracos) partes.push(`${resumo.fracos} de pontos fracos`)
+        toast.success(`Meta do dia: ${qs.length} questões${partes.length ? ' — ' + partes.join(', ') : ''}`)
+        await comecar(qs, 'estudo')
+      } catch (err) {
+        toast.error('Erro ao montar a meta: ' + err.message)
+      } finally {
+        setCarregandoMeta(false)
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metaParam])
 
   // ?aula=<id> → resolve as questões daquela aula
   const aulaId = searchParams.get('aula')
@@ -371,11 +397,13 @@ export default function Estudo() {
 
   // ══════════════ FASE: CONFIG ══════════════
   if (fase === 'config') {
-    if (carregandoSimulado || carregandoAula || carregandoRevisao) {
+    if (carregandoSimulado || carregandoAula || carregandoRevisao || carregandoMeta) {
       return (
         <div className={styles.page}>
           <div className={styles.carregandoSimulado}>
-            {carregandoRevisao ? 'Montando sua revisão...' : carregandoAula ? 'Abrindo aula...' : 'Abrindo simulado...'}
+            {carregandoMeta ? 'Montando sua meta do dia...'
+              : carregandoRevisao ? 'Montando sua revisão...'
+              : carregandoAula ? 'Abrindo aula...' : 'Abrindo simulado...'}
           </div>
         </div>
       )
