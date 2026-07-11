@@ -12,6 +12,7 @@ import {
 import { buscarSimulado } from '../../services/simulados'
 import { buscarAula } from '../../services/aulas'
 import VideoYouTube from '../../components/VideoYouTube'
+import FeedbackQuestao from '../../components/FeedbackQuestao'
 import {
   Play, CheckCircle, XCircle, ChevronRight, RotateCcw, BarChart2, BookOpen, Youtube, Sparkles,
 } from 'lucide-react'
@@ -662,6 +663,9 @@ export default function Estudo() {
             )}
           </div>
         )}
+
+        {/* Feedback: dificuldade, estrelas e reportar problema */}
+        {respondida && <div style={{ marginTop: 14 }}><FeedbackQuestao questaoId={q.id} compacto /></div>}
 
         {/* Ações */}
         <div className={styles.acoesRow}>

@@ -24,7 +24,7 @@ const TIPOS = [
 ]
 const fmtData = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 
-export default function FeedbackQuestao({ questaoId }) {
+export default function FeedbackQuestao({ questaoId, compacto = false }) {
   const { usuario, perfil, isAdmin } = useAuth()
   const qc = useQueryClient()
   const [hoverEstrela, setHoverEstrela] = useState(0)
@@ -33,7 +33,7 @@ export default function FeedbackQuestao({ questaoId }) {
   const [reportTipo, setReportTipo] = useState('gabarito')
   const [reportDesc, setReportDesc] = useState('')
 
-  const { data: comentarios = [] } = useQuery({ queryKey: ['comentarios', questaoId], queryFn: () => listarComentarios(questaoId) })
+  const { data: comentarios = [] } = useQuery({ queryKey: ['comentarios', questaoId], queryFn: () => listarComentarios(questaoId), enabled: !compacto })
   const { data: avaliacoes = [] } = useQuery({ queryKey: ['avaliacoes', questaoId], queryFn: () => listarAvaliacoes(questaoId) })
 
   const resumo = resumoAvaliacoes(avaliacoes)
@@ -119,6 +119,7 @@ export default function FeedbackQuestao({ questaoId }) {
       </button>
 
       {/* Comentários */}
+      {!compacto && (
       <div className={styles.comentarios}>
         <p className={styles.cardTitulo}>Comentários ({comentarios.length})</p>
         <div className={styles.novoComentario}>
@@ -152,6 +153,7 @@ export default function FeedbackQuestao({ questaoId }) {
           </div>
         )}
       </div>
+      )}
 
       {/* Modal de report */}
       {modalReport && (

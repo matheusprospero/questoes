@@ -39,6 +39,7 @@ export default function Questoes() {
   const [soComImagem, setSoComImagem] = useState(false)
   const [ocultarRevisadas, setOcultarRevisadas] = useState(true)
   const [expandidas, setExpandidas] = useState(new Set())
+  const [gabVisivel, setGabVisivel] = useState(new Set())
   const [questaoParaSimulado, setQuestaoParaSimulado] = useState(null)
   const [simuladoSelected, setSimuladoSelected] = useState(null)
   const [questaoParaCaderno, setQuestaoParaCaderno] = useState(null)
@@ -137,6 +138,10 @@ export default function Questoes() {
     if (novas.has(id)) novas.delete(id)
     else novas.add(id)
     setExpandidas(novas)
+  }
+
+  function verGabarito(id) {
+    setGabVisivel(s => new Set(s).add(id))
   }
 
   const questaoTemImagem = (q) =>
@@ -509,7 +514,9 @@ export default function Questoes() {
                   </div>
                 </div>
 
-                {expandida && (
+                {expandida && (() => {
+                  const revelado = mostrarGabarito || gabVisivel.has(q.id)
+                  return (
                   <div className={styles.cardExpanded}>
                     <div className={styles.enunciado}>
                       <p className={styles.label}>Enunciado:</p>
@@ -521,16 +528,16 @@ export default function Questoes() {
                         <p className={styles.label}>Alternativas:</p>
                         {q.alternativas.map(alt => (
                           <div key={alt.id}
-                            className={`${styles.altItem} ${mostrarGabarito && alt.correta ? styles.altCorreta : ''}`}>
+                            className={`${styles.altItem} ${revelado && alt.correta ? styles.altCorreta : ''}`}>
                             <span className={styles.altLetra}>{alt.letra})</span>
                             <span dangerouslySetInnerHTML={{ __html: alt.texto }} />
-                            {mostrarGabarito && alt.correta && <CheckCircle size={14} className={styles.checkIcon} />}
+                            {revelado && alt.correta && <CheckCircle size={14} className={styles.checkIcon} />}
                           </div>
                         ))}
                       </div>
                     )}
 
-                    {q.tipo === 'certo_errado' && mostrarGabarito && (
+                    {q.tipo === 'certo_errado' && revelado && (
                       <div className={styles.gabarito}>
                         <p className={styles.label}>Gabarito:</p>
                         <p style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -541,7 +548,13 @@ export default function Questoes() {
                       </div>
                     )}
 
-                    {q.comentario && (
+                    {!revelado && (
+                      <button className={styles.btnVerGabarito} onClick={() => verGabarito(q.id)}>
+                        <Eye size={14} /> Ver gabarito
+                      </button>
+                    )}
+
+                    {revelado && q.comentario && (
                       <div className={styles.gabarito}>
                         <p className={styles.label}>Comentário:</p>
                         <div dangerouslySetInnerHTML={{ __html: q.comentario }} />
@@ -559,7 +572,7 @@ export default function Questoes() {
                       </button>
                     </div>
                   </div>
-                )}
+                  ) })()}
               </div>
             )
           })}

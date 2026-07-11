@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { registrarResposta } from '../services/estudo'
 import { listarQuestoes, buscarVideoQuestao, gabaritoQuestao } from '../services/questoes'
 import VideoYouTube from './VideoYouTube'
+import FeedbackQuestao from './FeedbackQuestao'
 import {
   CheckCircle, XCircle, ChevronRight, ChevronDown, ChevronUp,
   RotateCcw, BookOpen, Youtube, Eye,
@@ -273,6 +274,7 @@ export default function QuestaoResolver({ questoes, contexto }) {
                 : <p className={styles.videoBloqueado}>🔒 Resolução em vídeo exclusiva para assinantes.</p>}
             </div>
           )}
+          <div style={{ marginTop: 14 }}><FeedbackQuestao questaoId={q.id} compacto /></div>
         </>
       )}
 
