@@ -36,9 +36,10 @@ function normalizar(a) {
 // ── Listagem ──────────────────────────────────────────────
 
 export async function listarAulas() {
+  // NÃO traz "conteudo" (URLs de vídeo) na listagem — só ao abrir a aula (buscarAula)
   const { data, error } = await supabase
     .from('aulas')
-    .select('*, disciplinas(id, nome, cor), aula_questoes(count)')
+    .select('id, titulo, descricao, disciplina_id, assunto_id, publicada, criado_em, disciplinas(id, nome, cor), aula_questoes(count)')
     .order('criado_em', { ascending: false })
   if (error) throw error
   return (data || []).map(a => ({

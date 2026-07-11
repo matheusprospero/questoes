@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { criarSimulado, atualizarSimulado, buscarSimulado } from '../../services/simulados'
-import { listarQuestoes, listarDisciplinas, resumoEnunciado, rotuloQuestao } from '../../services/questoes'
-import { Plus, Trash2, ChevronLeft, Save, GripVertical } from 'lucide-react'
+import {
+  listarQuestoes, listarDisciplinas, resumoEnunciado, rotuloQuestao,
+  listarFacetas, listarProvas, opcoesDisponiveis,
+} from '../../services/questoes'
+import { Plus, Trash2, ChevronLeft, Save, GripVertical, FileText } from 'lucide-react'
 import SimuladoHeader, { CABECALHO_PADRAO } from '../../components/SimuladoHeader'
 import toast from 'react-hot-toast'
 import styles from './SimuladoForm.module.css'
@@ -56,6 +59,44 @@ export default function SimuladoForm() {
   }, [simuladoExistente])
 
   const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
+
+  // Provas (Órgão+Ano+Cargo) para adicionar em bloco
+  const { data: facetas = [] } = useQuery({ queryKey: ['facetas'], queryFn: listarFacetas })
+  const provas = useMemo(() => listarProvas(facetas), [facetas])
+  const [provaSel, setProvaSel] = useState('')
+  const [discProva, setDiscProva] = useState(new Set())
+  const provaObj = provas.find(p => p.chave === provaSel) || null
+  const disciplinasProva = useMemo(() => {
+    if (!provaObj) return []
+    const f = { orgao_id: provaObj.orgao_id, ano: provaObj.ano ?? undefined, cargo: provaObj.cargo ?? undefined }
+    return (opcoesDisponiveis(facetas, f).disciplina_id || []).slice().sort((a, b) => a.rotulo.localeCompare(b.rotulo, 'pt-BR'))
+  }, [provaObj, facetas])
+
+  function escolherProva(chave) {
+    setProvaSel(chave)
+    const p = provas.find(x => x.chave === chave)
+    const f = p ? { orgao_id: p.orgao_id, ano: p.ano ?? undefined, cargo: p.cargo ?? undefined } : null
+    setDiscProva(new Set(f ? (opcoesDisponiveis(facetas, f).disciplina_id || []).map(d => d.valor) : []))
+  }
+  function toggleDiscProva(idDisc) {
+    setDiscProva(s => { const n = new Set(s); n.has(idDisc) ? n.delete(idDisc) : n.add(idDisc); return n })
+  }
+
+  const addProva = useMutation({
+    mutationFn: async () => {
+      if (!provaObj) throw new Error('Escolha uma prova')
+      if (discProva.size === 0) throw new Error('Marque ao menos uma disciplina')
+      const qs = await listarQuestoes({ orgao_id: provaObj.orgao_id, ano: provaObj.ano ?? undefined, cargo: provaObj.cargo ?? undefined })
+      return qs.filter(q => discProva.has(q.disciplina_id)).map(q => q.id)
+    },
+    onSuccess: (ids) => {
+      const novos = ids.filter(x => !questoes.includes(x))
+      if (novos.length === 0) { toast.error('Essas questões já estão no simulado.'); return }
+      setQuestoes(qs => [...qs, ...novos])
+      toast.success(`${novos.length} questão(ões) adicionada(s).`)
+    },
+    onError: (err) => toast.error(err.message),
+  })
 
   const { data: todasQuestoes = [] } = useQuery({
     queryKey: ['questoes', { disciplina_id: filtroDisc || undefined }],
@@ -244,6 +285,39 @@ export default function SimuladoForm() {
         </div>
 
         <div className={styles.colSide}>
+          <div className={styles.card}>
+            <p className={styles.cardTitulo}><FileText size={14} style={{ verticalAlign: '-2px', marginRight: 6 }} />Adicionar uma prova</p>
+            <select className={styles.select ?? styles.input}
+              value={provaSel} onChange={e => escolherProva(e.target.value)}
+              style={{ marginBottom: 8, width: '100%' }}>
+              <option value="">Escolha uma prova…</option>
+              {provas.map(p => (
+                <option key={p.chave} value={p.chave}>
+                  {[p.banca, p.orgao, p.cargo, p.ano].filter(Boolean).join(' · ')} — {p.total}
+                </option>
+              ))}
+            </select>
+            {provaObj && (
+              <>
+                <p className={styles.provaHint}>Disciplinas (todas = prova inteira):</p>
+                <div className={styles.provaChips}>
+                  {disciplinasProva.map(d => (
+                    <button key={d.valor} type="button"
+                      className={`${styles.provaChip} ${discProva.has(d.valor) ? styles.provaChipOn : ''}`}
+                      onClick={() => toggleDiscProva(d.valor)}>
+                      {d.rotulo} ({d.total})
+                    </button>
+                  ))}
+                </div>
+                <button className={styles.btnAddProva}
+                  onClick={() => addProva.mutate()} disabled={addProva.isPending}>
+                  <Plus size={13} /> {addProva.isPending ? 'Adicionando...'
+                    : `Adicionar ${discProva.size >= disciplinasProva.length ? 'a prova inteira' : `${discProva.size} disciplina(s)`}`}
+                </button>
+              </>
+            )}
+          </div>
+
           <div className={styles.card}>
             <p className={styles.cardTitulo}>Buscar questões</p>
             <select className={styles.select ?? styles.input}
