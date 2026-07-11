@@ -1,8 +1,19 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { Mail, Lock, AlertCircle, ChevronDown } from 'lucide-react'
+import {
+  Mail, Lock, AlertCircle, ChevronDown,
+  Target, RotateCcw, GraduationCap, BarChart2, ClipboardList, CheckCircle2,
+} from 'lucide-react'
 import styles from './Login.module.css'
+
+const RECURSOS = [
+  { Icon: Target, titulo: 'Meta do dia pronta pra você', texto: 'Escolha banca, disciplinas e assuntos — o sistema monta sua sessão diária com o que importa.' },
+  { Icon: RotateCcw, titulo: 'Revisão espaçada', texto: 'As questões que você erra voltam na hora certa para fixar de verdade.' },
+  { Icon: GraduationCap, titulo: 'Aulas com teoria e questões', texto: 'Estude o conteúdo e treine no mesmo tema, com resolução em vídeo.' },
+  { Icon: BarChart2, titulo: 'Estatísticas e maestria', texto: 'Veja seu desempenho por assunto e saiba exatamente onde focar.' },
+  { Icon: ClipboardList, titulo: 'Simulados', texto: 'Monte simulados, resolva online ou imprima para treinar como na prova.' },
+]
 
 function GoogleIcon() {
   return (
@@ -55,13 +66,41 @@ export default function Login() {
 
   return (
     <div className={styles.page}>
+      <div className={styles.shell}>
+        {/* Vitrine: o que dá pra fazer */}
+        <div className={styles.hero}>
+          <div className={styles.heroTop}>
+            <div className={styles.heroLogo}>MP</div>
+            <div>
+              <p className={styles.heroKicker}>Prof. Matheus Próspero</p>
+              <p className={styles.heroBrand}>Banco de Questões · Concursos</p>
+            </div>
+          </div>
+          <h1 className={styles.heroTitulo}>Estude para concursos do jeito certo.</h1>
+          <p className={styles.heroTexto}>
+            Resolva questões de provas reais, receba sua meta diária personalizada e
+            acompanhe sua evolução até a aprovação.
+          </p>
+          <ul className={styles.features}>
+            {RECURSOS.map(({ Icon, titulo, texto }) => (
+              <li key={titulo} className={styles.feature}>
+                <span className={styles.featureIcon}><Icon size={17} /></span>
+                <span>
+                  <strong className={styles.featureTitulo}>{titulo}</strong>
+                  <span className={styles.featureTexto}>{texto}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className={styles.heroRodape}>
+            <CheckCircle2 size={15} /> Acesso gratuito — basta entrar com o Google.
+          </p>
+        </div>
+
       <div className={styles.card}>
-        {/* Logo */}
-        <div className={styles.logoArea}>
-          <div className={styles.logoIcon}>MP</div>
-          <p className={styles.logoKicker}>Professor</p>
-          <h1 className={styles.logoTitle}>Matheus Próspero</h1>
-          <p className={styles.logoSub}>Banco de Questões para Concursos Públicos</p>
+        <div className={styles.cardHeader}>
+          <h2 className={styles.cardTitulo}>Comece a estudar agora</h2>
+          <p className={styles.cardSub}>Entre para montar sua meta do dia.</p>
         </div>
 
         {/* Entrar com Google (aluno) */}
@@ -138,6 +177,7 @@ export default function Login() {
             </button>
           </form>
         )}
+      </div>
       </div>
     </div>
   )

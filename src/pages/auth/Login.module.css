@@ -12,14 +12,58 @@
   padding: 24px;
 }
 
+.shell {
+  display: flex; align-items: center; gap: 48px;
+  width: 100%; max-width: 980px;
+}
+
+/* Vitrine (esquerda) */
+.hero { flex: 1; color: #fff; min-width: 0; }
+.heroTop { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+.heroLogo {
+  width: 48px; height: 48px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 14px; font-family: var(--font-display); font-weight: 800; font-size: 17px;
+}
+.heroKicker { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #c7d2fe; }
+.heroBrand { font-size: 13px; color: rgba(255, 255, 255, 0.8); }
+.heroTitulo {
+  font-family: var(--font-display); font-size: 32px; font-weight: 800;
+  line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 14px; color: #fff;
+}
+.heroTexto { font-size: 15px; line-height: 1.6; color: rgba(255, 255, 255, 0.85); margin-bottom: 26px; max-width: 460px; }
+.features { list-style: none; display: flex; flex-direction: column; gap: 16px; margin: 0 0 24px; }
+.feature { display: flex; align-items: flex-start; gap: 12px; }
+.featureIcon {
+  flex-shrink: 0; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px; color: #ede9fe;
+}
+.featureTitulo { display: block; font-size: 14px; font-weight: 700; color: #fff; }
+.featureTexto { display: block; font-size: 12.5px; line-height: 1.5; color: rgba(255, 255, 255, 0.78); }
+.heroRodape { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #a7f3d0; }
+
 .card {
+  flex-shrink: 0;
   background: rgba(255, 255, 255, 0.97);
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 24px;
-  padding: 42px 38px;
+  padding: 38px 34px;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   box-shadow: 0 30px 80px rgba(23, 15, 60, 0.45);
+}
+.cardHeader { text-align: center; margin-bottom: 24px; }
+.cardTitulo { font-family: var(--font-display); font-size: 21px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; }
+.cardSub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+@media (max-width: 860px) {
+  .shell { flex-direction: column; gap: 28px; max-width: 440px; }
+  .hero { text-align: left; width: 100%; }
+  .heroTitulo { font-size: 26px; }
+  .features { gap: 12px; }
+  .card { max-width: 100%; }
 }
 
 .logoArea {
