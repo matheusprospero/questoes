@@ -58,13 +58,12 @@ export async function contarRevisoesHoje() {
 export async function montarMetaDoDia(cfg = {}) {
   // A meta do dia é o MAIOR valor entre o total e a soma das metas por disciplina
   const somaDisc = Object.values(cfg.porDisciplina || {}).reduce((a, b) => a + (Number(b) || 0), 0)
-  const meta = Math.max(1, Number(cfg.metaDiaria) || 0, somaDisc)
+  const metaTotal = Math.max(1, Number(cfg.metaDiaria) || 0, somaDisc)
   const obj = cfg.objetivo || {}
   const scopeDiscs = new Set(Object.keys(cfg.porDisciplina || {}).map(String))
   const scopeAssuntos = new Set((obj.assuntos || []).map(String))
   const baseFiltro = {}
   if (obj.banca_id) baseFiltro.banca_id = obj.banca_id
-  // Questão dentro do objetivo (banca + disciplinas + assuntos escolhidos)?
   const noObjetivo = (q) =>
     (!obj.banca_id || String(q.banca_id) === String(obj.banca_id)) &&
     (scopeDiscs.size === 0 || scopeDiscs.has(String(q.disciplina_id))) &&
@@ -75,35 +74,46 @@ export async function montarMetaDoDia(cfg = {}) {
     listarRespostas(),
     listarQuestoes(baseFiltro),
   ])
+
+  // O que já foi feito HOJE (para continuar de onde parou, não recomeçar)
+  const hojeStr = new Date().toLocaleDateString('en-CA')
+  const respHoje = respostas.filter(r => new Date(r.respondido_em).toLocaleDateString('en-CA') === hojeStr)
+  const feitoHojeIds = new Set(respHoje.map(r => r.questao_id))
+  const feitoDisc = {}
+  for (const r of respHoje) { const d = r.questoes?.disciplinas; if (d) feitoDisc[d.id] = (feitoDisc[d.id] || 0) + 1 }
+  const restante = Math.max(0, metaTotal - respHoje.length)
+  if (restante === 0) return { questoes: [], resumo: { revisao: 0, disciplinas: 0, fracos: 0, novas: 0 }, concluida: true }
+
+  const meta = restante // monta só o que falta
   const revisao = revisaoRaw.filter(temGab).filter(noObjetivo)
   const todas = todasRaw.filter(temGab).filter(noObjetivo)
   const respondidas = new Set(respostas.map(r => r.questao_id))
 
   const sel = []
   const usados = new Set()
-  const add = (q) => { if (q && !usados.has(q.id) && sel.length < meta) { usados.add(q.id); sel.push(q); return true } return false }
+  // Não repete o que já foi feito hoje
+  const add = (q) => { if (q && !usados.has(q.id) && !feitoHojeIds.has(q.id) && sel.length < meta) { usados.add(q.id); sel.push(q); return true } return false }
 
   const resumo = { revisao: 0, disciplinas: 0, fracos: 0, novas: 0 }
 
   // 1) Revisão vencida (prioridade)
   for (const q of revisao) { if (add(q)) resumo.revisao++ }
 
-  // 2) Metas por disciplina (completa o que falta de cada uma)
+  // 2) Metas por disciplina — completa o que FALTA de cada uma (descontando o de hoje)
   for (const [discId, goal] of Object.entries(cfg.porDisciplina || {})) {
     const jaNa = sel.filter(q => String(q.disciplina_id) === String(discId)).length
-    let faltam = Math.max(0, Number(goal) - jaNa)
+    let faltam = Math.max(0, Number(goal) - (feitoDisc[discId] || 0) - jaNa)
     const cand = todas.filter(q => String(q.disciplina_id) === String(discId) && !usados.has(q.id))
     const ordenadas = [...misturar(cand.filter(q => !respondidas.has(q.id))), ...misturar(cand.filter(q => respondidas.has(q.id)))]
     for (const q of ordenadas) { if (faltam <= 0) break; if (add(q)) { faltam--; resumo.disciplinas++ } }
   }
 
-  // 3) Pontos fracos (assuntos onde mais erra), inéditas
+  // 3) Pontos fracos (assuntos onde mais erra)
   if (sel.length < meta) {
     const fracos = montarRecomendadas(todas.filter(q => !usados.has(q.id)), respostas, { limite: meta - sel.length })
     for (const q of fracos) { if (add(q)) resumo.fracos++ }
   }
-
-  // 4) Completa com questões novas variadas
+  // 4) Questões novas variadas
   if (sel.length < meta) {
     const novas = amostraDiversificada(todas.filter(q => !usados.has(q.id) && !respondidas.has(q.id)), meta - sel.length)
     for (const q of novas) { if (add(q)) resumo.novas++ }
@@ -113,7 +123,7 @@ export async function montarMetaDoDia(cfg = {}) {
     for (const q of misturar(todas.filter(q => !usados.has(q.id)))) { if (!add(q)) break }
   }
 
-  return { questoes: misturar(sel), resumo }
+  return { questoes: misturar(sel), resumo, concluida: false }
 }
 
 // Todas as respostas, com a classificação da questão (para estatísticas)

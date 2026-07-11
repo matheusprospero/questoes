@@ -115,7 +115,8 @@ export default function Estudo() {
     if (!metaParam) return
     ;(async () => {
       try {
-        const { questoes, resumo } = await montarMetaDoDia(lerCfgMeta())
+        const { questoes, resumo, concluida } = await montarMetaDoDia(lerCfgMeta())
+        if (concluida) { toast.success('Meta do dia já concluída! 🎉 Bom descanso ou treine mais pelos filtros.'); return }
         const qs = questoes.filter(temGabarito)
         if (qs.length === 0) { toast.error('Não há questões com gabarito para montar a meta.'); return }
         const partes = []

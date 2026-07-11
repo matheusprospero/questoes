@@ -262,7 +262,9 @@ export default function Inicio() {
           </div>
           <div className={styles.ofAcoes}>
             <button className={styles.ofMetaBtn} onClick={() => navigate('/estudo?meta=1')}>
-              <Target size={16} /> Começar meta do dia
+              <Target size={16} /> {ofensiva.hoje >= metaEfetiva ? 'Meta do dia concluída 🎉'
+                : ofensiva.hoje > 0 ? `Continuar meta (faltam ${metaEfetiva - ofensiva.hoje})`
+                : 'Começar meta do dia'}
             </button>
             {revisoesHoje > 0 && (
               <button className={styles.ofRevisao} onClick={() => navigate('/estudo?revisao=1')}>
