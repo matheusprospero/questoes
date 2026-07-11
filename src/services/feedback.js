@@ -82,6 +82,45 @@ export function resumoAvaliacoes(rows) {
   }
 }
 
+// ── Painel de engajamento (admin) ─────────────────────────────
+// Usa reports + avaliações (ambos legíveis pelo admin) para achar as
+// questões mais reportadas, mais difíceis (voto dos alunos) e pior avaliadas.
+export async function engajamentoTurma() {
+  const [{ data: avals }, reports] = await Promise.all([
+    supabase.from('questao_avaliacoes')
+      .select('questao_id, estrelas, dificuldade, questoes(id, enunciado, bancas(nome), orgaos(nome), ano, cargo)'),
+    listarReports({ apenasAbertos: false }),
+  ])
+
+  const m = new Map()
+  for (const a of (avals || [])) {
+    if (!a.questoes) continue
+    const g = m.get(a.questao_id) ?? { questao: a.questoes, est: [], dif: [] }
+    if (a.estrelas != null) g.est.push(a.estrelas)
+    if (a.dificuldade != null) g.dif.push(a.dificuldade)
+    m.set(a.questao_id, g)
+  }
+  const media = (arr) => arr.length ? arr.reduce((x, y) => x + y, 0) / arr.length : null
+  const arr = [...m.values()].map(g => ({
+    questao: g.questao,
+    difMedia: media(g.dif), difN: g.dif.length,
+    estMedia: media(g.est), estN: g.est.length,
+  }))
+  const maisDificeis = arr.filter(x => x.difN >= 3).sort((a, b) => b.difMedia - a.difMedia).slice(0, 10)
+  const piorAvaliadas = arr.filter(x => x.estN >= 3).sort((a, b) => a.estMedia - b.estMedia).slice(0, 10)
+
+  const rm = new Map()
+  for (const r of reports) {
+    if (!r.questoes) continue
+    const g = rm.get(r.questao_id) ?? { questao: r.questoes, total: 0, abertos: 0 }
+    g.total++; if (!r.resolvido) g.abertos++
+    rm.set(r.questao_id, g)
+  }
+  const maisReportadas = [...rm.values()].sort((a, b) => b.abertos - a.abertos || b.total - a.total).slice(0, 10)
+
+  return { maisDificeis, piorAvaliadas, maisReportadas }
+}
+
 // ── Avaliação da aula (estrelas) ──────────────────────────────
 export async function listarAvaliacoesAula(aulaId) {
   const { data, error } = await supabase

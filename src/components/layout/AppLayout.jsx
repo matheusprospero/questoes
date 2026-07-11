@@ -6,7 +6,7 @@ import { contarReportsAbertos } from '../../services/feedback'
 import { temaAtual, definirTema } from '../../theme'
 import {
   HelpCircle, ClipboardList, Layers, Heart, Home,
-  LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles, Flag, Moon, Sun
+  LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles, Flag, Moon, Sun, BarChart3
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
 
@@ -104,6 +104,7 @@ export default function AppLayout() {
           <div>
             <div className={styles.navSection}>Gestão</div>
             <NavItem to="/destaques" label="Destaques" Icon={Sparkles} />
+            <NavItem to="/engajamento" label="Engajamento" Icon={BarChart3} />
             <NavItem to="/reports" label="Reportados" Icon={Flag} badge={reportsAbertos} />
             <NavItem to="/alunos" label="Alunos" Icon={Users} />
           </div>

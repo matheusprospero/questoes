@@ -22,6 +22,7 @@ import Alunos from './pages/alunos/Alunos'
 import Destaques from './pages/destaques/Destaques'
 import DestaqueForm from './pages/destaques/DestaqueForm'
 import Reports from './pages/reports/Reports'
+import Engajamento from './pages/reports/Engajamento'
 import Perfil from './pages/perfil/Perfil'
 
 const base = import.meta.env.BASE_URL
@@ -56,6 +57,7 @@ const router = createBrowserRouter([
       { path: 'destaques/novo',      element: <RotaProtegida somenteAdmin><DestaqueForm /></RotaProtegida> },
       { path: 'destaques/:id/editar',element: <RotaProtegida somenteAdmin><DestaqueForm /></RotaProtegida> },
       { path: 'reports',             element: <RotaProtegida somenteAdmin><Reports /></RotaProtegida> },
+      { path: 'engajamento',         element: <RotaProtegida somenteAdmin><Engajamento /></RotaProtegida> },
       { path: 'perfil',              element: <Perfil /> },
     ],
   },
