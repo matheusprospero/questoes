@@ -8,6 +8,7 @@ import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simula
 import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos'
 import { useAuth } from '../../contexts/AuthContext'
 import VideoYouTube from '../../components/VideoYouTube'
+import FeedbackQuestao from '../../components/FeedbackQuestao'
 import { ChevronLeft, Pencil, Heart, CheckCircle, XCircle, Trash2, Youtube, Lock, FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -289,6 +290,9 @@ export default function QuestaoDetalhe() {
           </div>
         </div>
       </div>
+
+      {/* Feedback dos alunos: dificuldade, estrelas, report e comentários */}
+      <FeedbackQuestao questaoId={questao.id} />
 
       {/* Modal adicionar ao simulado */}
       {modalSimulado && (

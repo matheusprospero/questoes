@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
+import { contarReportsAbertos } from '../../services/feedback'
 import {
   HelpCircle, ClipboardList, Layers, Heart, Home,
-  LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles
+  LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles, Flag
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
 
@@ -33,7 +35,7 @@ const NAV_ITEMS = [
   },
 ]
 
-function NavItem({ to, label, Icon, end }) {
+function NavItem({ to, label, Icon, end, badge }) {
   return (
     <NavLink
       to={to}
@@ -44,6 +46,7 @@ function NavItem({ to, label, Icon, end }) {
     >
       <Icon size={16} aria-hidden />
       <span>{label}</span>
+      {badge > 0 && <span className={styles.navBadge}>{badge}</span>}
     </NavLink>
   )
 }
@@ -52,6 +55,12 @@ export default function AppLayout() {
   const { usuario, perfil, isAdmin, signOut } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const { data: reportsAbertos = 0 } = useQuery({
+    queryKey: ['reports-abertos'],
+    queryFn: contarReportsAbertos,
+    enabled: isAdmin,
+  })
 
   const nome = perfil?.nome || usuario?.email
   const iniciais = nome
@@ -89,6 +98,7 @@ export default function AppLayout() {
           <div>
             <div className={styles.navSection}>Gestão</div>
             <NavItem to="/destaques" label="Destaques" Icon={Sparkles} />
+            <NavItem to="/reports" label="Reportados" Icon={Flag} badge={reportsAbertos} />
             <NavItem to="/alunos" label="Alunos" Icon={Users} />
           </div>
         )}

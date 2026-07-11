@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import VideoYouTube from '../../components/VideoYouTube'
 import BloqueioAssinante from '../../components/BloqueioAssinante'
 import QuestaoResolver from '../../components/QuestaoResolver'
+import EstrelasAula from '../../components/EstrelasAula'
 import {
   ChevronLeft, Pencil, Play, GraduationCap, PlayCircle,
 } from 'lucide-react'
@@ -124,6 +125,8 @@ export default function AulaDetalhe() {
           )}
         </section>
       )}
+
+      <EstrelasAula aulaId={id} />
     </div>
   )
 }
