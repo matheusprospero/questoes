@@ -3,10 +3,12 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
 import { contarReportsAbertos } from '../../services/feedback'
+import { contarPendentesRevisao } from '../../services/questoes'
 import { temaAtual, definirTema } from '../../theme'
 import {
   HelpCircle, ClipboardList, Layers, Heart, Home,
-  LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles, Flag, Moon, Sun, BarChart3
+  LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles, Flag, Moon, Sun, BarChart3,
+  ClipboardCheck
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
 
@@ -68,6 +70,12 @@ export default function AppLayout() {
     enabled: isAdmin,
   })
 
+  const { data: pendentesRevisao = 0 } = useQuery({
+    queryKey: ['revisao-count'],
+    queryFn: contarPendentesRevisao,
+    enabled: isAdmin,
+  })
+
   const nome = perfil?.nome || usuario?.email
   const iniciais = nome
     ? nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
@@ -106,6 +114,7 @@ export default function AppLayout() {
             <NavItem to="/destaques" label="Destaques" Icon={Sparkles} />
             <NavItem to="/engajamento" label="Engajamento" Icon={BarChart3} />
             <NavItem to="/reports" label="Reportados" Icon={Flag} badge={reportsAbertos} />
+            <NavItem to="/revisao" label="Revisão" Icon={ClipboardCheck} badge={pendentesRevisao} />
             <NavItem to="/alunos" label="Alunos" Icon={Users} />
           </div>
         )}

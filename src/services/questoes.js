@@ -257,6 +257,37 @@ export async function marcarRevisada(id, revisada) {
   if (error) throw error
 }
 
+// ── Revisão pendente (admin) ─────────────────────────────────
+// Questões aguardando revisão humana (revisada = false).
+// Novas importações nascem com revisada = false e aparecem aqui.
+export async function listarPendentesRevisao() {
+  const PAGINA = 1000
+  let inicio = 0
+  const todas = []
+  for (;;) {
+    const { data, error } = await supabase
+      .from('questoes')
+      .select(SELECT_QUESTAO)
+      .eq('revisada', false)
+      .order('criado_em', { ascending: false })
+      .range(inicio, inicio + PAGINA - 1)
+    if (error) throw error
+    todas.push(...data)
+    if (data.length < PAGINA) break
+    inicio += PAGINA
+  }
+  return todas.map(normalizar)
+}
+
+export async function contarPendentesRevisao() {
+  const { count, error } = await supabase
+    .from('questoes')
+    .select('id', { count: 'exact', head: true })
+    .eq('revisada', false)
+  if (error) throw error
+  return count ?? 0
+}
+
 // ── Favoritos ─────────────────────────────────────────────────
 
 export async function toggleFavorito(questaoId, favoritoId) {

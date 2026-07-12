@@ -6,6 +6,7 @@ import Inicio from './pages/inicio/Inicio'
 import Questoes from './pages/questoes/Questoes'
 import QuestaoForm from './pages/questoes/QuestaoForm'
 import QuestaoDetalhe from './pages/questoes/QuestaoDetalhe'
+import Revisao from './pages/questoes/Revisao'
 import Simulados from './pages/simulados/Simulados'
 import SimuladoForm from './pages/simulados/SimuladoForm'
 import SimuladoDetalhe from './pages/simulados/SimuladoDetalhe'
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
       { path: 'questoes/nova',       element: <RotaProtegida somenteAdmin><QuestaoForm /></RotaProtegida> },
       { path: 'questoes/:id',        element: <QuestaoDetalhe /> },
       { path: 'questoes/:id/editar', element: <RotaProtegida somenteAdmin><QuestaoForm /></RotaProtegida> },
+      { path: 'revisao',             element: <RotaProtegida somenteAdmin><Revisao /></RotaProtegida> },
       { path: 'simulados',            element: <Simulados /> },
       { path: 'simulados/novo',       element: <SimuladoForm /> },
       { path: 'simulados/:id',           element: <SimuladoDetalhe /> },
