@@ -147,9 +147,11 @@ export default function QuestaoDetalhe() {
           {/* Cabeçalho */}
           <div className={styles.card}>
             <div className={styles.badgeRow}>
+              {questao.codigo && <span className={styles.badgeCodigo}>{questao.codigo}</span>}
               <span className={`${styles.badge} ${styles['tipo_' + questao.tipo] ?? ''}`}>
                 {questao.tipo === 'multipla_escolha' ? 'Múltipla escolha' : 'Certo / Errado'}
               </span>
+              {questao.area && <span className={styles.badgeGray}>{questao.area}</span>}
               {questao.disciplinas && <span className={styles.badgeGray}>{questao.disciplinas.nome}</span>}
               {questao.assuntos && <span className={styles.badgeGray}>{questao.assuntos.nome}</span>}
               {questao.nivel && <span className={styles.badgeGray}>Nível {NIVEIS[questao.nivel]}</span>}

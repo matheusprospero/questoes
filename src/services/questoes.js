@@ -33,6 +33,7 @@ export async function listarQuestoes(filtros = {}) {
       .order('criado_em', { ascending: false })
 
     if (filtros.tipo)          query = query.eq('tipo', filtros.tipo)
+    if (filtros.area)          query = query.eq('area', filtros.area)
     if (filtros.disciplina_id) query = query.eq('disciplina_id', filtros.disciplina_id)
     if (filtros.assunto_id)    query = query.eq('assunto_id', filtros.assunto_id)
     if (filtros.banca_id)      query = query.eq('banca_id', filtros.banca_id)
@@ -55,7 +56,7 @@ export async function listarQuestoes(filtros = {}) {
 
 // Só a classificação de todas as questões (leve) — para filtros dependentes e provas
 const SELECT_FACETA = `
-  id, disciplina_id, assunto_id, banca_id, orgao_id, cargo, ano, nivel, dificuldade, tipo,
+  id, disciplina_id, assunto_id, banca_id, orgao_id, cargo, ano, nivel, dificuldade, tipo, area,
   disciplinas(id, nome, cor), assuntos(id, nome), bancas(id, nome), orgaos(id, nome)
 `
 export async function listarFacetas() {
@@ -77,6 +78,7 @@ export async function listarFacetas() {
 
 // Como cada filtro casa com o campo da questão
 const CAMPO_MATCH = {
+  area:          (q, v) => q.area === v,
   disciplina_id: (q, v) => String(q.disciplina_id) === String(v),
   assunto_id:    (q, v) => String(q.assunto_id) === String(v),
   banca_id:      (q, v) => String(q.banca_id) === String(v),
@@ -99,6 +101,7 @@ function tally(list, campo) {
   for (const q of list) {
     let valor, rotulo, cor
     switch (campo) {
+      case 'area':          if (!q.area)        continue; valor = q.area; rotulo = q.area; break
       case 'disciplina_id': if (!q.disciplinas) continue; valor = q.disciplinas.id; rotulo = q.disciplinas.nome; cor = q.disciplinas.cor; break
       case 'assunto_id':    if (!q.assuntos)    continue; valor = q.assuntos.id;    rotulo = q.assuntos.nome; break
       case 'banca_id':      if (!q.bancas)      continue; valor = q.bancas.id;      rotulo = q.bancas.nome; break

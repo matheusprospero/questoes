@@ -25,6 +25,11 @@
 
 .cardTop { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
 .prova { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.codigo {
+  font-size: 11px; font-weight: 700; font-family: ui-monospace, 'Cascadia Code', monospace;
+  padding: 2px 8px; border-radius: var(--radius-full);
+  background: var(--color-primary-light); color: var(--color-primary-dark);
+}
 .disciplina {
   font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: var(--radius-full);
   background: var(--bg-subtle); color: var(--text-secondary);

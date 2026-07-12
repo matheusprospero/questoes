@@ -73,6 +73,7 @@ export default function Revisao() {
         {questoes.map(q => (
           <div key={q.id} className={styles.card}>
             <div className={styles.cardTop}>
+              {q.codigo && <span className={styles.codigo}>{q.codigo}</span>}
               <span className={styles.prova}>
                 {[q.bancas?.nome, q.orgaos?.nome, q.ano, q.cargo].filter(Boolean).join(' · ')}
               </span>

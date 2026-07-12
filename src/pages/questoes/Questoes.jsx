@@ -339,6 +339,14 @@ export default function Questoes() {
       {!explorando && mostrarFiltros && (
         <div className={styles.filtrosPanel}>
           <div className={styles.filtroGrupo}>
+            <label className={styles.filtroLabel}>Área</label>
+            <select className={styles.filtroSelect} value={filtros.area ?? ''}
+              onChange={e => setFiltro('area', e.target.value)}>
+              <option value="">Todas</option>
+              {opcoesCampo('area')}
+            </select>
+          </div>
+          <div className={styles.filtroGrupo}>
             <label className={styles.filtroLabel}>Disciplina</label>
             <select className={styles.filtroSelect} value={filtros.disciplina_id ?? ''}
               onChange={e => setFiltro('disciplina_id', e.target.value)}>
@@ -471,6 +479,7 @@ export default function Questoes() {
                       {[q.bancas?.nome, q.orgaos?.nome, q.cargo].filter(Boolean).join(' · ') || 'Questão'}
                     </h3>
                     <div className={styles.cardMeta}>
+                      {q.codigo && <span className={styles.badgeCodigo}>{q.codigo}</span>}
                       {q.ano && <span className={styles.badge}>{q.ano}</span>}
                       {q.disciplinas && <span className={styles.badge}>{q.disciplinas.nome}</span>}
                       {q.assuntos && <span className={styles.badge}>{q.assuntos.nome}</span>}
