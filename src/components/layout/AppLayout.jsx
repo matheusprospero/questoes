@@ -8,7 +8,7 @@ import { temaAtual, definirTema } from '../../theme'
 import {
   HelpCircle, ClipboardList, Layers, Heart, Home,
   LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles, Flag, Moon, Sun, BarChart3,
-  ClipboardCheck
+  ClipboardCheck, CalendarDays, Route, FileText, LineChart
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
 
@@ -17,9 +17,12 @@ const NAV_ITEMS = [
     section: 'Estudo',
     items: [
       { to: '/',              label: 'Início',            icon: Home, end: true },
+      { to: '/plano',         label: 'Plano de Estudos',  icon: Route },
       { to: '/aulas',         label: 'Aulas',             icon: GraduationCap },
       { to: '/estudo',        label: 'Resolver Questões', icon: BookOpen  },
+      { to: '/calendario',    label: 'Calendário',        icon: CalendarDays },
       { to: '/estatisticas',  label: 'Estatísticas',      icon: BarChart2 },
+      { to: '/boletim',       label: 'Boletim',           icon: FileText },
     ]
   },
   {
@@ -111,6 +114,7 @@ export default function AppLayout() {
         {isAdmin && (
           <div>
             <div className={styles.navSection}>Gestão</div>
+            <NavItem to="/acompanhamento" label="Acompanhamento" Icon={LineChart} />
             <NavItem to="/destaques" label="Destaques" Icon={Sparkles} />
             <NavItem to="/engajamento" label="Engajamento" Icon={BarChart3} />
             <NavItem to="/reports" label="Reportados" Icon={Flag} badge={reportsAbertos} />

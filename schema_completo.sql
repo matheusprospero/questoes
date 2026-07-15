@@ -543,3 +543,81 @@ insert into bancas (nome) values
   ('Instituto Consulplan'),
   ('IADES'),
   ('FUNDATEC');
+
+-- ============================================================================
+--  Serviço de acompanhamento de estudos (plano_estudos.sql consolidado)
+-- ============================================================================
+
+alter table respostas add column if not exists tempo_seg int;
+
+create table if not exists metas (
+  usuario_id     uuid primary key default auth.uid() references auth.users(id) on delete cascade,
+  meta_diaria    int  not null default 20,
+  meta_semanal   int,
+  dias_alvo      int  not null default 7,
+  plano_id       uuid,
+  objetivo       jsonb not null default '{}'::jsonb,
+  atualizado_em  timestamptz not null default now()
+);
+
+create table if not exists planos_estudo (
+  id          uuid primary key default gen_random_uuid(),
+  usuario_id  uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  nome        text not null,
+  banca_id    uuid references bancas(id) on delete set null,
+  orgao_id    uuid references orgaos(id) on delete set null,
+  cargo       text,
+  ativo       boolean not null default true,
+  criado_em   timestamptz not null default now()
+);
+create index if not exists idx_planos_usuario on planos_estudo(usuario_id);
+
+create table if not exists plano_itens (
+  id            uuid primary key default gen_random_uuid(),
+  plano_id      uuid not null references planos_estudo(id) on delete cascade,
+  disciplina_id uuid references disciplinas(id) on delete cascade,
+  assunto_id    uuid references assuntos(id)   on delete cascade,
+  peso          int not null default 3 check (peso between 1 and 5),
+  meta_questoes int not null default 0,
+  estudado      boolean not null default false,
+  revisado      boolean not null default false,
+  ciclos        int not null default 0,
+  ordem         int not null default 0,
+  atualizado_em timestamptz not null default now()
+);
+create index if not exists idx_plano_itens_plano on plano_itens(plano_id);
+
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'metas_plano_fk') then
+    alter table metas add constraint metas_plano_fk
+      foreign key (plano_id) references planos_estudo(id) on delete set null;
+  end if;
+end $$;
+
+create or replace view v_estudo_dia
+with (security_invoker = on) as
+  select usuario_id,
+         (respondido_em at time zone 'America/Sao_Paulo')::date as dia,
+         origem,
+         count(*)                          as total,
+         count(*) filter (where acertou)   as acertos,
+         coalesce(sum(tempo_seg), 0)       as tempo_seg
+    from respostas
+   group by usuario_id, (respondido_em at time zone 'America/Sao_Paulo')::date, origem;
+
+alter table metas         enable row level security;
+alter table planos_estudo enable row level security;
+alter table plano_itens   enable row level security;
+
+create policy "meta_dono" on metas for all to authenticated
+  using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
+create policy "meta_admin_le" on metas for select to authenticated using (is_admin());
+create policy "plano_dono" on planos_estudo for all to authenticated
+  using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
+create policy "plano_admin_le" on planos_estudo for select to authenticated using (is_admin());
+create policy "plano_item_dono" on plano_itens for all to authenticated
+  using     (exists (select 1 from planos_estudo p where p.id = plano_id and p.usuario_id = auth.uid()))
+  with check (exists (select 1 from planos_estudo p where p.id = plano_id and p.usuario_id = auth.uid()));
+create policy "plano_item_admin_le" on plano_itens for select to authenticated using (is_admin());
+create policy "respostas_admin_le" on respostas for select to authenticated using (is_admin());
+create policy "revisoes_admin_le" on revisoes for select to authenticated using (is_admin());

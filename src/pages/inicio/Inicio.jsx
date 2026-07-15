@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
@@ -6,6 +6,7 @@ import { listarQuestoes } from '../../services/questoes'
 import { listarRespostas, calcularOfensiva, contarRevisoesHoje } from '../../services/estudo'
 import { listarDisciplinas, listarFacetas } from '../../services/questoes'
 import ModalMeta, { lerCfgMeta, salvarCfgMeta } from '../../components/ModalMeta'
+import { lerMetas, salvarMetas } from '../../services/metas'
 import { listarDestaquesAtivos, destinoDestaque } from '../../services/destaques'
 import CardDestaque from '../../components/CardDestaque'
 import {
@@ -148,6 +149,8 @@ export default function Inicio() {
   const { data: facetas = [] } = useQuery({ queryKey: ['facetas'], queryFn: listarFacetas })
   const [cfg, setCfg] = useState(lerCfgMeta)
   const [modalMeta, setModalMeta] = useState(false)
+  // Sincroniza as metas do banco (fonte durável) para o cache local usado no app
+  useEffect(() => { lerMetas().then(setCfg).catch(() => {}) }, [])
   const somaDisc = Object.values(cfg.porDisciplina || {}).reduce((a, b) => a + (Number(b) || 0), 0)
   const metaEfetiva = Math.max(Number(cfg.metaDiaria) || 0, somaDisc) || 1
   const pctMeta = Math.min(100, Math.round((ofensiva.hoje / metaEfetiva) * 100))
@@ -292,7 +295,7 @@ export default function Inicio() {
           cfgInicial={cfg}
           facetas={facetas}
           onFechar={() => setModalMeta(false)}
-          onSalvar={(novo) => { salvarCfgMeta(novo); setCfg(novo); setModalMeta(false) }}
+          onSalvar={(novo) => { salvarCfgMeta(novo); salvarMetas(novo).catch(() => {}); setCfg(novo); setModalMeta(false) }}
         />
       )}
 

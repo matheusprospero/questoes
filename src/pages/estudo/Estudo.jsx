@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
@@ -285,6 +285,12 @@ export default function Estudo() {
 
   const questaoAtual = sessao[indice]
 
+  // Cronômetro por questão: zera quando a questão exibida muda (para gravar tempo_seg)
+  const inicioQuestaoRef = useRef(Date.now())
+  useEffect(() => { inicioQuestaoRef.current = Date.now() }, [questaoAtual?.id])
+  const tempoDaQuestao = () =>
+    Math.min(3600, Math.max(1, Math.round((Date.now() - inicioQuestaoRef.current) / 1000)))
+
   // Vídeo (protegido) da questão atual, só após responder e se houver vídeo
   const { data: videoAtual } = useQuery({
     queryKey: ['questao-video', questaoAtual?.id],
@@ -309,6 +315,7 @@ export default function Estudo() {
         acertou,
         origem: origemSessao,
         simulado_id: origemSessao === 'simulado' ? simuladoId : null,
+        tempo_seg: tempoDaQuestao(),
       })
       queryClient.invalidateQueries({ queryKey: ['respostas'] })
     } catch (err) {
@@ -341,6 +348,7 @@ export default function Estudo() {
         acertou,
         origem: origemSessao,
         simulado_id: origemSessao === 'simulado' ? simuladoId : null,
+        tempo_seg: tempoDaQuestao(),
       })
       queryClient.invalidateQueries({ queryKey: ['respostas'] })
     } catch (err) {

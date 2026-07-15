@@ -1,0 +1,99 @@
+.page { padding: 0; }
+.loading { text-align: center; padding: 64px; color: var(--text-tertiary); font-size: 13px; }
+
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
+.titulo { font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.subtitulo { font-size: 13px; color: var(--text-tertiary); }
+
+.btnPrimary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; background: var(--color-primary); color: white;
+  border: none; border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  cursor: pointer; white-space: nowrap;
+}
+.btnPrimary:hover { background: var(--color-primary-dark); }
+
+/* Cards de resumo */
+.cardsResumo {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px; margin-bottom: 16px;
+}
+.cardResumo {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 16px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.cardTopo {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+  color: var(--text-tertiary);
+}
+.cardValor { font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1.1; }
+.cardValor small { font-size: 12px; font-weight: 500; color: var(--text-tertiary); }
+.cardMeta { display: flex; align-items: baseline; justify-content: space-between; font-size: 12.5px; font-weight: 600; }
+.cardDias { color: var(--text-tertiary); font-weight: 500; }
+
+/* Card genérico */
+.card {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 18px;
+}
+.secTitulo {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+  color: var(--text-tertiary); margin-bottom: 14px;
+}
+.semDados { font-size: 13px; color: var(--text-tertiary); }
+
+/* Heatmap */
+.heatWrap { display: flex; flex-direction: column; gap: 12px; }
+.heatGrid { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+
+.heatDows {
+  display: flex; flex-direction: column; gap: 3px;
+  padding-top: 18px; flex-shrink: 0;
+}
+.heatDow {
+  height: 13px; font-size: 9px; line-height: 13px;
+  color: var(--text-tertiary); text-align: right; padding-right: 2px;
+}
+
+.heatCols { display: flex; flex-direction: column; gap: 4px; }
+.heatMeses { display: flex; gap: 3px; height: 14px; }
+.heatMes {
+  width: 13px; font-size: 9px; color: var(--text-tertiary);
+  white-space: nowrap; overflow: visible;
+}
+.heatBody { display: flex; gap: 3px; }
+.heatColuna { display: flex; flex-direction: column; gap: 3px; }
+
+.heatCel, .heatVazio {
+  width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0;
+}
+.heatVazio { background: transparent; }
+.heatCel { background: var(--bg-subtle); border: 1px solid var(--border-subtle); }
+.heatCel[data-nivel="1"] { background: color-mix(in srgb, var(--color-primary) 28%, transparent); border-color: transparent; }
+.heatCel[data-nivel="2"] { background: color-mix(in srgb, var(--color-primary) 50%, transparent); border-color: transparent; }
+.heatCel[data-nivel="3"] { background: color-mix(in srgb, var(--color-primary) 75%, transparent); border-color: transparent; }
+.heatCel[data-nivel="4"] { background: var(--color-primary); border-color: transparent; }
+
+/* Legenda */
+.legenda {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--text-tertiary);
+}
+.legenda .heatCel { cursor: default; }
+.legenda span:first-child { margin-right: 2px; }
+.legenda span:last-child { margin-left: 2px; }
+
+/* Tabela últimos 14 dias */
+.tabela { display: flex; flex-direction: column; gap: 4px; }
+.tabelaRow {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 12px; border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); background: var(--bg-surface);
+}
+.tabelaDia { width: 100px; flex-shrink: 0; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.tabelaQtd { flex: 1; font-size: 12.5px; color: var(--text-secondary); }
+.tabelaPct { width: 48px; text-align: right; font-size: 13px; font-weight: 700; }

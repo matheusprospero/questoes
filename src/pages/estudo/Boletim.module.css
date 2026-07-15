@@ -1,0 +1,195 @@
+.page { padding: 0; }
+.loading { text-align: center; padding: 64px; color: var(--text-tertiary); font-size: 13px; }
+
+/* ── Cabeçalho / controles ─────────────────────────────── */
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
+.titulo { font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.subtitulo { font-size: 13px; color: var(--text-tertiary); }
+.headerBotoes { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.btnPrimary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; background: var(--color-primary); color: white;
+  border: none; border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 500; font-family: var(--font-sans);
+  cursor: pointer; white-space: nowrap;
+}
+.btnPrimary:hover { background: var(--color-primary-dark); }
+
+.segmented {
+  display: inline-flex; padding: 3px; gap: 2px;
+  background: var(--bg-subtle); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.segBtn {
+  padding: 6px 12px; border: none; background: transparent;
+  color: var(--text-secondary); font-size: 12.5px; font-weight: 500;
+  font-family: var(--font-sans); cursor: pointer; border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.segBtn:hover { color: var(--text-primary); }
+.segAtivo { background: var(--bg-surface); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+/* ── Documento do boletim ──────────────────────────────── */
+.boletim {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 28px;
+}
+.boletimHead {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  padding-bottom: 18px; margin-bottom: 20px;
+  border-bottom: 2px solid var(--border-default);
+}
+.boletimBrand { display: flex; align-items: center; gap: 12px; color: var(--color-primary); }
+.boletimBrand > div { display: flex; flex-direction: column; }
+.boletimTitulo { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); }
+.boletimAluno { font-size: 19px; font-weight: 700; color: var(--text-primary); }
+.boletimMeta { display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--text-secondary); text-align: right; }
+.boletimMeta strong { color: var(--text-primary); font-weight: 600; }
+
+.aviso {
+  padding: 12px 14px; margin-bottom: 18px;
+  background: color-mix(in srgb, #d97706 12%, transparent);
+  border: 1px solid color-mix(in srgb, #d97706 30%, transparent);
+  border-radius: var(--radius-md); font-size: 13px; color: var(--text-primary);
+}
+
+/* ── KPIs ──────────────────────────────────────────────── */
+.kpis {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px; margin-bottom: 22px;
+}
+.kpi {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.kpiIcon { color: var(--text-tertiary); }
+.kpiValor { font-size: 24px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+.kpiLabel { font-size: 12px; color: var(--text-tertiary); }
+
+.deltaUp, .deltaDown, .deltaFlat {
+  display: inline-flex; align-items: center; gap: 2px;
+  font-size: 11.5px; font-weight: 600; margin-top: 2px;
+}
+.deltaUp { color: #059669; }
+.deltaDown { color: #dc2626; }
+.deltaFlat { color: var(--text-tertiary); }
+
+/* ── Seções ────────────────────────────────────────────── */
+.secao {
+  padding: 18px 0; border-top: 1px solid var(--border-subtle);
+}
+.secTitulo {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+  color: var(--text-tertiary); margin-bottom: 14px;
+}
+.semDados { font-size: 13px; color: var(--text-tertiary); }
+
+/* ── Prontidão ─────────────────────────────────────────── */
+.prontidaoWrap { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.medidor { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+.medidorNum { font-size: 30px; font-weight: 800; fill: var(--text-primary); }
+.medidorUnid { font-size: 11px; fill: var(--text-tertiary); }
+.medidorLabel { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.prontidaoInfo { flex: 1; min-width: 260px; }
+.explicacao { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 14px; }
+.explicacao strong { color: var(--text-primary); }
+.prontidaoDiscs { display: flex; flex-direction: column; gap: 9px; }
+.discRow { display: flex; align-items: center; gap: 10px; }
+.discNome {
+  width: 130px; flex-shrink: 0; font-size: 12.5px; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.discPront { width: 26px; text-align: right; font-size: 13px; font-weight: 800; }
+.discDetalhe { flex-shrink: 0; font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+
+/* ── Barras (maestria / disciplina) ────────────────────── */
+.barraRow { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.barraNome {
+  width: 170px; flex-shrink: 0; font-size: 12.5px; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.barraTrack { flex: 1; height: 8px; background: var(--bg-subtle); border-radius: var(--radius-full); overflow: hidden; }
+.barraFill { height: 100%; border-radius: var(--radius-full); }
+.barraPct { width: 40px; text-align: right; font-size: 12.5px; font-weight: 700; }
+.barraTotal { width: 48px; text-align: right; font-size: 11.5px; color: var(--text-tertiary); }
+
+/* ── Tiles de maestria ─────────────────────────────────── */
+.maestriaTiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.maestriaTile {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 14px 8px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);
+}
+.maestriaTile[data-nivel="alto"]  { background: color-mix(in srgb, #16a34a 12%, transparent); }
+.maestriaTile[data-nivel="medio"] { background: color-mix(in srgb, #0284c7 12%, transparent); }
+.maestriaTile[data-nivel="baixo"] { background: color-mix(in srgb, #dc2626 12%, transparent); }
+.maestriaNum { font-size: 24px; font-weight: 800; color: var(--text-primary); }
+.maestriaLabel { font-size: 11px; color: var(--text-secondary); text-align: center; }
+
+/* ── Pontos fracos ─────────────────────────────────────── */
+.fracos { display: flex; flex-wrap: wrap; gap: 8px; }
+.fracoChip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; padding: 5px 10px; border-radius: var(--radius-full);
+  background: color-mix(in srgb, #dc2626 12%, transparent); color: var(--text-primary);
+}
+.fracoChip[data-nivel="medio"] { background: color-mix(in srgb, #d97706 12%, transparent); }
+.fracoChip strong { font-weight: 800; }
+.fracoDisc { font-size: 11px; color: var(--text-tertiary); }
+
+/* ── Evolução mensal ───────────────────────────────────── */
+.evolucao { display: flex; align-items: flex-end; gap: 12px; min-height: 150px; overflow-x: auto; padding-bottom: 4px; }
+.evoCol { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 44px; }
+.evoPct { font-size: 11px; font-weight: 700; }
+.evoTrack { width: 26px; height: 90px; background: var(--bg-subtle); border-radius: var(--radius-sm); display: flex; align-items: flex-end; overflow: hidden; }
+.evoFill { width: 100%; border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.evoLabel { font-size: 11px; color: var(--text-secondary); }
+.evoTotal { font-size: 10px; color: var(--text-tertiary); }
+
+/* ── Aderência (estudo vs simulado) ────────────────────── */
+.origemBar {
+  display: flex; height: 22px; border-radius: var(--radius-full);
+  overflow: hidden; background: var(--bg-subtle); margin-bottom: 12px;
+}
+.origemSeg { height: 100%; }
+.origemSeg[data-tipo="est"] { background: var(--color-primary); }
+.origemSeg[data-tipo="sim"] { background: #7c3aed; }
+.origemLegenda { display: flex; flex-wrap: wrap; gap: 16px; }
+.origemItem { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary); }
+.origemItem strong { color: var(--text-primary); }
+.origemDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.origemDot[data-tipo="est"] { background: var(--color-primary); }
+.origemDot[data-tipo="sim"] { background: #7c3aed; }
+
+.rodape {
+  margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border-subtle);
+  font-size: 11px; color: var(--text-tertiary); text-align: center;
+}
+
+/* ── Responsivo ────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .boletim { padding: 18px; }
+  .boletimMeta { text-align: left; }
+  .barraNome { width: 120px; }
+  .discNome { width: 100px; }
+  .discDetalhe { display: none; }
+}
+@media (max-width: 560px) {
+  .maestriaTiles { grid-template-columns: 1fr; }
+}
+
+/* ── Impressão / PDF ───────────────────────────────────── */
+@media print {
+  .naoImprimir { display: none !important; }
+  .page { padding: 0; }
+  .boletim {
+    border: none; border-radius: 0; padding: 0;
+    background: white; color: #000;
+  }
+  .secao { break-inside: avoid; }
+  .kpi, .maestriaTile { break-inside: avoid; }
+  .evolucao { overflow: visible; }
+}

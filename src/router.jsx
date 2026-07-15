@@ -19,6 +19,10 @@ import AulaDetalhe from './pages/aulas/AulaDetalhe'
 import Favoritos from './pages/favoritos/Favoritos'
 import Estudo from './pages/estudo/Estudo'
 import Estatisticas from './pages/estudo/Estatisticas'
+import Boletim from './pages/estudo/Boletim'
+import Calendario from './pages/estudo/Calendario'
+import PlanoEstudos from './pages/plano/PlanoEstudos'
+import Acompanhamento from './pages/acompanhamento/Acompanhamento'
 import Alunos from './pages/alunos/Alunos'
 import Destaques from './pages/destaques/Destaques'
 import DestaqueForm from './pages/destaques/DestaqueForm'
@@ -54,6 +58,10 @@ const router = createBrowserRouter([
       { path: 'favoritos',           element: <Favoritos /> },
       { path: 'estudo',              element: <Estudo /> },
       { path: 'estatisticas',        element: <Estatisticas /> },
+      { path: 'boletim',             element: <Boletim /> },
+      { path: 'calendario',          element: <Calendario /> },
+      { path: 'plano',               element: <PlanoEstudos /> },
+      { path: 'acompanhamento',      element: <RotaProtegida somenteAdmin><Acompanhamento /></RotaProtegida> },
       { path: 'alunos',              element: <RotaProtegida somenteAdmin><Alunos /></RotaProtegida> },
       { path: 'destaques',           element: <RotaProtegida somenteAdmin><Destaques /></RotaProtegida> },
       { path: 'destaques/novo',      element: <RotaProtegida somenteAdmin><DestaqueForm /></RotaProtegida> },
