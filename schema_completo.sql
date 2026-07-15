@@ -134,6 +134,7 @@ create table questoes (
   dificuldade    int not null default 3 check (dificuldade between 1 and 5),
   gabarito_certo boolean,                 -- só para certo_errado: true = Certo, false = Errado
   revisada       boolean not null default false, -- conferida pelo admin (ex.: revisão das imagens)
+  liberada       boolean not null default true,   -- visível para alunos (autorais nascem false até o admin liberar)
   criado_em      timestamptz not null default now(),
   atualizado_em  timestamptz not null default now()
 );
@@ -142,6 +143,7 @@ create index idx_questoes_disciplina on questoes(disciplina_id);
 create index idx_questoes_assunto    on questoes(assunto_id);
 create index idx_questoes_banca      on questoes(banca_id);
 create index idx_questoes_ano        on questoes(ano);
+create index idx_questoes_liberada   on questoes(liberada);
 
 -- Alternativas (apenas para tipo multipla_escolha)
 create table questao_alternativas (
@@ -324,7 +326,7 @@ create policy "conteudo_select" on disciplinas          for select to authentica
 create policy "conteudo_select" on assuntos             for select to authenticated using (true);
 create policy "conteudo_select" on bancas               for select to authenticated using (true);
 create policy "conteudo_select" on orgaos               for select to authenticated using (true);
-create policy "conteudo_select" on questoes             for select to authenticated using (true);
+create policy "conteudo_select" on questoes             for select to authenticated using (liberada or is_admin());
 create policy "conteudo_select" on questao_alternativas for select to authenticated using (true);
 
 -- Vídeo de resolução: admin gerencia; só admin/assinante lê a URL

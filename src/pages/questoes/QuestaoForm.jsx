@@ -8,7 +8,7 @@ import {
 } from '../../services/questoes'
 import RichEditor from '../../components/RichEditor'
 import VideoYouTube, { extrairIdYouTube } from '../../components/VideoYouTube'
-import { Plus, Trash2, ChevronLeft, Save, CheckCircle, XCircle, Youtube, Check } from 'lucide-react'
+import { Plus, Trash2, ChevronLeft, Save, CheckCircle, XCircle, Youtube, Check, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './QuestaoForm.module.css'
 
@@ -29,7 +29,7 @@ export default function QuestaoForm() {
     tipo: 'multipla_escolha', enunciado: '', comentario: '', video_url: '',
     disciplina_id: '', assunto_id: '', banca_id: '', orgao_id: '',
     ano: '', cargo: '', nivel: '', dificuldade: 3, gabarito_certo: null,
-    revisada: false,
+    revisada: false, liberada: true,
   })
   const [alternativas, setAlternativas] = useState(novasAlternativas())
 
@@ -63,6 +63,7 @@ export default function QuestaoForm() {
         dificuldade: questaoExistente.dificuldade || 3,
         gabarito_certo: questaoExistente.gabarito_certo,
         revisada: !!questaoExistente.revisada,
+        liberada: questaoExistente.liberada ?? true,
       })
       if (questaoExistente.alternativas?.length) {
         setAlternativas(questaoExistente.alternativas.map((a, i) => ({
@@ -156,6 +157,7 @@ export default function QuestaoForm() {
         dificuldade: form.dificuldade,
         gabarito_certo: form.tipo === 'certo_errado' ? form.gabarito_certo : null,
         revisada: form.revisada,
+        liberada: form.liberada,
       }
 
       if (isEdicao) {
@@ -205,6 +207,12 @@ export default function QuestaoForm() {
             onClick={() => setForm(f => ({ ...f, revisada: !f.revisada }))}
             title="Marca a questão como conferida (salva ao clicar em Salvar questão)">
             <Check size={14} /> {form.revisada ? 'Revisada' : 'Marcar como revisada'}
+          </button>
+          <button type="button"
+            className={`${styles.btnRevisada} ${form.liberada ? styles.btnRevisadaOn : ''}`}
+            onClick={() => setForm(f => ({ ...f, liberada: !f.liberada }))}
+            title="Questão visível para os alunos (desmarque para deixá-la oculta até liberar)">
+            {form.liberada ? <Eye size={14} /> : <EyeOff size={14} />} {form.liberada ? 'Liberada' : 'Não liberada'}
           </button>
           <button className={styles.btnPrimary}
             onClick={() => salvar.mutate()}

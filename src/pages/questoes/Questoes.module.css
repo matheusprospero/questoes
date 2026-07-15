@@ -141,6 +141,12 @@
   background: #dcfce7; color: #15803d; font-weight: 500;
 }
 
+.badgeNaoLiberada {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; padding: 3px 8px; border-radius: var(--radius-full);
+  background: #fef3c7; color: #b45309; font-weight: 500;
+}
+
 .badgeCodigo {
   font-size: 11px; font-weight: 700; font-family: ui-monospace, 'Cascadia Code', monospace;
   padding: 3px 8px; border-radius: var(--radius-full);
@@ -152,6 +158,10 @@
   border-color: #22c55e; background: #dcfce7; color: #15803d;
 }
 .iconBtnRevisada:hover { background: #bbf7d0; color: #166534; }
+.iconBtnLiberar {
+  border-color: #f59e0b; background: #fef3c7; color: #b45309;
+}
+.iconBtnLiberar:hover { background: #fde68a; color: #92400e; }
 .iconBtn {
   width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
   border: 1px solid var(--border-subtle); border-radius: var(--radius-md);

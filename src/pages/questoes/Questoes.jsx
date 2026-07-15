@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  listarQuestoes, excluirQuestao, marcarRevisada, listarDisciplinas, listarAssuntos,
+  listarQuestoes, excluirQuestao, marcarRevisada, marcarLiberada, listarDisciplinas, listarAssuntos,
   listarBancas, listarOrgaos, listarFacetas, opcoesDisponiveis,
 } from '../../services/questoes'
 import { listarSimulados, adicionarQuestaoSimulado } from '../../services/simulados'
@@ -10,7 +10,7 @@ import { listarCadernos, adicionarQuestaoCaderno } from '../../services/cadernos
 import { useAuth } from '../../contexts/AuthContext'
 import {
   Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, X, BookOpen, Landmark, LayoutGrid, Image as ImageIcon, Check,
+  CheckCircle, XCircle, X, BookOpen, Landmark, LayoutGrid, Image as ImageIcon, Check, Send, EyeOff,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Questoes.module.css'
@@ -82,6 +82,16 @@ export default function Questoes() {
       toast.success(revisada ? 'Marcada como revisada.' : 'Marcação removida.')
     },
     onError: (err) => toast.error('Erro ao marcar: ' + err.message),
+  })
+
+  const liberar = useMutation({
+    mutationFn: ({ id, liberada }) => marcarLiberada(id, liberada),
+    onSuccess: (_data, { liberada }) => {
+      queryClient.invalidateQueries({ queryKey: ['questoes'] })
+      queryClient.invalidateQueries({ queryKey: ['facetas'] })
+      toast.success(liberada ? 'Questão liberada para os alunos!' : 'Questão ocultada dos alunos.')
+    },
+    onError: (err) => toast.error('Erro ao liberar: ' + err.message),
   })
 
   const addSimulado = useMutation({
@@ -490,6 +500,9 @@ export default function Questoes() {
                       {isAdmin && q.revisada && (
                         <span className={styles.badgeRevisada}><Check size={11} /> Revisada</span>
                       )}
+                      {isAdmin && !q.liberada && (
+                        <span className={styles.badgeNaoLiberada}><EyeOff size={11} /> Não liberada</span>
+                      )}
                     </div>
                   </div>
                   <div className={styles.cardAcoes}>
@@ -500,6 +513,15 @@ export default function Questoes() {
                         disabled={revisar.isPending}
                         title={q.revisada ? 'Desmarcar revisada' : 'Marcar como revisada'}>
                         <Check size={15} />
+                      </button>
+                    )}
+                    {isAdmin && !q.liberada && (
+                      <button
+                        className={`${styles.iconBtn} ${styles.iconBtnLiberar}`}
+                        onClick={() => liberar.mutate({ id: q.id, liberada: true })}
+                        disabled={liberar.isPending}
+                        title="Liberar para os alunos">
+                        <Send size={15} />
                       </button>
                     )}
                     {isAdmin && (

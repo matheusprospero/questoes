@@ -260,6 +260,15 @@ export async function marcarRevisada(id, revisada) {
   if (error) throw error
 }
 
+// Libera/oculta a questão para os alunos (usado nas questões autorais)
+export async function marcarLiberada(id, liberada) {
+  const { error } = await supabase
+    .from('questoes')
+    .update({ liberada })
+    .eq('id', id)
+  if (error) throw error
+}
+
 // ── Revisão pendente (admin) ─────────────────────────────────
 // Questões aguardando revisão humana (revisada = false).
 // Novas importações nascem com revisada = false e aparecem aqui.
