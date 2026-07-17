@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -21,17 +21,33 @@ const porNome = (a, b) => a.rotulo.localeCompare(b.rotulo, 'pt-BR')
 const TIPOS = { multipla_escolha: 'Múltipla escolha', certo_errado: 'Certo/Errado' }
 const DIFICULDADES = ['', 'Muito fácil', 'Fácil', 'Média', 'Difícil', 'Muito difícil']
 
+// Filtros que persistem na URL (o Voltar do detalhe recupera a lista filtrada)
+const CHAVES_FILTRO = ['area', 'disciplina_id', 'assunto_id', 'banca_id', 'orgao_id', 'cargo', 'ano', 'nivel', 'dificuldade', 'tipo']
+
 export default function Questoes() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { isAdmin } = useAuth()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  // ?disciplina=<id> (vindo da página Início) já entra filtrado
+  // Filtros vêm da URL (?disciplina_id=...&banca_id=...); aceita também
+  // ?disciplina=<id> (atalho vindo da página Início)
   const [filtros, setFiltros] = useState(() => {
+    const f = {}
+    for (const k of CHAVES_FILTRO) {
+      const v = searchParams.get(k)
+      if (v) f[k] = v
+    }
     const d = searchParams.get('disciplina')
-    return d ? { disciplina_id: d } : {}
+    if (d && !f.disciplina_id) f.disciplina_id = d
+    return f
   })
+  // Mantém a URL espelhando os filtros (replace: não polui o histórico)
+  useEffect(() => {
+    const params = {}
+    for (const k of CHAVES_FILTRO) if (filtros[k]) params[k] = String(filtros[k])
+    setSearchParams(params, { replace: true })
+  }, [filtros]) // eslint-disable-line react-hooks/exhaustive-deps
   const [buscaTexto, setBuscaTexto] = useState('')
   const [mostrarFiltros, setMostrarFiltros] = useState(true)
   const [verTodas, setVerTodas] = useState(false)
