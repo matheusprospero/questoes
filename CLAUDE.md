@@ -12,7 +12,8 @@ Tudo isolado por RLS. Frontend em GitHub Pages, dados no Supabase.
 ## ⚠️ Fluxo de atualização (ler antes de mexer)
 1. **Migrations de banco são MANUAIS**: cada `*.sql` da raiz é rodado pelo usuário no Supabase → SQL Editor. Eu não consigo rodar DDL pela API (service_role não faz DDL). Sempre entregar o SQL e pedir para rodar.
 2. **Rodar o SQL ANTES do `npm run deploy`** — senão as telas novas quebram por falta de tabela/coluna.
-3. **`.env` precisa de `VITE_SUPABASE_ANON_KEY`** (além da URL). O Vite embute em build time; se faltar, o build sobe com **tela em branco** (supabase.js dá throw). O `.env` é gitignored.
+3. **`.env` precisa de `VITE_SUPABASE_ANON_KEY`** (além da URL). O Vite embute em build time; se faltar, o build sobe com **tela em branco** (supabase.js dá throw). O `.env` é gitignored e **já está completo nesta máquina — não sobrescrever**.
+3b. Após deploy, o navegador do usuário costuma segurar cache — pedir teste em **aba anônima**/Ctrl+Shift+R antes de investigar "não mudou nada".
 4. **Questões e respostas vivem no Supabase, não no git.** "Colocar na main" = commit de código; dados não passam pelo git.
 5. **Deploy usa gh-pages** (push no branch gh-pages do repo `matheusprospero/questoes`) — precisa de conta com acesso de escrita.
 6. Para inserir questões em massa: `importador/importar.py` (por prova) ou os scripts em `importador/conteudo/` (autorais). service_role em `importador/conteudo/service_role.txt` (gitignored).
@@ -24,6 +25,7 @@ Backend: Supabase (Postgres + Auth + Storage bucket `midia`). Auth via `AuthCont
 ## Modelo de dados (Postgres) — ver `schema_completo.sql`
 Conteúdo (admin escreve, todos leem): `disciplinas`, `assuntos`, `bancas`, `orgaos`, `questoes`, `questao_alternativas`, `questao_videos` (URL só admin/assinante).
 - `questoes.liberada` (bool): aluno só vê `liberada or is_admin()`. Autorais entram `false` até o admin liberar. `questoes.revisada`: fila de conferência do admin (≠ liberada).
+- Questões autorais: banca **"Prof. Matheus Próspero"** (~713, geradas por IA e verificadas). `questoes.codigo` (ex.: `TJSP-2010-MAT-32`) ordena a lista do banco (natural sort em Questoes.jsx).
 Por usuário (isolado por RLS `usuario_id = auth.uid()`): `respostas` (append-only, `acertou`, `origem` estudo/simulado, `respondido_em`, `tempo_seg`), `revisoes` (SRS 1/3/7/15/30/60), `cadernos`/`caderno_questoes`, `simulados`/`simulado_questoes`, `favoritos`, `metas`, `planos_estudo`/`plano_itens`.
 - Professor (admin) LÊ respostas/metas/planos/revisoes dos alunos (policies `*_admin_le`) para o acompanhamento.
 - View `v_estudo_dia` (security_invoker): agregação por dia (heatmap, dia/semana/mês).
@@ -41,9 +43,16 @@ Menu em `src/components/layout/AppLayout.jsx` (NAV_ITEMS + bloco admin "Gestão"
 - `acompanhamento.js` — listarAlunosComResumo, resumoAluno(id) (admin).
 - `questoes.js` — listagem/facetas/favoritos + marcarLiberada/marcarRevisada.
 - `simulados.js` (relatorioSimulado), `cadernos.js`, `aulas.js`, `destaques.js`, `feedback.js`.
+- PDF do simulado: `SimuladoDetalhe.jsx → buildHtml()` monta HTML e chama window.print. `cfg_impressao` (jsonb): tamanhoFonte, separadorQuestoes, quebrarPagina, rodapes, **questoesPorFolha** (0=todas/1/2/3 → classe `.folha` flex 276mm, quebra por página) e **espacoResolucao** (área "Resolução" que preenche o restante da folha, dividida igualmente — uso: gravação de aulas). Config no SimuladoForm.jsx.
 
 ## Migrations SQL (raiz) — rodar no Supabase SQL Editor
 `schema_completo.sql` (do zero, fonte de verdade) · e incrementais já consolidadas nele: `liberada.sql`, `revisada.sql`, `revisao_espacada.sql`, `relatorio_simulados.sql`, `feedback.sql`, `plano_estudos.sql` (acompanhamento de estudos), `codigo_area.sql`, `simulados_propostos.sql`, `destaque_simulados.sql`, `destaques_agenda.sql`, `login_google.sql`, `aulas*.sql`.
+
+## Economia de tokens (para o Claude)
+- Confie neste mapa: NÃO releia `schema_completo.sql` (623 linhas) nem explore `src/` para achar onde algo mora — os caminhos estão acima. Leia só o trecho do arquivo-alvo (offset/limit).
+- Consultas ao banco: use `python -c` importando `importador/importar.py` (`m.rest_get(tabela, query)` = PostgREST com service_role). Não montar clientes novos.
+- Geração de questões em massa: pipeline pronto descrito em `importador/conteudo/inserir_verificadas.py` (subagentes por assunto → verificação matemática → balancear gabaritos A–E → inserir `liberada=false`).
+- Build ~7s: `npm run build | tail -3` basta como validação; não subir dev server para mudanças não visuais.
 
 ## Convenções
 - Textos e nomes de código em pt-BR. Enunciados/comentários de questões em HTML; frações como `<sup>x</sup>&frasl;<sub>y</sub>`.
