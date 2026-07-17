@@ -1,8 +1,9 @@
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { listarPendentesRevisao, marcarRevisada } from '../../services/questoes'
-import { ClipboardCheck, Pencil, Check, Eye, Loader2 } from 'lucide-react'
+import { ClipboardCheck, Pencil, Check, Eye, Loader2, X } from 'lucide-react'
 import styles from './Revisao.module.css'
 
 // Remove tags HTML para exibir o começo do enunciado
@@ -24,13 +25,43 @@ function motivos(q) {
   return lista
 }
 
+// Opções distintas de um campo relacionado, com contagem
+function opcoes(questoes, get) {
+  const m = new Map()
+  for (const q of questoes) {
+    const r = get(q)
+    if (!r?.id) continue
+    const g = m.get(String(r.id)) ?? { id: String(r.id), nome: r.nome, total: 0 }
+    g.total += 1; m.set(g.id, g)
+  }
+  return [...m.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+}
+
 export default function Revisao() {
   const queryClient = useQueryClient()
+  const [filtros, setFiltros] = useState({ disciplina: '', assunto: '', banca: '', orgao: '' })
+  const setF = (k, v) => setFiltros(f => ({ ...f, [k]: v, ...(k === 'disciplina' ? { assunto: '' } : {}) }))
+  const temFiltro = Object.values(filtros).some(Boolean)
 
   const { data: questoes = [], isLoading } = useQuery({
     queryKey: ['revisao-pendentes'],
     queryFn: listarPendentesRevisao,
   })
+
+  // Opções dos selects, derivadas das pendentes (assunto depende da disciplina)
+  const optDisc = useMemo(() => opcoes(questoes, q => q.disciplinas), [questoes])
+  const optBanca = useMemo(() => opcoes(questoes, q => q.bancas), [questoes])
+  const optOrgao = useMemo(() => opcoes(questoes, q => q.orgaos), [questoes])
+  const optAssunto = useMemo(() =>
+    opcoes(questoes.filter(q => !filtros.disciplina || String(q.disciplinas?.id) === filtros.disciplina), q => q.assuntos),
+    [questoes, filtros.disciplina])
+
+  const filtradas = useMemo(() => questoes.filter(q =>
+    (!filtros.disciplina || String(q.disciplinas?.id) === filtros.disciplina) &&
+    (!filtros.assunto || String(q.assuntos?.id) === filtros.assunto) &&
+    (!filtros.banca || String(q.bancas?.id) === filtros.banca) &&
+    (!filtros.orgao || String(q.orgaos?.id) === filtros.orgao)
+  ), [questoes, filtros])
 
   const revisar = useMutation({
     mutationFn: (id) => marcarRevisada(id, true),
@@ -54,9 +85,37 @@ export default function Revisao() {
           </p>
         </div>
         {questoes.length > 0 && (
-          <span className={styles.contador}>{questoes.length} pendente{questoes.length > 1 ? 's' : ''}</span>
+          <span className={styles.contador}>
+            {temFiltro ? `${filtradas.length} de ${questoes.length}` : questoes.length} pendente{questoes.length > 1 ? 's' : ''}
+          </span>
         )}
       </div>
+
+      {questoes.length > 0 && (
+        <div className={styles.filtros}>
+          <select className={styles.filtroSel} value={filtros.disciplina} onChange={e => setF('disciplina', e.target.value)}>
+            <option value="">Disciplina (todas)</option>
+            {optDisc.map(o => <option key={o.id} value={o.id}>{o.nome} ({o.total})</option>)}
+          </select>
+          <select className={styles.filtroSel} value={filtros.assunto} onChange={e => setF('assunto', e.target.value)}>
+            <option value="">Assunto (todos)</option>
+            {optAssunto.map(o => <option key={o.id} value={o.id}>{o.nome} ({o.total})</option>)}
+          </select>
+          <select className={styles.filtroSel} value={filtros.banca} onChange={e => setF('banca', e.target.value)}>
+            <option value="">Banca (todas)</option>
+            {optBanca.map(o => <option key={o.id} value={o.id}>{o.nome} ({o.total})</option>)}
+          </select>
+          <select className={styles.filtroSel} value={filtros.orgao} onChange={e => setF('orgao', e.target.value)}>
+            <option value="">Órgão (todos)</option>
+            {optOrgao.map(o => <option key={o.id} value={o.id}>{o.nome} ({o.total})</option>)}
+          </select>
+          {temFiltro && (
+            <button className={styles.filtroLimpar} onClick={() => setFiltros({ disciplina: '', assunto: '', banca: '', orgao: '' })}>
+              <X size={13} /> Limpar
+            </button>
+          )}
+        </div>
+      )}
 
       {isLoading && (
         <div className={styles.loading}><Loader2 size={22} className={styles.spin} /> Carregando…</div>
@@ -69,8 +128,14 @@ export default function Revisao() {
         </div>
       )}
 
+      {!isLoading && questoes.length > 0 && filtradas.length === 0 && (
+        <div className={styles.vazio}>
+          <p>Nenhuma pendente com esses filtros.</p>
+        </div>
+      )}
+
       <div className={styles.lista}>
-        {questoes.map(q => (
+        {filtradas.map(q => (
           <div key={q.id} className={styles.card}>
             <div className={styles.cardTop}>
               {q.codigo && <span className={styles.codigo}>{q.codigo}</span>}
