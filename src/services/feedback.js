@@ -42,14 +42,66 @@ export async function listarReports({ apenasAbertos = false } = {}) {
   return reports
 }
 
-// ── Modelo do e-mail de aviso (personalizável na tela Reportados) ──
+// ── Modelos de e-mail (personalizáveis na tela Reportados) ──
+// Chaves em config_app. Boas-vindas e lembrete são disparados pelo BANCO
+// (trigger em perfis / função enfileirar_lembretes_metas chamada pelo Apps Script).
+export const MODELOS_EMAIL = {
+  email_report: {
+    label: 'Questão corrigida (report)',
+    variaveis: [
+      { tag: '{nome}', desc: 'primeiro nome do aluno' },
+      { tag: '{nome_completo}', desc: 'nome completo' },
+      { tag: '{codigo}', desc: 'código da questão' },
+      { tag: '{tipo}', desc: 'tipo do problema reportado' },
+    ],
+    exemplo: { '{nome}': 'Maria', '{nome_completo}': 'Maria da Silva', '{codigo}': 'ALUM-2016-MAT-17', '{tipo}': 'Gabarito errado' },
+    assunto: 'Questão corrigida — obrigado pelo aviso!',
+    corpo:
+      'Olá {nome}!\n\n' +
+      'A questão que você reportou ({codigo}) foi verificada e corrigida. ' +
+      'Obrigado por avisar — isso ajuda todo mundo que estuda na plataforma.\n\n' +
+      'Bons estudos!\nProf. Matheus Próspero',
+  },
+  email_boas_vindas: {
+    label: 'Boas-vindas (aluno novo)',
+    variaveis: [
+      { tag: '{nome}', desc: 'primeiro nome do aluno' },
+      { tag: '{nome_completo}', desc: 'nome completo' },
+    ],
+    exemplo: { '{nome}': 'Maria', '{nome_completo}': 'Maria da Silva' },
+    assunto: 'Bem-vindo(a), {nome}! Seus estudos começam agora 🚀',
+    corpo:
+      'Olá {nome}!\n\n' +
+      'Sua conta na plataforma do Prof. Matheus Próspero está pronta. Por aqui você encontra:\n\n' +
+      '• Banco de questões de concursos com correção na hora;\n' +
+      '• Meta do dia personalizada — defina a sua na página Início;\n' +
+      '• Plano de Estudos para organizar o edital;\n' +
+      '• Estatísticas e boletim para acompanhar sua evolução.\n\n' +
+      'Comece definindo sua meta diária e resolvendo as primeiras questões ainda hoje!\n\n' +
+      'Bons estudos!\nProf. Matheus Próspero\nhttps://matheusprospero.com.br',
+  },
+  email_lembrete: {
+    label: 'Lembrete diário de meta',
+    variaveis: [
+      { tag: '{nome}', desc: 'primeiro nome do aluno' },
+      { tag: '{nome_completo}', desc: 'nome completo' },
+      { tag: '{feitas}', desc: 'questões resolvidas hoje' },
+      { tag: '{meta}', desc: 'meta diária do aluno' },
+      { tag: '{restantes}', desc: 'quantas faltam para a meta' },
+    ],
+    exemplo: { '{nome}': 'Maria', '{nome_completo}': 'Maria da Silva', '{feitas}': '8', '{meta}': '20', '{restantes}': '12' },
+    assunto: 'Sua meta de hoje ainda não fechou, {nome} 🎯',
+    corpo:
+      'Olá {nome}!\n\n' +
+      'Passando para lembrar da sua meta de hoje: você já resolveu {feitas} de {meta} questões — faltam {restantes}.\n\n' +
+      'Que tal fechar agora? Entre na plataforma e toque em "Começar meta do dia":\nhttps://matheusprospero.com.br\n\n' +
+      'Constância vence talento. Até já!\nProf. Matheus Próspero',
+  },
+}
+
 export const MODELO_EMAIL_PADRAO = {
-  assunto: 'Questão corrigida — obrigado pelo aviso!',
-  corpo:
-    'Olá {nome}!\n\n' +
-    'A questão que você reportou ({codigo}) foi verificada e corrigida. ' +
-    'Obrigado por avisar — isso ajuda todo mundo que estuda na plataforma.\n\n' +
-    'Bons estudos!\nProf. Matheus Próspero',
+  assunto: MODELOS_EMAIL.email_report.assunto,
+  corpo: MODELOS_EMAIL.email_report.corpo,
 }
 
 const TIPO_LABEL = {
@@ -59,23 +111,31 @@ const TIPO_LABEL = {
   outro: 'Outro',
 }
 
-export async function lerModeloEmail() {
+export async function lerModeloEmail(chave = 'email_report') {
+  const padrao = { assunto: MODELOS_EMAIL[chave].assunto, corpo: MODELOS_EMAIL[chave].corpo }
   const { data, error } = await supabase
     .from('config_app')
     .select('valor')
-    .eq('chave', 'email_report')
+    .eq('chave', chave)
     .maybeSingle()
-  if (error) return { ...MODELO_EMAIL_PADRAO }   // tabela pode não existir ainda
-  return { ...MODELO_EMAIL_PADRAO, ...(data?.valor || {}) }
+  if (error) return padrao   // tabela pode não existir ainda
+  return { ...padrao, ...(data?.valor || {}) }
 }
 
-export async function salvarModeloEmail(modelo) {
+export async function salvarModeloEmail(chave, modelo) {
   const { error } = await supabase.from('config_app').upsert({
-    chave: 'email_report',
+    chave,
     valor: { assunto: modelo.assunto, corpo: modelo.corpo },
     atualizado_em: new Date().toISOString(),
   })
   if (error) throw error
+}
+
+// Prévia: aplica um mapa {variavel: valor} ao texto
+export function aplicarExemplo(texto, mapa) {
+  let t = texto || ''
+  for (const [tag, val] of Object.entries(mapa || {})) t = t.replaceAll(tag, val)
+  return t
 }
 
 // Substitui as variáveis do modelo pelos dados do report.

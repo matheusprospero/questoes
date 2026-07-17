@@ -36,6 +36,17 @@ function enviarEmailsPendentes() {
     'Content-Type': 'application/json',
   };
 
+  // 1) Pede ao banco para enfileirar os lembretes diários de meta.
+  //    A função só age a partir das 18h (config lembrete_config) e
+  //    no máximo 1x/dia por aluno — chamar a cada 10 min é seguro.
+  try {
+    UrlFetchApp.fetch(URL + '/rest/v1/rpc/enfileirar_lembretes_metas', {
+      method: 'post', headers: headers, payload: '{}', muteHttpExceptions: true,
+    });
+  } catch (e) {
+    console.warn('Lembretes: ' + e);
+  }
+
   // Busca até 20 pendentes por ciclo (Gmail tem cota diária; 20/10min é folgado)
   var resp = UrlFetchApp.fetch(
     URL + '/rest/v1/emails_fila?status=eq.pendente&select=id,para,assunto,corpo&order=criado_em&limit=20',
