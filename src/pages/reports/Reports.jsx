@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { listarReports, resolverReport, enfileirarEmailReport } from '../../services/feedback'
+import {
+  listarReports, resolverReport, enfileirarEmailReport,
+  lerModeloEmail, salvarModeloEmail, aplicarModelo, MODELO_EMAIL_PADRAO,
+} from '../../services/feedback'
 import { resumoEnunciado } from '../../services/questoes'
-import { Flag, Check, RotateCcw, Eye, AlertTriangle, User, Mail } from 'lucide-react'
+import { Flag, Check, RotateCcw, Eye, AlertTriangle, User, Mail, Settings2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Reports.module.css'
 
@@ -15,14 +18,105 @@ const TIPO = {
 }
 const fmt = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
+const VARIAVEIS = [
+  { tag: '{nome}', desc: 'primeiro nome do aluno' },
+  { tag: '{nome_completo}', desc: 'nome completo' },
+  { tag: '{codigo}', desc: 'código da questão (ex.: ALUM-2016-MAT-17)' },
+  { tag: '{tipo}', desc: 'tipo do problema reportado' },
+]
+// Report de exemplo para a prévia do modelo
+const REPORT_EXEMPLO = {
+  tipo: 'gabarito',
+  autor: { nome: 'Maria da Silva' },
+  questoes: { codigo: 'ALUM-2016-MAT-17' },
+}
+
+// ── Modal de personalização do e-mail de aviso ────────────────
+function ModalModeloEmail({ modeloInicial, onFechar, onSalvar, salvando }) {
+  const [assunto, setAssunto] = useState(modeloInicial.assunto)
+  const [corpo, setCorpo] = useState(modeloInicial.corpo)
+  return (
+    <div className={styles.overlay} onClick={onFechar}>
+      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalTopo}>
+          <p className={styles.modalTitulo}><Mail size={16} /> Personalizar e-mail de aviso</p>
+          <button className={styles.iconBtn} onClick={onFechar} aria-label="Fechar"><X size={18} /></button>
+        </div>
+
+        <div className={styles.modalCorpo}>
+          <label className={styles.campo}>
+            <span className={styles.campoLabel}>Assunto</span>
+            <input className={styles.input} value={assunto} onChange={e => setAssunto(e.target.value)} />
+          </label>
+          <label className={styles.campo}>
+            <span className={styles.campoLabel}>Mensagem</span>
+            <textarea className={styles.textarea} rows={9} value={corpo} onChange={e => setCorpo(e.target.value)} />
+          </label>
+
+          <div className={styles.variaveis}>
+            <span className={styles.campoLabel}>Variáveis disponíveis (clique para inserir na mensagem):</span>
+            <div className={styles.variaveisChips}>
+              {VARIAVEIS.map(v => (
+                <button key={v.tag} type="button" className={styles.varChip}
+                  title={v.desc} onClick={() => setCorpo(c => c + v.tag)}>
+                  {v.tag}
+                </button>
+              ))}
+            </div>
+            <span className={styles.varDica}>Ex.: {'{nome}'} vira “Maria”, {'{codigo}'} vira o código da questão.</span>
+          </div>
+
+          <div className={styles.previa}>
+            <span className={styles.campoLabel}>Prévia (com dados de exemplo):</span>
+            <div className={styles.previaBox}>
+              <p className={styles.previaAssunto}>{aplicarModelo(assunto, REPORT_EXEMPLO)}</p>
+              <pre className={styles.previaCorpo}>{aplicarModelo(corpo, REPORT_EXEMPLO)}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.modalRodape}>
+          <button className={styles.btnGhost}
+            onClick={() => { setAssunto(MODELO_EMAIL_PADRAO.assunto); setCorpo(MODELO_EMAIL_PADRAO.corpo) }}>
+            Restaurar padrão
+          </button>
+          <div className={styles.modalBotoes}>
+            <button className={styles.btnGhost} onClick={onFechar}>Cancelar</button>
+            <button className={styles.btnResolver} disabled={salvando || !assunto.trim() || !corpo.trim()}
+              onClick={() => onSalvar({ assunto: assunto.trim(), corpo: corpo.trim() })}>
+              <Check size={14} /> {salvando ? 'Salvando…' : 'Salvar modelo'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Reports() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [soAbertos, setSoAbertos] = useState(true)
+  const [modalModelo, setModalModelo] = useState(false)
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ['reports', soAbertos],
     queryFn: () => listarReports({ apenasAbertos: soAbertos }),
+  })
+
+  const { data: modelo = MODELO_EMAIL_PADRAO } = useQuery({
+    queryKey: ['modelo-email-report'],
+    queryFn: lerModeloEmail,
+  })
+
+  const salvarModelo = useMutation({
+    mutationFn: salvarModeloEmail,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['modelo-email-report'] })
+      setModalModelo(false)
+      toast.success('Modelo salvo! Próximos e-mails usarão o novo texto.')
+    },
+    onError: (e) => toast.error('Erro ao salvar: ' + e.message),
   })
 
   const resolver = useMutation({
@@ -57,10 +151,15 @@ export default function Reports() {
           <h1 className={styles.titulo}><Flag size={20} /> Problemas reportados</h1>
           <p className={styles.subtitulo}>O que os alunos sinalizaram nas questões</p>
         </div>
-        <label className={styles.toggle}>
-          <input type="checkbox" checked={soAbertos} onChange={e => setSoAbertos(e.target.checked)} />
-          Só os abertos
-        </label>
+        <div className={styles.headerAcoes}>
+          <button className={styles.btnGhost} onClick={() => setModalModelo(true)}>
+            <Settings2 size={14} /> Personalizar e-mail
+          </button>
+          <label className={styles.toggle}>
+            <input type="checkbox" checked={soAbertos} onChange={e => setSoAbertos(e.target.checked)} />
+            Só os abertos
+          </label>
+        </div>
       </div>
 
       {isLoading ? (
@@ -130,6 +229,15 @@ export default function Reports() {
             </div>
           ))}
         </div>
+      )}
+
+      {modalModelo && (
+        <ModalModeloEmail
+          modeloInicial={modelo}
+          salvando={salvarModelo.isPending}
+          onFechar={() => setModalModelo(false)}
+          onSalvar={(m) => salvarModelo.mutate(m)}
+        />
       )}
     </div>
   )

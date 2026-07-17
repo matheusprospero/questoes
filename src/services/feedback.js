@@ -9,7 +9,7 @@ export async function criarReport({ questao_id, tipo, descricao }) {
 export async function listarReports({ apenasAbertos = false } = {}) {
   let q = supabase
     .from('questao_reports')
-    .select('*, questoes(id, enunciado, bancas(nome), orgaos(nome), ano, cargo)')
+    .select('*, questoes(id, codigo, enunciado, bancas(nome), orgaos(nome), ano, cargo)')
     .order('criado_em', { ascending: false })
   if (apenasAbertos) q = q.eq('resolvido', false)
   const { data, error } = await q
@@ -42,21 +42,62 @@ export async function listarReports({ apenasAbertos = false } = {}) {
   return reports
 }
 
+// ── Modelo do e-mail de aviso (personalizável na tela Reportados) ──
+export const MODELO_EMAIL_PADRAO = {
+  assunto: 'Questão corrigida — obrigado pelo aviso!',
+  corpo:
+    'Olá {nome}!\n\n' +
+    'A questão que você reportou ({codigo}) foi verificada e corrigida. ' +
+    'Obrigado por avisar — isso ajuda todo mundo que estuda na plataforma.\n\n' +
+    'Bons estudos!\nProf. Matheus Próspero',
+}
+
+const TIPO_LABEL = {
+  gabarito: 'Gabarito errado',
+  sem_resposta: 'Sem resposta correta',
+  enunciado: 'Enunciado / imagem',
+  outro: 'Outro',
+}
+
+export async function lerModeloEmail() {
+  const { data, error } = await supabase
+    .from('config_app')
+    .select('valor')
+    .eq('chave', 'email_report')
+    .maybeSingle()
+  if (error) return { ...MODELO_EMAIL_PADRAO }   // tabela pode não existir ainda
+  return { ...MODELO_EMAIL_PADRAO, ...(data?.valor || {}) }
+}
+
+export async function salvarModeloEmail(modelo) {
+  const { error } = await supabase.from('config_app').upsert({
+    chave: 'email_report',
+    valor: { assunto: modelo.assunto, corpo: modelo.corpo },
+    atualizado_em: new Date().toISOString(),
+  })
+  if (error) throw error
+}
+
+// Substitui as variáveis do modelo pelos dados do report.
+export function aplicarModelo(texto, report) {
+  const nomeCompleto = report.autor?.nome || ''
+  return (texto || '')
+    .replaceAll('{nome}', nomeCompleto ? nomeCompleto.split(' ')[0] : 'aluno(a)')
+    .replaceAll('{nome_completo}', nomeCompleto || 'aluno(a)')
+    .replaceAll('{codigo}', report.questoes?.codigo || 'questão reportada')
+    .replaceAll('{tipo}', TIPO_LABEL[report.tipo] ?? report.tipo ?? '')
+}
+
 // Coloca na fila o e-mail de "questão corrigida" para quem reportou.
 // O envio em si é feito pelo Google Apps Script (acionador de 10 em 10 min).
 export async function enfileirarEmailReport(report) {
   const email = report.autor?.email
   if (!email) throw new Error('Quem reportou não tem e-mail cadastrado')
-  const primeiroNome = report.autor?.nome ? ' ' + report.autor.nome.split(' ')[0] : ''
-  const corpo =
-    `Olá${primeiroNome}!\n\n` +
-    'A questão que você reportou foi verificada e corrigida. ' +
-    'Obrigado por avisar — isso ajuda todo mundo que estuda na plataforma.\n\n' +
-    'Bons estudos!\nProf. Matheus Próspero'
+  const modelo = await lerModeloEmail()
   const { error } = await supabase.from('emails_fila').insert({
     para: email,
-    assunto: 'Questão corrigida — obrigado pelo aviso!',
-    corpo,
+    assunto: aplicarModelo(modelo.assunto, report),
+    corpo: aplicarModelo(modelo.corpo, report),
     report_id: report.id,
   })
   if (error) throw error
