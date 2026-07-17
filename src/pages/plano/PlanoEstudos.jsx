@@ -9,11 +9,59 @@ import { listarFacetas } from '../../services/questoes'
 import { listarRespostas } from '../../services/estudo'
 import {
   ListChecks, Plus, BookOpen, Target, CheckCircle2, Trash2,
-  RotateCw, ChevronDown, ChevronRight, X, Layers,
+  RotateCw, ChevronDown, ChevronRight, X, Layers, HelpCircle, Lightbulb,
 } from 'lucide-react'
 import styles from './PlanoEstudos.module.css'
 
 const PESOS = [1, 2, 3, 4, 5]
+
+// ── Guia "Como funciona" (aberto na 1ª visita; depois fica recolhido) ──
+const GUIA_KEY = 'plano-guia-visto'
+function GuiaPlano() {
+  const [aberto, setAberto] = useState(() => !localStorage.getItem(GUIA_KEY))
+  function alternar() {
+    setAberto(a => {
+      const novo = !a
+      if (!novo) try { localStorage.setItem(GUIA_KEY, '1') } catch { /* ignora */ }
+      return novo
+    })
+  }
+  return (
+    <div className={styles.guia}>
+      <button className={styles.guiaTopo} onClick={alternar}>
+        <HelpCircle size={15} />
+        <span>Como funciona o Plano de Estudos?</span>
+        {aberto ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+      </button>
+      {aberto && (
+        <div className={styles.guiaCorpo}>
+          <p className={styles.guiaIntro}>
+            O plano é o seu <strong>edital verticalizado</strong>: a lista de tudo o que você
+            precisa dominar para a prova, matéria por matéria, com o seu progresso ao lado.
+            O objetivo é responder, num bate-olho, <strong>“o que eu já estudei e o que ainda falta?”</strong>
+          </p>
+          <ol className={styles.guiaPassos}>
+            <li><strong>Adicione as matérias</strong> do seu concurso (disciplinas inteiras ou assuntos específicos).</li>
+            <li><strong>Defina peso e meta</strong>: peso é a importância da matéria na prova (5 = cai muito); meta é quantas questões você quer resolver dela.</li>
+            <li><strong>Estude em ciclo</strong>: vá passando pelas matérias na ordem, marcando <em>Estudei</em> quando terminar a teoria e <em>Revisei</em> após a revisão. Ao completar uma rodada por todas as matérias, clique <em>+1 volta</em> e recomece — cada volta aprofunda.</li>
+          </ol>
+          <div className={styles.guiaColunas}>
+            <span><strong>Peso</strong> — prioridade da matéria (1 a 5). Dê peso maior ao que mais cai na sua banca.</span>
+            <span><strong>Meta</strong> — questões que você pretende resolver. A barra de progresso compara com o que você já fez.</span>
+            <span><strong>Estudei</strong> — teoria vista pela primeira vez.</span>
+            <span><strong>Revisei</strong> — voltou no conteúdo depois de um tempo (é a revisão que fixa!).</span>
+            <span><strong>Ciclos</strong> — quantas voltas completas você já deu nessa matéria.</span>
+            <span><strong>Progresso</strong> — questões respondidas ÷ meta (conta as resoluções feitas em Resolver Questões).</span>
+          </div>
+          <p className={styles.guiaDica}>
+            <Lightbulb size={14} /> Dica: comece marcando as matérias de maior peso e resolva a
+            <strong> Meta do dia</strong> na página Início — ela puxa automaticamente revisões e pontos fracos.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
 
 // Nº de questões distintas que o aluno já respondeu, indexado por assunto e por disciplina.
 function contarRespostas(respostas) {
@@ -275,9 +323,19 @@ export default function PlanoEstudos() {
     return (
       <div className={styles.page}>
         <h1 className={styles.titulo}>Plano de Estudos</h1>
+        <p className={styles.subtitulo}>Seu mapa do edital: o que estudar, em que ordem e quanto falta</p>
         <div className={styles.criarVazio}>
           <ListChecks size={40} strokeWidth={1.5} />
-          <p className={styles.criarTexto}>Monte seu edital verticalizado e organize seu ciclo de estudos.</p>
+          <p className={styles.criarTexto}>
+            O plano de estudos transforma o edital do seu concurso em uma lista de matérias
+            com prioridade, meta de questões e progresso — para você sempre saber
+            <strong> o que já estudou e o que ainda falta</strong>.
+          </p>
+          <div className={styles.criarPassos}>
+            <span><strong>1.</strong> Crie o plano com o nome do seu concurso</span>
+            <span><strong>2.</strong> Adicione as matérias do edital</span>
+            <span><strong>3.</strong> Estude, resolva questões e acompanhe o avanço</span>
+          </div>
           <div className={styles.criarForm}>
             <input
               className={styles.input}
@@ -315,7 +373,7 @@ export default function PlanoEstudos() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.titulo}>Plano de Estudos</h1>
-          <p className={styles.subtitulo}>Edital verticalizado e ciclo de estudos</p>
+          <p className={styles.subtitulo}>Seu mapa do edital: o que estudar, em que ordem e quanto falta</p>
         </div>
         <div className={styles.headerBotoes}>
           {planos.length > 1 && (
@@ -335,6 +393,8 @@ export default function PlanoEstudos() {
           </button>
         </div>
       </div>
+
+      <GuiaPlano />
 
       {/* Resumo */}
       <div className={styles.cardsResumo}>
@@ -368,6 +428,10 @@ export default function PlanoEstudos() {
           <div className={styles.vazio}>
             <ListChecks size={32} strokeWidth={1.5} />
             <p>Seu plano ainda não tem matérias.</p>
+            <p className={styles.vazioDica}>
+              Clique abaixo e marque as disciplinas e assuntos que caem no seu concurso —
+              eles virarão a sua lista de estudos.
+            </p>
             <button className={styles.btnPrimary} onClick={() => setPainelAberto(true)}>
               <Layers size={14} /> Adicionar matérias
             </button>
@@ -378,12 +442,12 @@ export default function PlanoEstudos() {
               <thead>
                 <tr>
                   <th className={styles.thNome}>Disciplina / Assunto</th>
-                  <th>Peso</th>
-                  <th>Meta</th>
-                  <th>Estudei</th>
-                  <th>Revisei</th>
-                  <th>Ciclos</th>
-                  <th className={styles.thProgresso}>Progresso</th>
+                  <th title="Importância da matéria na prova: 1 = cai pouco, 5 = cai muito">Peso</th>
+                  <th title="Quantas questões você pretende resolver desta matéria">Meta</th>
+                  <th title="Marque quando terminar a teoria desta matéria">Estudei</th>
+                  <th title="Marque quando fizer a revisão (é ela que fixa o conteúdo)">Revisei</th>
+                  <th title="Voltas completas no ciclo de estudos: a cada nova passada, clique +1 volta">Ciclos</th>
+                  <th className={styles.thProgresso} title="Questões respondidas ÷ meta (conta o que você resolve em Resolver Questões)">Progresso</th>
                   <th></th>
                 </tr>
               </thead>
