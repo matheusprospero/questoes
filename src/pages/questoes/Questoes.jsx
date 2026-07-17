@@ -180,6 +180,15 @@ export default function Questoes() {
       ...(q.alternativas || []).map(a => a.texto?.replace(/<[^>]*>/g, '')),
     ].some(campo => campo?.toLowerCase().includes(termo))
   })
+    // Ordena pelo número da questão na prova (embutido no código, ex.: TJSP-2010-MAT-32).
+    // localeCompare numeric mantém cada prova agrupada e em ordem de questão (2 antes de 10);
+    // questões sem código vão para o fim.
+    .sort((a, b) => {
+      const ca = a.codigo || '', cb = b.codigo || ''
+      if (!ca) return cb ? 1 : 0
+      if (!cb) return -1
+      return ca.localeCompare(cb, 'pt-BR', { numeric: true })
+    })
 
   // Rótulo legível de cada filtro ativo (para os "chips")
   function rotuloFiltro(key, val) {
