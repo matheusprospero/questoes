@@ -184,7 +184,7 @@ export default function PlanoEstudos() {
     queryFn: listarPlanos,
   })
   const { data: facetas = [] } = useQuery({ queryKey: ['facetas'], queryFn: listarFacetas })
-  const { data: respostas = [] } = useQuery({ queryKey: ['respostas'], queryFn: listarRespostas })
+  const { data: respostas = [] } = useQuery({ queryKey: ['respostas'], queryFn: () => listarRespostas() })
 
   // Plano ativo: o selecionado ou o primeiro da lista
   const planoAtivo = planoId ?? planos[0]?.id ?? null

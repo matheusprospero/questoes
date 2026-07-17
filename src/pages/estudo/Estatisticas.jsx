@@ -35,7 +35,7 @@ export default function Estatisticas() {
 
   const { data: respostas = [], isLoading } = useQuery({
     queryKey: ['respostas'],
-    queryFn: listarRespostas,
+    queryFn: () => listarRespostas(),
   })
 
   if (isLoading) return <div className={styles.loading}>Carregando estatísticas...</div>

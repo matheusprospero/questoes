@@ -132,7 +132,7 @@ export default function Inicio() {
   const nome = perfil?.nome || usuario?.email?.split('@')[0] || ''
 
   const { data: questoes = [] } = useQuery({ queryKey: ['questoes', {}], queryFn: () => listarQuestoes({}) })
-  const { data: respostas = [] } = useQuery({ queryKey: ['respostas'], queryFn: listarRespostas })
+  const { data: respostas = [] } = useQuery({ queryKey: ['respostas'], queryFn: () => listarRespostas() })
   const { data: destaques = [] } = useQuery({ queryKey: ['destaques-ativos'], queryFn: listarDestaquesAtivos })
   const { data: revisoesHoje = 0 } = useQuery({ queryKey: ['revisoes-hoje'], queryFn: contarRevisoesHoje })
 

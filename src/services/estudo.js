@@ -129,7 +129,9 @@ export async function montarMetaDoDia(cfg = {}) {
 
 // Todas as respostas, com a classificação da questão (para estatísticas).
 // usuarioId opcional: o professor (admin) passa o id do aluno para acompanhá-lo.
+// (aceita apenas string: se vier o contexto do React Query — queryFn: listarRespostas —, ignora)
 export async function listarRespostas(usuarioId = null) {
+  if (typeof usuarioId !== 'string') usuarioId = null
   let q = supabase
     .from('respostas')
     .select(`
