@@ -26,7 +26,40 @@ export async function listarReports({ apenasAbertos = false } = {}) {
     const porId = new Map((perfis ?? []).map(p => [p.id, p]))
     for (const r of reports) r.autor = porId.get(r.usuario_id) ?? null
   }
+
+  // Status do e-mail de aviso na fila (enviado pelo Google Apps Script)
+  const repIds = reports.map(r => r.id)
+  if (repIds.length) {
+    const { data: fila } = await supabase
+      .from('emails_fila')
+      .select('report_id, status, enviado_em')
+      .in('report_id', repIds)
+    if (fila) {
+      const porReport = new Map(fila.map(f => [f.report_id, f]))
+      for (const r of reports) r.email = porReport.get(r.id) ?? null
+    }
+  }
   return reports
+}
+
+// Coloca na fila o e-mail de "questão corrigida" para quem reportou.
+// O envio em si é feito pelo Google Apps Script (acionador de 10 em 10 min).
+export async function enfileirarEmailReport(report) {
+  const email = report.autor?.email
+  if (!email) throw new Error('Quem reportou não tem e-mail cadastrado')
+  const primeiroNome = report.autor?.nome ? ' ' + report.autor.nome.split(' ')[0] : ''
+  const corpo =
+    `Olá${primeiroNome}!\n\n` +
+    'A questão que você reportou foi verificada e corrigida. ' +
+    'Obrigado por avisar — isso ajuda todo mundo que estuda na plataforma.\n\n' +
+    'Bons estudos!\nProf. Matheus Próspero'
+  const { error } = await supabase.from('emails_fila').insert({
+    para: email,
+    assunto: 'Questão corrigida — obrigado pelo aviso!',
+    corpo,
+    report_id: report.id,
+  })
+  if (error) throw error
 }
 
 export async function resolverReport(id, resolvido) {

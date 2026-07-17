@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { listarReports, resolverReport } from '../../services/feedback'
+import { listarReports, resolverReport, enfileirarEmailReport } from '../../services/feedback'
 import { resumoEnunciado } from '../../services/questoes'
 import { Flag, Check, RotateCcw, Eye, AlertTriangle, User, Mail } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -33,6 +33,22 @@ export default function Reports() {
     },
     onError: (e) => toast.error('Erro: ' + e.message),
   })
+
+  // Coloca o aviso de "questão corrigida" na fila; o Google Apps Script
+  // envia pelo Gmail no próximo ciclo (a cada 10 min).
+  const enviarEmail = useMutation({
+    mutationFn: (report) => enfileirarEmailReport(report),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reports'] })
+      toast.success('E-mail na fila — será enviado em até 10 min.')
+    },
+    onError: (e) => toast.error('Erro ao enfileirar: ' + e.message),
+  })
+
+  function resolverEAvisar(r) {
+    resolver.mutate({ id: r.id, resolvido: true })
+    if (r.autor?.email && !r.email) enviarEmail.mutate(r)
+  }
 
   return (
     <div className={styles.page}>
@@ -90,19 +106,24 @@ export default function Reports() {
                     Corrigir
                   </button>
                 )}
-                {r.autor?.email && (
-                  <a className={styles.btnGhost}
-                    href={`mailto:${r.autor.email}?subject=${encodeURIComponent('Questão corrigida — obrigado pelo aviso!')}&body=${encodeURIComponent(`Olá${r.autor.nome ? ' ' + r.autor.nome.split(' ')[0] : ''}!\n\nA questão que você reportou (${TIPO[r.tipo] ?? r.tipo}) foi verificada e corrigida. Obrigado por avisar — isso ajuda todo mundo que estuda na plataforma.\n\nBons estudos!\nProf. Matheus Próspero`)}`}>
-                    <Mail size={14} /> Enviar e-mail
-                  </a>
+                {r.email ? (
+                  <span className={r.email.status === 'enviado' ? styles.emailOk : r.email.status === 'erro' ? styles.emailErro : styles.emailFila}>
+                    <Mail size={13} />
+                    {r.email.status === 'enviado' ? 'E-mail enviado' : r.email.status === 'erro' ? 'Erro no envio' : 'E-mail na fila'}
+                  </span>
+                ) : r.autor?.email && (
+                  <button className={styles.btnGhost} onClick={() => enviarEmail.mutate(r)} disabled={enviarEmail.isPending}>
+                    <Mail size={14} /> Avisar por e-mail
+                  </button>
                 )}
                 {r.resolvido ? (
                   <button className={styles.btnGhost} onClick={() => resolver.mutate({ id: r.id, resolvido: false })}>
                     <RotateCcw size={14} /> Reabrir
                   </button>
                 ) : (
-                  <button className={styles.btnResolver} onClick={() => resolver.mutate({ id: r.id, resolvido: true })}>
-                    <Check size={14} /> Marcar resolvido
+                  <button className={styles.btnResolver} onClick={() => resolverEAvisar(r)}
+                    title={r.autor?.email ? 'Marca como resolvido e coloca o aviso por e-mail na fila' : 'Marca como resolvido'}>
+                    <Check size={14} /> Resolver{r.autor?.email ? ' + avisar' : ''}
                   </button>
                 )}
               </div>
