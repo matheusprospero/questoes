@@ -1,6 +1,14 @@
 /**
  * Envia os e-mails da fila (tabela emails_fila do Supabase) pelo Gmail.
  *
+ * ONDE ESTÁ INSTALADO (produção):
+ * Script vinculado à planilha Google do professor — abrir a planilha e ir em
+ * Extensões → Apps Script:
+ * https://docs.google.com/spreadsheets/d/1QJ40pa27u93z3DTsixztXwafxbK3X3-_ggiBqezTo_4/edit
+ * Acionador: enviarEmailsPendentes, baseado em tempo, a cada 10 minutos.
+ * (Este arquivo no repositório é a cópia de referência — se editar aqui,
+ * cole a atualização lá também.)
+ *
  * COMO INSTALAR (uma vez):
  * 1. Acesse https://script.google.com → Novo projeto (logado na conta Gmail do professor).
  * 2. Cole este arquivo inteiro no editor (substituindo o conteúdo).
