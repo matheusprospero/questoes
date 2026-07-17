@@ -24,6 +24,8 @@ export default function SimuladoForm() {
     tamanhoFonte: 11,
     separadorQuestoes: true,
     quebrarPagina: false,
+    questoesPorFolha: 0,      // 0 = todas (padrão); 1, 2 ou 3 = por folha
+    espacoResolucao: false,   // reserva espaço em branco para resolver
     rodapeEsquerda: 'Total: {total} questões',
     rodapeDireita: 'Boa prova!',
   })
@@ -225,7 +227,26 @@ export default function SimuladoForm() {
                 </div>
               </div>
 
+              <div className={styles.field}>
+                <label className={styles.label}>Questões por folha (PDF)</label>
+                <div className={styles.cfgFonteRow}>
+                  {[{v:0,l:'Todas'},{v:1,l:'1'},{v:2,l:'2'},{v:3,l:'3'}].map(o => (
+                    <button key={o.v} type="button"
+                      className={`${styles.cfgFonteBtn} ${(cfgImpressao.questoesPorFolha ?? 0) === o.v ? styles.cfgFonteBtnOn : ''}`}
+                      onClick={() => setCfgImpressao(c => ({...c, questoesPorFolha: o.v}))}>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+                <span className={styles.cfgHint}>Para aulas/gravação: 1 ou 2 questões por folha.</span>
+              </div>
+
               <div className={styles.cfgOpcoes}>
+                <label className={styles.cfgCheck}>
+                  <input type="checkbox" checked={cfgImpressao.espacoResolucao}
+                    onChange={e => setCfgImpressao(c => ({...c, espacoResolucao: e.target.checked}))} />
+                  Reservar espaço para resolução (aulas/gravação)
+                </label>
                 <label className={styles.cfgCheck}>
                   <input type="checkbox" checked={cfgImpressao.separadorQuestoes}
                     onChange={e => setCfgImpressao(c => ({...c, separadorQuestoes: e.target.checked}))} />

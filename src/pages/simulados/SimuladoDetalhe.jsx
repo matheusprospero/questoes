@@ -54,6 +54,12 @@ export default function SimuladoDetalhe() {
     const separador = cfg.separadorQuestoes !== false
     const semQuebra = cfg.quebrarPagina !== false
     const cabecalhoHtml = simulado.cabecalho || CABECALHO_PADRAO
+    // Questões por folha + espaço para resolução (aulas/gravação)
+    const porFolha = Number(cfg.questoesPorFolha) || 0            // 0 = todas
+    const evitaCorte = semQuebra || porFolha > 0                   // com N por folha, nunca corta a questão
+    const alturaResol = cfg.espacoResolucao && !soGabarito
+      ? (porFolha === 1 ? 150 : porFolha === 2 ? 72 : porFolha === 3 ? 46 : 60)
+      : 0
 
     // ── Gabarito resumido: "1 - A, 2 - Certo, ..." ───────────
     const linhasGab = (simulado.questoes || [])
@@ -95,17 +101,31 @@ export default function SimuladoDetalhe() {
       const origemHtml = origem
         ? `<span style="font-size:9pt;color:#666;margin-left:8px">(${origem})</span>`
         : ''
-      const sep = separador && idx > 0
-        ? `<hr style="border:none;border-top:1px solid #ddd;margin:14px 0"/>`
-        : idx > 0 ? '<div style="margin-top:16px"></div>' : ''
+      // Com N questões por folha, o separador vira quebra de página a cada N.
+      const primeiraDaPagina = porFolha > 0 && idx % porFolha === 0
+      const sep = idx === 0
+        ? ''
+        : porFolha > 0
+          ? (primeiraDaPagina ? '<div style="page-break-before:always"></div>' : '<div style="margin-top:16px"></div>')
+          : separador
+            ? `<hr style="border:none;border-top:1px solid #ddd;margin:14px 0"/>`
+            : '<div style="margin-top:16px"></div>'
+
+      // Espaço em branco para resolução (opcional)
+      const espacoHtml = alturaResol > 0
+        ? `<div style="height:${alturaResol}mm;margin-top:8px;border:1px dashed #bbb;border-radius:4px;position:relative">
+            <span style="position:absolute;top:4px;left:6px;font-size:8pt;color:#999">Resolução</span>
+          </div>`
+        : ''
 
       return `${sep}
-        <div style="page-break-inside:${semQuebra ? 'avoid' : 'auto'}">
+        <div style="page-break-inside:${evitaCorte ? 'avoid' : 'auto'}">
           <p style="font-weight:700;font-size:${fontSize};margin:0 0 6px">
             Questão ${idx + 1}${origemHtml}
           </p>
           <div style="font-size:${fontSize};margin-bottom:8px;text-align:justify">${q.enunciado}</div>
           ${alts}
+          ${espacoHtml}
         </div>`
     }).join('')
 
