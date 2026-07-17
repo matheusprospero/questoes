@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { listarReports, resolverReport } from '../../services/feedback'
 import { resumoEnunciado } from '../../services/questoes'
-import { Flag, Check, RotateCcw, Eye, AlertTriangle } from 'lucide-react'
+import { Flag, Check, RotateCcw, Eye, AlertTriangle, User, Mail } from 'lucide-react'
 import toast from 'react-hot-toast'
 import styles from './Reports.module.css'
 
@@ -69,6 +69,12 @@ export default function Reports() {
                 {r.questoes ? resumoEnunciado(r.questoes.enunciado, 160) : '(questão removida)'}
               </p>
               {r.descricao && <p className={styles.descricao}>“{r.descricao}”</p>}
+              {r.autor && (
+                <p className={styles.autor}>
+                  <User size={13} /> Reportado por <strong>{r.autor.nome || r.autor.email}</strong>
+                  {r.autor.nome && r.autor.email ? ` (${r.autor.email})` : ''}
+                </p>
+              )}
               <div className={styles.origem}>
                 {[r.questoes?.bancas?.nome, r.questoes?.orgaos?.nome, r.questoes?.cargo, r.questoes?.ano]
                   .filter(Boolean).join(' · ')}
@@ -83,6 +89,12 @@ export default function Reports() {
                   <button className={styles.btnGhost} onClick={() => navigate(`/questoes/${r.questoes.id}/editar`)}>
                     Corrigir
                   </button>
+                )}
+                {r.autor?.email && (
+                  <a className={styles.btnGhost}
+                    href={`mailto:${r.autor.email}?subject=${encodeURIComponent('Questão corrigida — obrigado pelo aviso!')}&body=${encodeURIComponent(`Olá${r.autor.nome ? ' ' + r.autor.nome.split(' ')[0] : ''}!\n\nA questão que você reportou (${TIPO[r.tipo] ?? r.tipo}) foi verificada e corrigida. Obrigado por avisar — isso ajuda todo mundo que estuda na plataforma.\n\nBons estudos!\nProf. Matheus Próspero`)}`}>
+                    <Mail size={14} /> Enviar e-mail
+                  </a>
                 )}
                 {r.resolvido ? (
                   <button className={styles.btnGhost} onClick={() => resolver.mutate({ id: r.id, resolvido: false })}>

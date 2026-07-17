@@ -14,7 +14,19 @@ export async function listarReports({ apenasAbertos = false } = {}) {
   if (apenasAbertos) q = q.eq('resolvido', false)
   const { data, error } = await q
   if (error) throw error
-  return data ?? []
+  const reports = data ?? []
+
+  // Junta nome/e-mail de quem reportou (admin lê perfis; aluno vê só o próprio)
+  const ids = [...new Set(reports.map(r => r.usuario_id).filter(Boolean))]
+  if (ids.length) {
+    const { data: perfis } = await supabase
+      .from('perfis')
+      .select('id, nome, email')
+      .in('id', ids)
+    const porId = new Map((perfis ?? []).map(p => [p.id, p]))
+    for (const r of reports) r.autor = porId.get(r.usuario_id) ?? null
+  }
+  return reports
 }
 
 export async function resolverReport(id, resolvido) {
