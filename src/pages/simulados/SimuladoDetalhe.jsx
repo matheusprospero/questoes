@@ -57,9 +57,8 @@ export default function SimuladoDetalhe() {
     // Questões por folha + espaço para resolução (aulas/gravação)
     const porFolha = Number(cfg.questoesPorFolha) || 0            // 0 = todas
     const evitaCorte = semQuebra || porFolha > 0                   // com N por folha, nunca corta a questão
-    const alturaResol = cfg.espacoResolucao && !soGabarito
-      ? (porFolha === 1 ? 150 : porFolha === 2 ? 72 : porFolha === 3 ? 46 : 60)
-      : 0
+    const comResolucao = cfg.espacoResolucao && !soGabarito       // reserva espaço para resolver
+    const alturaFixaResol = 60                                    // mm, usado só no modo "Todas" (fluxo contínuo)
 
     // ── Gabarito resumido: "1 - A, 2 - Certo, ..." ───────────
     const linhasGab = (simulado.questoes || [])
@@ -82,8 +81,15 @@ export default function SimuladoDetalhe() {
         <div style="height:32px"></div>`
       : ''
 
+    const instrHtml = simulado.instrucoes
+      ? `<div style="font-size:10pt;background:#f8f8f8;border-left:3px solid #999;padding:8px 12px;margin:10px 0">
+          <strong>Instruções:</strong> ${simulado.instrucoes}
+        </div>`
+      : ''
+
     // ── Questões ──────────────────────────────────────────────
-    const questoesHtml = (simulado.questoes || []).map((q, idx) => {
+    // Conteúdo (título + enunciado + alternativas) de cada questão, sem paginação.
+    const blocosInner = (simulado.questoes || []).map((q, idx) => {
       const alts = q.tipo === 'multipla_escolha' && q.alternativas?.length
         ? q.alternativas.map(a =>
             `<div style="display:flex;gap:8px;margin:3px 0;font-size:${fontSize}">
@@ -96,44 +102,42 @@ export default function SimuladoDetalhe() {
               (&nbsp;&nbsp;) Certo&nbsp;&nbsp;&nbsp;&nbsp;(&nbsp;&nbsp;) Errado
             </div>`
           : ''
-
       const origem = [q.bancas?.nome, q.orgaos?.nome, q.ano].filter(Boolean).join(' · ')
       const origemHtml = origem
         ? `<span style="font-size:9pt;color:#666;margin-left:8px">(${origem})</span>`
         : ''
-      // Com N questões por folha, o separador vira quebra de página a cada N.
-      const primeiraDaPagina = porFolha > 0 && idx % porFolha === 0
-      const sep = idx === 0
-        ? ''
-        : porFolha > 0
-          ? (primeiraDaPagina ? '<div style="page-break-before:always"></div>' : '<div style="margin-top:16px"></div>')
-          : separador
-            ? `<hr style="border:none;border-top:1px solid #ddd;margin:14px 0"/>`
-            : '<div style="margin-top:16px"></div>'
+      return `<p style="font-weight:700;font-size:${fontSize};margin:0 0 6px">Questão ${idx + 1}${origemHtml}</p>
+        <div style="font-size:${fontSize};margin-bottom:8px;text-align:justify">${q.enunciado}</div>
+        ${alts}`
+    })
 
-      // Espaço em branco para resolução (opcional)
-      const espacoHtml = alturaResol > 0
-        ? `<div style="height:${alturaResol}mm;margin-top:8px;border:1px dashed #bbb;border-radius:4px;position:relative">
-            <span style="position:absolute;top:4px;left:6px;font-size:8pt;color:#999">Resolução</span>
-          </div>`
-        : ''
+    const boxResol = '<div class="resol"><span class="resollb">Resolução</span></div>'
 
-      return `${sep}
-        <div style="page-break-inside:${evitaCorte ? 'avoid' : 'auto'}">
-          <p style="font-weight:700;font-size:${fontSize};margin:0 0 6px">
-            Questão ${idx + 1}${origemHtml}
-          </p>
-          <div style="font-size:${fontSize};margin-bottom:8px;text-align:justify">${q.enunciado}</div>
-          ${alts}
-          ${espacoHtml}
-        </div>`
-    }).join('')
-
-    const instrHtml = simulado.instrucoes
-      ? `<div style="font-size:10pt;background:#f8f8f8;border-left:3px solid #999;padding:8px 12px;margin:10px 0">
-          <strong>Instruções:</strong> ${simulado.instrucoes}
-        </div>`
-      : ''
+    let questoesHtml
+    if (porFolha > 0) {
+      // N questões por folha: cada folha ocupa a página; com espaço de resolução,
+      // a área em branco cresce e é dividida igualmente entre as questões da folha.
+      const paginas = []
+      for (let i = 0; i < blocosInner.length; i += porFolha) paginas.push(blocosInner.slice(i, i + porFolha))
+      const tituloTopo = `<h2 style="text-align:center;font-size:14pt;font-weight:700;margin:0 0 6px">${simulado.titulo}</h2>`
+      const topoHtml = `${cabecalhoHtml}${tituloTopo}${instrHtml}`
+      questoesHtml = paginas.map((pag, p) => {
+        const qs = pag.map(inner =>
+          `<div class="q">${inner}${comResolucao ? boxResol : ''}</div>`).join('')
+        const topo = p === 0 ? `<div class="folhaTopo">${topoHtml}</div>` : ''
+        return `<div class="folha${comResolucao ? ' resolOn' : ''}">${topo}${qs}</div>`
+      }).join('')
+    } else {
+      questoesHtml = blocosInner.map((inner, idx) => {
+        const sep = idx === 0 ? ''
+          : separador ? `<hr style="border:none;border-top:1px solid #ddd;margin:14px 0"/>`
+          : '<div style="margin-top:16px"></div>'
+        const resol = comResolucao
+          ? `<div style="height:${alturaFixaResol}mm;margin-top:8px;border:1px dashed #bbb;border-radius:4px;position:relative"><span style="position:absolute;top:4px;left:6px;font-size:8pt;color:#999">Resolução</span></div>`
+          : ''
+        return `${sep}<div style="page-break-inside:${evitaCorte ? 'avoid' : 'auto'}">${inner}${resol}</div>`
+      }).join('')
+    }
 
     // ── Modo: só gabarito ─────────────────────────────────────
     if (soGabarito) {
@@ -159,6 +163,17 @@ export default function SimuladoDetalhe() {
     }
 
     // ── Modo: simulado normal ou com gabarito no rodapé ───────
+    // Com N por folha, cada folha ocupa a página e o corpo é só as folhas
+    // (o topo já vai dentro da primeira folha; sem rodapé para não gerar página extra).
+    const corpo = porFolha > 0
+      ? questoesHtml
+      : `${cabecalhoHtml}
+  <h2 style="text-align:center;font-size:14pt;font-weight:700;margin:12px 0 6px">${simulado.titulo}</h2>
+  ${instrHtml}
+  <div>${questoesHtml}</div>
+  ${rodapeHtml}
+  ${comGabarito ? gabRodapeHtml : ''}`
+
     return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -170,15 +185,18 @@ export default function SimuladoDetalhe() {
     body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; color: #000; }
     img { max-width: 100%; height: auto; }
     @media print { body { margin: 0; } }
+    /* Folhas com N questões: cada uma ocupa a página e divide o espaço de resolução */
+    .folha { height: 276mm; display: flex; flex-direction: column; box-sizing: border-box; }
+    .folha:not(:last-child) { page-break-after: always; }
+    .folhaTopo { flex: 0 0 auto; }
+    .q { flex: 0 0 auto; margin-bottom: 6mm; }
+    .resolOn .q { flex: 1 1 0; display: flex; flex-direction: column; min-height: 0; margin-bottom: 6mm; }
+    .resol { flex: 1 1 auto; border: 1px dashed #bbb; border-radius: 4px; margin-top: 6px; min-height: 16mm; position: relative; }
+    .resollb { position: absolute; top: 3px; left: 6px; font-size: 8pt; color: #999; }
   </style>
 </head>
 <body>
-  ${cabecalhoHtml}
-  <h2 style="text-align:center;font-size:14pt;font-weight:700;margin:12px 0 6px">${simulado.titulo}</h2>
-  ${instrHtml}
-  <div>${questoesHtml}</div>
-  ${rodapeHtml}
-  ${comGabarito ? gabRodapeHtml : ''}
+  ${corpo}
 </body>
 </html>`
   }
