@@ -145,7 +145,7 @@ export default function DestaqueForm() {
   return (
     <div className={styles.page}>
       <div className={styles.topbar}>
-        <button className={styles.btnBack} onClick={() => navigate('/destaques')}>
+        <button className={styles.btnBack} onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/destaques'))}>
           <ChevronLeft size={16} /> Voltar
         </button>
         <h1 className={styles.titulo}>{isEdicao ? 'Editar destaque' : 'Novo destaque'}</h1>

@@ -232,7 +232,7 @@ export default function SimuladoDetalhe() {
     <div className={styles.page}>
       {/* Topbar — não aparece na impressão */}
       <div className={styles.topbar}>
-        <button className={styles.btnBack} onClick={() => navigate('/simulados')}>
+        <button className={styles.btnBack} onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/simulados'))}>
           <ChevronLeft size={16} /> Voltar
         </button>
         <div className={styles.topbarInfo}>

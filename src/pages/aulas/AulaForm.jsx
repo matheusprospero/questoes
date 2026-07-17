@@ -118,7 +118,7 @@ export default function AulaForm() {
   return (
     <div className={styles.page}>
       <div className={styles.topbar}>
-        <button className={styles.btnBack} onClick={() => navigate('/aulas')}>
+        <button className={styles.btnBack} onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/aulas'))}>
           <ChevronLeft size={16} /> Voltar
         </button>
         <h1 className={styles.titulo}>{isEdicao ? 'Editar aula' : 'Nova aula'}</h1>

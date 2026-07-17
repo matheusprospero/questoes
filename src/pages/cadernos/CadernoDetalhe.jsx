@@ -81,7 +81,7 @@ export default function CadernoDetalhe() {
     <div className={styles.page}>
       {/* Topbar */}
       <div className={styles.topbar}>
-        <button className={styles.btnBack} onClick={() => navigate('/cadernos')}>
+        <button className={styles.btnBack} onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/cadernos'))}>
           <ChevronLeft size={16} /> Voltar
         </button>
         <div className={styles.topbarInfo}>

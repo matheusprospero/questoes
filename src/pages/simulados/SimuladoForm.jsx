@@ -163,7 +163,7 @@ export default function SimuladoForm() {
   return (
     <div className={styles.page}>
       <div className={styles.topbar}>
-        <button className={styles.btnBack} onClick={() => navigate('/simulados')}>
+        <button className={styles.btnBack} onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/simulados'))}>
           <ChevronLeft size={16} /> Voltar
         </button>
         <h1 className={styles.titulo}>{isEdicao ? 'Editar simulado' : 'Novo simulado'}</h1>

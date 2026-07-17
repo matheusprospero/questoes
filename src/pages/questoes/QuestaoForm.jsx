@@ -197,7 +197,7 @@ export default function QuestaoForm() {
   return (
     <div className={styles.page}>
       <div className={styles.topbar}>
-        <button className={styles.btnBack} onClick={() => navigate('/questoes')}>
+        <button className={styles.btnBack} onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/questoes'))}>
           <ChevronLeft size={16} /> Voltar
         </button>
         <h1 className={styles.titulo}>{isEdicao ? 'Editar questão' : 'Nova questão'}</h1>

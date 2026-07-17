@@ -32,7 +32,7 @@ export default function AulaDetalhe() {
     return (
       <div className={styles.page}>
         <div className={styles.topbar}>
-          <button className={styles.btnBack} onClick={() => navigate('/aulas')}>
+          <button className={styles.btnBack} onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/aulas'))}>
             <ChevronLeft size={16} /> Voltar
           </button>
         </div>
@@ -48,7 +48,7 @@ export default function AulaDetalhe() {
   return (
     <div className={styles.page}>
       <div className={styles.topbar}>
-        <button className={styles.btnBack} onClick={() => navigate('/aulas')}>
+        <button className={styles.btnBack} onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/aulas'))}>
           <ChevronLeft size={16} /> Voltar
         </button>
         {isAdmin && (
