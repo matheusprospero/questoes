@@ -3,13 +3,21 @@ import { supabase } from './supabase'
 // Turmas + Central de Matrículas.
 // Matrícula = aluno × turma × disciplina, status: ativa | pendente | recusada.
 
-const SELECT_TURMA = '*, turma_disciplinas(disciplina_id, disciplinas(id, nome, cor))'
+const SELECT_TURMA = '*, turma_disciplinas(disciplina_id, preco_mensal, preco_vitalicio, disciplinas(id, nome, cor))'
 
 export function disciplinasDaTurma(turma) {
   return (turma?.turma_disciplinas || [])
     .map(td => td.disciplinas)
     .filter(Boolean)
     .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+}
+
+// disciplina_id -> { preco_mensal, preco_vitalicio } (preços da disciplina avulsa)
+export function precosDaTurma(turma) {
+  const m = new Map()
+  for (const td of turma?.turma_disciplinas || [])
+    m.set(td.disciplina_id, { preco_mensal: td.preco_mensal, preco_vitalicio: td.preco_vitalicio })
+  return m
 }
 
 // ── Turmas (admin gerencia; aluno lê as ativas) ───────────────
@@ -22,8 +30,8 @@ export async function listarTurmas() {
   return data ?? []
 }
 
-export async function criarTurma({ nome, descricao = null }) {
-  const { data, error } = await supabase.from('turmas').insert({ nome, descricao }).select().single()
+export async function criarTurma(dados) {
+  const { data, error } = await supabase.from('turmas').insert(dados).select().single()
   if (error) throw error
   return data
 }
@@ -38,14 +46,24 @@ export async function excluirTurma(id) {
   if (error) throw error
 }
 
-// Define o conjunto de disciplinas da turma (substitui o atual)
-export async function definirDisciplinas(turmaId, disciplinaIds) {
-  const { error: e1 } = await supabase.from('turma_disciplinas').delete().eq('turma_id', turmaId)
+// Define o conjunto de disciplinas da turma (substitui o atual), preservando/gravando
+// os preços de cada disciplina avulsa. `linhas`: [{ disciplina_id, preco_mensal, preco_vitalicio }]
+export async function definirDisciplinas(turmaId, linhas) {
+  const ids = linhas.map(l => l.disciplina_id)
+  // remove as que saíram da seleção
+  let del = supabase.from('turma_disciplinas').delete().eq('turma_id', turmaId)
+  if (ids.length) del = del.not('disciplina_id', 'in', `(${ids.join(',')})`)
+  const { error: e1 } = await del
   if (e1) throw e1
-  if (disciplinaIds.length) {
-    const { error: e2 } = await supabase
-      .from('turma_disciplinas')
-      .insert(disciplinaIds.map(d => ({ turma_id: turmaId, disciplina_id: d })))
+  if (linhas.length) {
+    const { error: e2 } = await supabase.from('turma_disciplinas').upsert(
+      linhas.map(l => ({
+        turma_id: turmaId,
+        disciplina_id: l.disciplina_id,
+        preco_mensal: l.preco_mensal ?? null,
+        preco_vitalicio: l.preco_vitalicio ?? null,
+      })),
+      { onConflict: 'turma_id,disciplina_id' })
     if (e2) throw e2
   }
 }

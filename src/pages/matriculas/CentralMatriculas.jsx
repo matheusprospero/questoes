@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
   listarTurmas, criarTurma, atualizarTurma, excluirTurma, definirDisciplinas,
-  listarMatriculas, matricular, decidirMatricula, removerMatricula, disciplinasDaTurma,
+  listarMatriculas, matricular, decidirMatricula, removerMatricula, disciplinasDaTurma, precosDaTurma,
 } from '../../services/turmas'
 import { listarDisciplinas } from '../../services/questoes'
 import { listarAlunosComEmail } from '../../services/comunicacao'
@@ -16,12 +16,46 @@ import styles from './CentralMatriculas.module.css'
 
 const fmt = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
 
+// número de um input de preço: '' → null, senão Number (aceita vírgula)
+const numOuNull = (v) => {
+  if (v == null || String(v).trim() === '') return null
+  const n = Number(String(v).replace(',', '.'))
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+const paraCampo = (v) => (v == null ? '' : String(v))
+
 // ── Modal criar/editar turma ──────────────────────────────────
 function ModalTurma({ turma, disciplinas, onFechar, onSalvar, salvando }) {
   const [nome, setNome] = useState(turma?.nome || '')
   const [descricao, setDescricao] = useState(turma?.descricao || '')
   const [sel, setSel] = useState(() => new Set(disciplinasDaTurma(turma).map(d => d.id)))
+  // preços do "conteúdo completo" (turma inteira)
+  const [compMensal, setCompMensal] = useState(paraCampo(turma?.preco_mensal))
+  const [compVital, setCompVital] = useState(paraCampo(turma?.preco_vitalicio))
+  // preços por disciplina avulsa: { [id]: { mensal, vitalicio } }
+  const [precos, setPrecos] = useState(() => {
+    const base = {}
+    const mapa = precosDaTurma(turma)
+    for (const [id, p] of mapa) base[id] = { mensal: paraCampo(p.preco_mensal), vitalicio: paraCampo(p.preco_vitalicio) }
+    return base
+  })
   const toggle = (id) => setSel(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const setPreco = (id, campo, v) => setPrecos(p => ({ ...p, [id]: { ...p[id], [campo]: v } }))
+
+  const salvar = () => {
+    const dados = {
+      nome: nome.trim(),
+      descricao: descricao.trim() || null,
+      preco_mensal: numOuNull(compMensal),
+      preco_vitalicio: numOuNull(compVital),
+    }
+    const linhas = [...sel].map(id => ({
+      disciplina_id: id,
+      preco_mensal: numOuNull(precos[id]?.mensal),
+      preco_vitalicio: numOuNull(precos[id]?.vitalicio),
+    }))
+    onSalvar(dados, linhas)
+  }
 
   return (
     <div className={styles.overlay} onClick={onFechar}>
@@ -39,28 +73,61 @@ function ModalTurma({ turma, disciplinas, onFechar, onSalvar, salvando }) {
             <span className={styles.campoLabel}>Descrição (opcional)</span>
             <input className={styles.input} value={descricao} onChange={e => setDescricao(e.target.value)} />
           </label>
+
           <div className={styles.campo}>
-            <span className={styles.campoLabel}>Disciplinas da turma</span>
+            <span className={styles.campoLabel}>Preço do conteúdo completo (todas as disciplinas)</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <PrecoInput label="Mensal" value={compMensal} onChange={setCompMensal} />
+              <PrecoInput label="Vitalício" value={compVital} onChange={setCompVital} />
+            </div>
+            <span className={styles.dica} style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+              Deixe em branco o plano que você não quiser vender.
+            </span>
+          </div>
+
+          <div className={styles.campo}>
+            <span className={styles.campoLabel}>Disciplinas da turma e preço avulso</span>
             <div className={styles.checkGrid}>
               {disciplinas.map(d => (
-                <label key={d.id} className={styles.checkItem}>
-                  <input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} />
-                  <span className={styles.dot} style={{ background: d.cor || 'var(--color-primary)' }} />
-                  {d.nome}
-                </label>
+                <div key={d.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label className={styles.checkItem}>
+                    <input type="checkbox" checked={sel.has(d.id)} onChange={() => toggle(d.id)} />
+                    <span className={styles.dot} style={{ background: d.cor || 'var(--color-primary)' }} />
+                    {d.nome}
+                  </label>
+                  {sel.has(d.id) && (
+                    <div style={{ display: 'flex', gap: 8, paddingLeft: 24 }}>
+                      <PrecoInput label="Mensal" value={precos[d.id]?.mensal || ''} onChange={v => setPreco(d.id, 'mensal', v)} />
+                      <PrecoInput label="Vitalício" value={precos[d.id]?.vitalicio || ''} onChange={v => setPreco(d.id, 'vitalicio', v)} />
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
         </div>
         <div className={styles.modalRodape}>
           <button className={styles.btnGhost} onClick={onFechar}>Cancelar</button>
-          <button className={styles.btnPrimary} disabled={salvando || !nome.trim()}
-            onClick={() => onSalvar({ nome: nome.trim(), descricao: descricao.trim() || null }, [...sel])}>
+          <button className={styles.btnPrimary} disabled={salvando || !nome.trim()} onClick={salvar}>
             <Check size={14} /> {salvando ? 'Salvando…' : 'Salvar turma'}
           </button>
         </div>
       </div>
     </div>
+  )
+}
+
+// input de preço compacto (R$)
+function PrecoInput({ label, value, onChange }) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+      <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>R$</span>
+        <input className={styles.input} inputMode="decimal" placeholder="—"
+          value={value} onChange={e => onChange(e.target.value)} style={{ padding: '6px 8px' }} />
+      </div>
+    </label>
   )
 }
 
@@ -165,17 +232,17 @@ export default function CentralMatriculas() {
   }
 
   const mCriarTurma = useMutation({
-    mutationFn: async ({ dados, discIds }) => {
+    mutationFn: async ({ dados, linhas }) => {
       const t = await criarTurma(dados)
-      await definirDisciplinas(t.id, discIds)
+      await definirDisciplinas(t.id, linhas)
     },
     onSuccess: () => { invalidar(); setModalTurma(null); toast.success('Turma criada!') },
     onError: (e) => toast.error('Erro: ' + e.message),
   })
   const mEditarTurma = useMutation({
-    mutationFn: async ({ id, dados, discIds }) => {
+    mutationFn: async ({ id, dados, linhas }) => {
       await atualizarTurma(id, dados)
-      await definirDisciplinas(id, discIds)
+      await definirDisciplinas(id, linhas)
     },
     onSuccess: () => { invalidar(); setModalTurma(null); toast.success('Turma atualizada!') },
     onError: (e) => toast.error('Erro: ' + e.message),
@@ -349,9 +416,9 @@ export default function CentralMatriculas() {
           disciplinas={disciplinas}
           salvando={mCriarTurma.isPending || mEditarTurma.isPending}
           onFechar={() => setModalTurma(null)}
-          onSalvar={(dados, discIds) => modalTurma.turma
-            ? mEditarTurma.mutate({ id: modalTurma.turma.id, dados, discIds })
-            : mCriarTurma.mutate({ dados, discIds })}
+          onSalvar={(dados, linhas) => modalTurma.turma
+            ? mEditarTurma.mutate({ id: modalTurma.turma.id, dados, linhas })
+            : mCriarTurma.mutate({ dados, linhas })}
         />
       )}
       {modalMatricular && (

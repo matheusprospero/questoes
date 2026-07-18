@@ -9,7 +9,7 @@ import { temaAtual, definirTema } from '../../theme'
 import {
   HelpCircle, ClipboardList, Layers, Heart, Home,
   LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles, Flag, Moon, Sun, BarChart3,
-  ClipboardCheck, CalendarDays, Route, FileText, LineChart, Mail, GraduationCap as GradCap
+  ClipboardCheck, CalendarDays, Route, FileText, LineChart, Mail, CreditCard, GraduationCap as GradCap
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
 
@@ -124,6 +124,7 @@ export default function AppLayout() {
             <div className={styles.navSection}>Gestão</div>
             <NavItem to="/acompanhamento" label="Acompanhamento" Icon={LineChart} />
             <NavItem to="/matriculas" label="Matrículas" Icon={GradCap} badge={matriculasPendentes} />
+            <NavItem to="/pagamentos" label="Pagamentos" Icon={CreditCard} />
             <NavItem to="/comunicacao" label="Comunicação" Icon={Mail} />
             <NavItem to="/destaques" label="Destaques" Icon={Sparkles} />
             <NavItem to="/engajamento" label="Engajamento" Icon={BarChart3} />
