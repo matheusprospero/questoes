@@ -19,6 +19,7 @@
 // ============================================================================
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+import { getMpConfig } from '../_shared/config.ts'
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -34,8 +35,6 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
     const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
-    const MP_TOKEN = Deno.env.get('MP_ACCESS_TOKEN')!
-    const SITE_URL = (Deno.env.get('SITE_URL') || '').replace(/\/$/, '')
 
     // Identifica o aluno pelo JWT que veio no header.
     const authHeader = req.headers.get('Authorization') || ''
@@ -52,6 +51,9 @@ Deno.serve(async (req) => {
 
     const precoCol = plano === 'mensal' ? 'preco_mensal' : 'preco_vitalicio'
     const admin = createClient(SUPABASE_URL, SERVICE_KEY)
+
+    const { token: MP_TOKEN, siteUrl: SITE_URL } = await getMpConfig(admin)
+    if (!MP_TOKEN) return json({ error: 'pagamento não configurado (falta o token do Mercado Pago)' }, 503)
 
     // ── Calcula preço e descrição no servidor ──────────────────────────────
     const { data: turma } = await admin.from('turmas')

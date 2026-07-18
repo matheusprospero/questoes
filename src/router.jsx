@@ -34,6 +34,7 @@ import Reports from './pages/reports/Reports'
 import Engajamento from './pages/reports/Engajamento'
 import Perfil from './pages/perfil/Perfil'
 import PagamentoRetorno from './pages/pagamento/PagamentoRetorno'
+import PagamentosConfig from './pages/pagamentos/PagamentosConfig'
 
 const base = import.meta.env.BASE_URL
 
@@ -69,6 +70,7 @@ const router = createBrowserRouter([
       { path: 'acompanhamento',      element: <RotaProtegida somenteAdmin><Acompanhamento /></RotaProtegida> },
       { path: 'comunicacao',         element: <RotaProtegida somenteAdmin><Comunicacao /></RotaProtegida> },
       { path: 'matriculas',          element: <RotaProtegida somenteAdmin><CentralMatriculas /></RotaProtegida> },
+      { path: 'pagamentos',          element: <RotaProtegida somenteAdmin><PagamentosConfig /></RotaProtegida> },
       { path: 'turmas',              element: <MinhasTurmas /> },
       { path: 'turmas/:id',          element: <TurmaDetalhe /> },
       { path: 'alunos',              element: <RotaProtegida somenteAdmin><Alunos /></RotaProtegida> },

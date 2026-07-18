@@ -18,13 +18,23 @@ pagamento vive aqui, em Edge Functions do Supabase (Deno). Duas funções:
 ## Deploy
 
 ```bash
-# secrets (o SUPABASE_URL / SERVICE_ROLE / ANON já são injetados automaticamente)
-supabase secrets set MP_ACCESS_TOKEN="APP_USR-...seu-token-de-producao..."
-supabase secrets set SITE_URL="https://matheusprospero.com.br"
-
-# funções
+# funções (SUPABASE_URL / SERVICE_ROLE / ANON já são injetados automaticamente)
 supabase functions deploy mp-criar-preferencia
 supabase functions deploy mp-webhook --no-verify-jwt   # webhook é chamado pelo MP, sem JWT
+```
+
+### Credenciais do Mercado Pago
+
+O **Access Token** (e opcionalmente Public Key e URL do site) é configurado
+**pela própria interface**, em **Gestão → Pagamentos** (`/pagamentos`, admin).
+Ele é gravado com segurança em `pagamento_config` (RLS bloqueia leitura pelo
+cliente) e as funções o leem via service_role — rode antes a migration
+`pagamento_config.sql`. Não é preciso `supabase secrets set`.
+
+Se preferir usar variáveis de ambiente (fallback), ainda funciona:
+```bash
+supabase secrets set MP_ACCESS_TOKEN="APP_USR-..."
+supabase secrets set SITE_URL="https://matheusprospero.com.br"
 ```
 
 > `mp-criar-preferencia` **exige** JWT (o aluno logado) — não use `--no-verify-jwt` nela.

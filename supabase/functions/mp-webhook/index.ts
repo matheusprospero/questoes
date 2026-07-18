@@ -14,12 +14,15 @@
 // Secrets: MP_ACCESS_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 // ============================================================================
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getMpConfig } from '../_shared/config.ts'
 
 Deno.serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
     const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const MP_TOKEN = Deno.env.get('MP_ACCESS_TOKEN')!
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY)
+    const { token: MP_TOKEN } = await getMpConfig(admin)
+    if (!MP_TOKEN) { console.error('sem token do MP'); return new Response('ok', { status: 200 }) }
 
     // O MP manda o id do pagamento ora no corpo, ora na query string.
     const url = new URL(req.url)
@@ -54,8 +57,6 @@ Deno.serve(async (req) => {
     const tipo = md.tipo
     const plano = md.plano
     const discIds: string[] = (md.disciplina_ids || '').split(',').map((s: string) => s.trim()).filter(Boolean)
-
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY)
 
     // Atualiza (ou cria) o registro do pagamento — idempotente por mp_payment_id.
     const registro: Record<string, unknown> = {

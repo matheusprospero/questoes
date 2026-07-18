@@ -37,3 +37,25 @@ export async function meusPagamentos() {
 
 export const precoFmt = (v) =>
   v == null ? null : Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+// ── Config do Mercado Pago (admin) ────────────────────────────
+// Status: token vem MASCARADO do banco (nunca o valor completo).
+export async function lerConfigPagamento() {
+  const { data, error } = await supabase.rpc('pagamento_config_status')
+  if (error) throw error
+  return data?.[0] ?? null // { configurado, token_final, mp_public_key, site_url, atualizado_em }
+}
+
+// Grava as credenciais. Campo em branco = mantém o valor atual no banco.
+export async function salvarConfigPagamento({ token = '', publicKey = '', siteUrl = '' }) {
+  const { error } = await supabase.rpc('salvar_pagamento_config', {
+    p_token: token, p_public_key: publicKey, p_site_url: siteUrl,
+  })
+  if (error) throw error
+}
+
+// URL do webhook para colar no painel do Mercado Pago.
+export function urlWebhook() {
+  const base = import.meta.env.VITE_SUPABASE_URL || ''
+  return base ? `${base.replace(/\/$/, '')}/functions/v1/mp-webhook` : ''
+}
