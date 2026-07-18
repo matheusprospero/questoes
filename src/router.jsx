@@ -33,6 +33,7 @@ import DestaqueForm from './pages/destaques/DestaqueForm'
 import Reports from './pages/reports/Reports'
 import Engajamento from './pages/reports/Engajamento'
 import Perfil from './pages/perfil/Perfil'
+import PagamentoRetorno from './pages/pagamento/PagamentoRetorno'
 
 const base = import.meta.env.BASE_URL
 
@@ -77,6 +78,7 @@ const router = createBrowserRouter([
       { path: 'reports',             element: <RotaProtegida somenteAdmin><Reports /></RotaProtegida> },
       { path: 'engajamento',         element: <RotaProtegida somenteAdmin><Engajamento /></RotaProtegida> },
       { path: 'perfil',              element: <Perfil /> },
+      { path: 'pagamento/retorno',   element: <PagamentoRetorno /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },
