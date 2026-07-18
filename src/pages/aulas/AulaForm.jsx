@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { criarAula, atualizarAula, buscarAula } from '../../services/aulas'
+import { listarTurmas } from '../../services/turmas'
 import {
   listarQuestoes, listarDisciplinas, listarAssuntos, resumoEnunciado, rotuloQuestao,
 } from '../../services/questoes'
@@ -20,7 +21,7 @@ export default function AulaForm() {
   const queryClient = useQueryClient()
   const isEdicao = !!id
 
-  const [form, setForm] = useState({ titulo: '', descricao: '', disciplina_id: '', assunto_id: '' })
+  const [form, setForm] = useState({ titulo: '', descricao: '', disciplina_id: '', assunto_id: '', turma_id: '' })
   const [blocos, setBlocos] = useState([])       // [{tipo:'texto',html} | {tipo:'video',url,titulo}]
   const [questaoIds, setQuestaoIds] = useState([]) // ordem preservada
   const [buscaQuestao, setBuscaQuestao] = useState('')
@@ -38,6 +39,7 @@ export default function AulaForm() {
         descricao: aulaExistente.descricao || '',
         disciplina_id: aulaExistente.disciplina_id || '',
         assunto_id: aulaExistente.assunto_id || '',
+        turma_id: aulaExistente.turma_id || '',
       })
       setBlocos(aulaExistente.conteudo || [])
       setQuestaoIds((aulaExistente.questoes || []).map(q => q.id))
@@ -45,6 +47,7 @@ export default function AulaForm() {
   }, [aulaExistente])
 
   const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
+  const { data: turmas = [] } = useQuery({ queryKey: ['turmas'], queryFn: listarTurmas })
   const { data: assuntos = [] } = useQuery({
     queryKey: ['assuntos', form.disciplina_id],
     queryFn: () => listarAssuntos(form.disciplina_id),
@@ -168,6 +171,15 @@ export default function AulaForm() {
               {assuntos.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
             </select>
           </div>
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label}>Turma (opcional — restringe aos matriculados)</label>
+          <select className={styles.input}
+            value={form.turma_id}
+            onChange={e => setForm(f => ({ ...f, turma_id: e.target.value }))}>
+            <option value="">Pública (todos os alunos)</option>
+            {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
+          </select>
         </div>
       </div>
 

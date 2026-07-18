@@ -66,6 +66,7 @@ function payloadAula(dados) {
     descricao: dados.descricao?.trim() || null,
     disciplina_id: dados.disciplina_id || null,
     assunto_id: dados.assunto_id || null,
+    turma_id: dados.turma_id || null,
     conteudo: dados.conteudo || [],
   }
 }

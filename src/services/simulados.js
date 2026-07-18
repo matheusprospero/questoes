@@ -62,6 +62,7 @@ export async function criarSimulado(dados, questaoIds) {
     instrucoes: dados.instrucoes || null,
     cabecalho: dados.cabecalho || '',
     cfg_impressao: dados.cfg_impressao || {},
+    turma_id: dados.turma_id || null,
   }
   const { data: simulado, error } = await supabase
     .from('simulados')
@@ -85,6 +86,7 @@ export async function atualizarSimulado(id, dados, questaoIds) {
     instrucoes: dados.instrucoes || null,
     cabecalho: dados.cabecalho || '',
     cfg_impressao: dados.cfg_impressao || {},
+    turma_id: dados.turma_id || null,
   }
   const { data: simulado, error } = await supabase
     .from('simulados')

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { criarSimulado, atualizarSimulado, buscarSimulado } from '../../services/simulados'
+import { listarTurmas } from '../../services/turmas'
 import {
   listarQuestoes, listarDisciplinas, resumoEnunciado, rotuloQuestao,
   listarFacetas, listarProvas, opcoesDisponiveis,
@@ -17,7 +18,7 @@ export default function SimuladoForm() {
   const queryClient = useQueryClient()
   const isEdicao = !!id
 
-  const [form, setForm] = useState({ titulo: '', descricao: '', instrucoes: '' })
+  const [form, setForm] = useState({ titulo: '', descricao: '', instrucoes: '', turma_id: '' })
   const [cabecalho, setCabecalho] = useState(CABECALHO_PADRAO)
   const [cabecalhoAberto, setCabecalhoAberto] = useState(false)
   const [cfgImpressao, setCfgImpressao] = useState({
@@ -46,6 +47,7 @@ export default function SimuladoForm() {
         titulo: simuladoExistente.titulo,
         descricao: simuladoExistente.descricao || '',
         instrucoes: simuladoExistente.instrucoes || '',
+        turma_id: simuladoExistente.turma_id || '',
       })
       setQuestoes(simuladoExistente.questoes?.map(q => q.id) || [])
       setCabecalho(simuladoExistente.cabecalho || CABECALHO_PADRAO)
@@ -61,6 +63,7 @@ export default function SimuladoForm() {
   }, [simuladoExistente])
 
   const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
+  const { data: turmas = [] } = useQuery({ queryKey: ['turmas'], queryFn: listarTurmas })
 
   // Provas (Órgão+Ano+Cargo) para adicionar em bloco
   const { data: facetas = [] } = useQuery({ queryKey: ['facetas'], queryFn: listarFacetas })
@@ -208,6 +211,13 @@ export default function SimuladoForm() {
               onChange={e => setForm(f => ({...f, instrucoes: e.target.value}))}
               rows={2}
             />
+            <label className={styles.label} style={{ marginTop: 12 }}>Turma (opcional — só matriculados veem este simulado proposto)</label>
+            <select className={styles.input}
+              value={form.turma_id}
+              onChange={e => setForm(f => ({ ...f, turma_id: e.target.value }))}>
+              <option value="">Pública (todos os alunos, se proposto)</option>
+              {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
+            </select>
           </div>
 
           <div className={styles.card}>

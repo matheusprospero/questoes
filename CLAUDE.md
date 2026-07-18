@@ -29,11 +29,12 @@ Conteúdo (admin escreve, todos leem): `disciplinas`, `assuntos`, `bancas`, `org
 Por usuário (isolado por RLS `usuario_id = auth.uid()`): `respostas` (append-only, `acertou`, `origem` estudo/simulado, `respondido_em`, `tempo_seg`), `revisoes` (SRS 1/3/7/15/30/60), `cadernos`/`caderno_questoes`, `simulados`/`simulado_questoes`, `favoritos`, `metas`, `planos_estudo`/`plano_itens`.
 - Professor (admin) LÊ respostas/metas/planos/revisoes dos alunos (policies `*_admin_le`) para o acompanhamento.
 - View `v_estudo_dia` (security_invoker): agregação por dia (heatmap, dia/semana/mês).
+- Turmas: `turmas`, `turma_disciplinas`, `matriculas` (ativa/pendente/recusada). `aulas.turma_id`/`simulados.turma_id` (null=público); RLS via `matriculado_em(turma, disc)` restringe aula/simulado com turma aos matriculados ativos. Rodar `turmas.sql`.
 Helpers RLS: `is_admin()`, `eh_assinante()`.
 
 ## Rotas / páginas (`src/router.jsx`, `src/pages/`)
-Aluno: `/` Início · `/plano` PlanoEstudos · `/aulas` · `/estudo` Estudo (resolver) · `/calendario` heatmap · `/estatisticas` · `/boletim` (PDF via print) · `/questoes` banco · `/favoritos` · `/cadernos` · `/simulados` · `/perfil`.
-Admin (`RotaProtegida somenteAdmin`): `/acompanhamento` (por aluno) · `/comunicacao` (histórico de e-mails + envio manual, service `comunicacao.js`) · `/questoes/nova|:id/editar` · `/revisao` · `/simulados/:id/relatorio` · `/aulas/nova|editar` · `/alunos` · `/destaques` · `/reports` · `/engajamento`.
+Aluno: `/` Início · `/plano` PlanoEstudos · `/turmas` MinhasTurmas (solicita matrícula) · `/aulas` · `/estudo` Estudo (resolver) · `/calendario` heatmap · `/estatisticas` · `/boletim` (PDF via print) · `/questoes` banco · `/favoritos` · `/cadernos` · `/simulados` · `/perfil`.
+Admin (`RotaProtegida somenteAdmin`): `/acompanhamento` (por aluno) · `/matriculas` CentralMatriculas (turmas + matrículas, service `turmas.js`) · `/comunicacao` (histórico de e-mails + envio manual, service `comunicacao.js`) · `/questoes/nova|:id/editar` · `/revisao` · `/simulados/:id/relatorio` · `/aulas/nova|editar` · `/alunos` · `/destaques` · `/reports` · `/engajamento`.
 Menu em `src/components/layout/AppLayout.jsx` (NAV_ITEMS + bloco admin "Gestão").
 
 ## Serviços (`src/services/`)
