@@ -4,11 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
 import { contarReportsAbertos } from '../../services/feedback'
 import { contarPendentesRevisao } from '../../services/questoes'
+import { contarSolicitacoesPendentes } from '../../services/turmas'
 import { temaAtual, definirTema } from '../../theme'
 import {
   HelpCircle, ClipboardList, Layers, Heart, Home,
   LogOut, Menu, X, BookOpen, BarChart2, Users, GraduationCap, Sparkles, Flag, Moon, Sun, BarChart3,
-  ClipboardCheck, CalendarDays, Route, FileText, LineChart, Mail
+  ClipboardCheck, CalendarDays, Route, FileText, LineChart, Mail, GraduationCap as GradCap
 } from 'lucide-react'
 import styles from './AppLayout.module.css'
 
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
       { to: '/',              label: 'Início',            icon: Home, end: true },
       { to: '/plano',         label: 'Plano de Estudos',  icon: Route },
       { to: '/aulas',         label: 'Aulas',             icon: GraduationCap },
+      { to: '/turmas',        label: 'Minhas Turmas',     icon: GradCap },
       { to: '/estudo',        label: 'Resolver Questões', icon: BookOpen  },
       { to: '/calendario',    label: 'Calendário',        icon: CalendarDays },
       { to: '/estatisticas',  label: 'Estatísticas',      icon: BarChart2 },
@@ -79,6 +81,12 @@ export default function AppLayout() {
     enabled: isAdmin,
   })
 
+  const { data: matriculasPendentes = 0 } = useQuery({
+    queryKey: ['matriculas-pendentes'],
+    queryFn: contarSolicitacoesPendentes,
+    enabled: isAdmin,
+  })
+
   const nome = perfil?.nome || usuario?.email
   const iniciais = nome
     ? nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
@@ -115,6 +123,7 @@ export default function AppLayout() {
           <div>
             <div className={styles.navSection}>Gestão</div>
             <NavItem to="/acompanhamento" label="Acompanhamento" Icon={LineChart} />
+            <NavItem to="/matriculas" label="Matrículas" Icon={GradCap} badge={matriculasPendentes} />
             <NavItem to="/comunicacao" label="Comunicação" Icon={Mail} />
             <NavItem to="/destaques" label="Destaques" Icon={Sparkles} />
             <NavItem to="/engajamento" label="Engajamento" Icon={BarChart3} />

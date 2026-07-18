@@ -24,6 +24,8 @@ import Calendario from './pages/estudo/Calendario'
 import PlanoEstudos from './pages/plano/PlanoEstudos'
 import Acompanhamento from './pages/acompanhamento/Acompanhamento'
 import Comunicacao from './pages/comunicacao/Comunicacao'
+import CentralMatriculas from './pages/matriculas/CentralMatriculas'
+import MinhasTurmas from './pages/turmas/MinhasTurmas'
 import Alunos from './pages/alunos/Alunos'
 import Destaques from './pages/destaques/Destaques'
 import DestaqueForm from './pages/destaques/DestaqueForm'
@@ -64,6 +66,8 @@ const router = createBrowserRouter([
       { path: 'plano',               element: <PlanoEstudos /> },
       { path: 'acompanhamento',      element: <RotaProtegida somenteAdmin><Acompanhamento /></RotaProtegida> },
       { path: 'comunicacao',         element: <RotaProtegida somenteAdmin><Comunicacao /></RotaProtegida> },
+      { path: 'matriculas',          element: <RotaProtegida somenteAdmin><CentralMatriculas /></RotaProtegida> },
+      { path: 'turmas',              element: <MinhasTurmas /> },
       { path: 'alunos',              element: <RotaProtegida somenteAdmin><Alunos /></RotaProtegida> },
       { path: 'destaques',           element: <RotaProtegida somenteAdmin><Destaques /></RotaProtegida> },
       { path: 'destaques/novo',      element: <RotaProtegida somenteAdmin><DestaqueForm /></RotaProtegida> },

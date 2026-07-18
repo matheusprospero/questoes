@@ -1,0 +1,41 @@
+.page { max-width: 760px; margin: 0 auto; }
+.header { margin-bottom: 16px; }
+.titulo { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 800; color: var(--text-primary); margin: 0; }
+.subtitulo { font-size: 13px; color: var(--text-secondary); margin: 6px 0 0; max-width: 560px; line-height: 1.5; }
+.loading { padding: 40px; text-align: center; color: var(--text-secondary); }
+
+.resumo { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
+.resumoItem { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+
+.turmas { display: flex; flex-direction: column; gap: 14px; }
+.turmaCard { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 16px; }
+.turmaTopo { display: flex; align-items: center; justify-content: space-between; }
+.turmaNome { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.turmaDesc { font-size: 13px; color: var(--text-secondary); margin: 4px 0 10px; }
+.discLista { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.semDisc { font-size: 13px; color: var(--text-tertiary); }
+.discLinha {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 9px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+.discNome { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: var(--text-primary); }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+.btnSolicitar {
+  font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: var(--radius-md);
+  border: none; background: var(--color-primary); color: #fff; cursor: pointer;
+}
+.btnSolicitar:disabled { opacity: 0.6; cursor: not-allowed; }
+.chipOk, .chipPend, .chipErr {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 700;
+  padding: 4px 10px; border-radius: var(--radius-full);
+}
+.chipOk { background: #dcfce7; color: #15803d; }
+.chipPend { background: #fef3c7; color: #b45309; }
+.chipErr { background: #fee2e2; color: #b91c1c; }
+.pendGrupo { display: inline-flex; align-items: center; gap: 8px; }
+.cancelar { display: inline-flex; align-items: center; gap: 3px; background: none; border: none; color: var(--text-tertiary); font-size: 12px; cursor: pointer; }
+.cancelar:hover { color: #b91c1c; }
+
+.vazio { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 56px 20px; color: var(--text-secondary); text-align: center; }
