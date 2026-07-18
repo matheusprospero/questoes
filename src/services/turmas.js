@@ -129,3 +129,78 @@ export async function cancelarSolicitacao(id) {
   const { error } = await supabase.from('matriculas').delete().eq('id', id)
   if (error) throw error
 }
+
+// ── Conteúdo da turma (N-N: aula/simulado pode estar em várias turmas) ──
+export async function turmasDaAula(aulaId) {
+  const { data, error } = await supabase.from('turma_aulas').select('turma_id').eq('aula_id', aulaId)
+  if (error) throw error
+  return (data ?? []).map(r => r.turma_id)
+}
+export async function turmasDoSimulado(simuladoId) {
+  const { data, error } = await supabase.from('turma_simulados').select('turma_id').eq('simulado_id', simuladoId)
+  if (error) throw error
+  return (data ?? []).map(r => r.turma_id)
+}
+// Substitui o conjunto de turmas de uma aula/simulado
+export async function setTurmasDaAula(aulaId, turmaIds) {
+  await supabase.from('turma_aulas').delete().eq('aula_id', aulaId)
+  if (turmaIds.length) {
+    const { error } = await supabase.from('turma_aulas').insert(turmaIds.map(t => ({ turma_id: t, aula_id: aulaId })))
+    if (error) throw error
+  }
+}
+export async function setTurmasDoSimulado(simuladoId, turmaIds) {
+  await supabase.from('turma_simulados').delete().eq('simulado_id', simuladoId)
+  if (turmaIds.length) {
+    const { error } = await supabase.from('turma_simulados').insert(turmaIds.map(t => ({ turma_id: t, simulado_id: simuladoId })))
+    if (error) throw error
+  }
+}
+
+// Uma turma + suas disciplinas, aulas e simulados (RLS já filtra o que o aluno vê)
+export async function buscarTurmaComConteudo(turmaId) {
+  const { data: turma, error } = await supabase.from('turmas').select(SELECT_TURMA).eq('id', turmaId).single()
+  if (error) throw error
+  const [{ data: ta }, { data: ts }] = await Promise.all([
+    supabase.from('turma_aulas').select('aulas(id, titulo, descricao, disciplina_id, publicada, aula_questoes(count))').eq('turma_id', turmaId),
+    supabase.from('turma_simulados').select('simulados(id, titulo, descricao, proposto, simulado_questoes(count))').eq('turma_id', turmaId),
+  ])
+  const aulas = (ta ?? []).map(r => r.aulas).filter(Boolean)
+  const simulados = (ts ?? []).map(r => r.simulados).filter(Boolean)
+  return { turma, aulas, simulados }
+}
+
+// Progresso do aluno no conteúdo da turma: questões distintas respondidas
+// (de aulas + simulados da turma) sobre o total, e % de acerto.
+export async function progressoTurma(turmaId) {
+  const [{ data: ta }, { data: ts }] = await Promise.all([
+    supabase.from('turma_aulas').select('aulas(aula_questoes(questao_id))').eq('turma_id', turmaId),
+    supabase.from('turma_simulados').select('simulados(simulado_questoes(questao_id))').eq('turma_id', turmaId),
+  ])
+  const ids = new Set()
+  for (const r of ta ?? []) for (const q of r.aulas?.aula_questoes ?? []) ids.add(q.questao_id)
+  for (const r of ts ?? []) for (const q of r.simulados?.simulado_questoes ?? []) ids.add(q.questao_id)
+  const total = ids.size
+  if (total === 0) return { total: 0, feitas: 0, acertos: 0, pct: 0, pctAcerto: 0 }
+
+  // Respostas do aluno nessas questões (última por questão define acerto)
+  const lista = [...ids]
+  const respostas = []
+  for (let i = 0; i < lista.length; i += 300) {
+    const chunk = lista.slice(i, i + 300)
+    const { data } = await supabase.from('respostas')
+      .select('questao_id, acertou, respondido_em')
+      .in('questao_id', chunk)
+      .order('respondido_em', { ascending: true })
+    if (data) respostas.push(...data)
+  }
+  const ultima = new Map()
+  for (const r of respostas) ultima.set(r.questao_id, r.acertou)
+  const feitas = ultima.size
+  const acertos = [...ultima.values()].filter(Boolean).length
+  return {
+    total, feitas, acertos,
+    pct: Math.round((feitas / total) * 100),
+    pctAcerto: feitas ? Math.round((acertos / feitas) * 100) : 0,
+  }
+}

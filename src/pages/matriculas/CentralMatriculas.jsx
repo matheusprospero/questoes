@@ -7,9 +7,10 @@ import {
 } from '../../services/turmas'
 import { listarDisciplinas } from '../../services/questoes'
 import { listarAlunosComEmail } from '../../services/comunicacao'
+import { useNavigate } from 'react-router-dom'
 import {
   GraduationCap, Plus, Pencil, Trash2, Check, X, Users, Search,
-  UserPlus, Power, Clock, Send,
+  UserPlus, Power, Clock, Eye,
 } from 'lucide-react'
 import styles from './CentralMatriculas.module.css'
 
@@ -145,6 +146,7 @@ function ModalMatricular({ turmas, turmaInicial, alunos, onFechar, onConfirmar, 
 // ── Página ────────────────────────────────────────────────────
 export default function CentralMatriculas() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const [modalTurma, setModalTurma] = useState(null)     // {turma}|{novo:true}
   const [modalMatricular, setModalMatricular] = useState(null) // turmaId|true
   const [fTurma, setFTurma] = useState('')
@@ -284,6 +286,7 @@ export default function CentralMatriculas() {
                 <div className={styles.turmaRodape}>
                   <span className={styles.turmaMat}><Users size={13} /> {ativasPorTurma.get(t.id) || 0} matriculados</span>
                   <div className={styles.turmaAcoes}>
+                    <button className={styles.iconBtn} title="Ver conteúdo da turma" onClick={() => navigate(`/turmas/${t.id}`)}><Eye size={15} /></button>
                     <button className={styles.iconBtn} title="Matricular alunos" onClick={() => setModalMatricular(t.id)}><UserPlus size={15} /></button>
                     <button className={styles.iconBtn} title="Editar" onClick={() => setModalTurma({ turma: t })}><Pencil size={15} /></button>
                     <button className={styles.iconBtn} title={t.ativa ? 'Desativar' : 'Ativar'} onClick={() => mAtiva.mutate({ id: t.id, ativa: !t.ativa })}><Power size={15} /></button>

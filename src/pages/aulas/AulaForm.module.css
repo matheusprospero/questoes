@@ -123,3 +123,14 @@
 @media (max-width: 560px) {
   .fieldRow { flex-direction: column; gap: 14px; }
 }
+
+/* Seleção de turmas (N-N) */
+.turmaChips { display: flex; flex-wrap: wrap; gap: 8px; }
+.turmaChip {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  font-size: 13px; padding: 6px 12px; border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-secondary);
+}
+.turmaChip input { margin: 0; }
+.turmaChipOn { border-color: var(--color-primary); color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+.turmaDica { font-size: 13px; color: var(--text-tertiary); margin: 0; }

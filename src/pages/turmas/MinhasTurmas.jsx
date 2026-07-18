@@ -1,14 +1,16 @@
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
   listarTurmas, minhasMatriculas, solicitarMatricula, cancelarSolicitacao, disciplinasDaTurma,
 } from '../../services/turmas'
-import { GraduationCap, Check, Clock, X, BookOpen } from 'lucide-react'
+import { GraduationCap, Check, Clock, X, BookOpen, ArrowRight } from 'lucide-react'
 import styles from './MinhasTurmas.module.css'
 
 export default function MinhasTurmas() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const { data: turmas = [], isLoading } = useQuery({ queryKey: ['turmas'], queryFn: listarTurmas })
   const { data: matriculas = [] } = useQuery({ queryKey: ['minhas-matriculas'], queryFn: minhasMatriculas })
 
@@ -66,6 +68,11 @@ export default function MinhasTurmas() {
               <div key={t.id} className={styles.turmaCard}>
                 <div className={styles.turmaTopo}>
                   <span className={styles.turmaNome}>{t.nome}</span>
+                  {matriculas.some(m => m.turma_id === t.id && m.status === 'ativa') && (
+                    <button className={styles.verConteudo} onClick={() => navigate(`/turmas/${t.id}`)}>
+                      Ver conteúdo <ArrowRight size={13} />
+                    </button>
+                  )}
                 </div>
                 {t.descricao && <p className={styles.turmaDesc}>{t.descricao}</p>}
                 <div className={styles.discLista}>

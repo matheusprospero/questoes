@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { criarAula, atualizarAula, buscarAula } from '../../services/aulas'
-import { listarTurmas } from '../../services/turmas'
+import { listarTurmas, turmasDaAula, setTurmasDaAula } from '../../services/turmas'
 import {
   listarQuestoes, listarDisciplinas, listarAssuntos, resumoEnunciado, rotuloQuestao,
 } from '../../services/questoes'
@@ -21,14 +21,21 @@ export default function AulaForm() {
   const queryClient = useQueryClient()
   const isEdicao = !!id
 
-  const [form, setForm] = useState({ titulo: '', descricao: '', disciplina_id: '', assunto_id: '', turma_id: '' })
+  const [form, setForm] = useState({ titulo: '', descricao: '', disciplina_id: '', assunto_id: '' })
+  const [turmaIds, setTurmaIds] = useState(new Set())  // turmas a que a aula pertence
   const [blocos, setBlocos] = useState([])       // [{tipo:'texto',html} | {tipo:'video',url,titulo}]
   const [questaoIds, setQuestaoIds] = useState([]) // ordem preservada
   const [buscaQuestao, setBuscaQuestao] = useState('')
+  const toggleTurma = (tid) => setTurmaIds(s => { const n = new Set(s); n.has(tid) ? n.delete(tid) : n.add(tid); return n })
 
   const { data: aulaExistente } = useQuery({
     queryKey: ['aula', id],
     queryFn: () => buscarAula(id),
+    enabled: isEdicao,
+  })
+  const { data: turmasDaAulaAtual } = useQuery({
+    queryKey: ['turmas-da-aula', id],
+    queryFn: () => turmasDaAula(id),
     enabled: isEdicao,
   })
 
@@ -39,12 +46,12 @@ export default function AulaForm() {
         descricao: aulaExistente.descricao || '',
         disciplina_id: aulaExistente.disciplina_id || '',
         assunto_id: aulaExistente.assunto_id || '',
-        turma_id: aulaExistente.turma_id || '',
       })
       setBlocos(aulaExistente.conteudo || [])
       setQuestaoIds((aulaExistente.questoes || []).map(q => q.id))
     }
   }, [aulaExistente])
+  useEffect(() => { if (turmasDaAulaAtual) setTurmaIds(new Set(turmasDaAulaAtual)) }, [turmasDaAulaAtual])
 
   const { data: disciplinas = [] } = useQuery({ queryKey: ['disciplinas'], queryFn: listarDisciplinas })
   const { data: turmas = [] } = useQuery({ queryKey: ['turmas'], queryFn: listarTurmas })
@@ -64,12 +71,14 @@ export default function AulaForm() {
           ? b.html?.replace(/<[^>]*>/g, '').trim()
           : extrairIdYouTube(b.url))
       const dados = { ...form, conteudo }
-      if (isEdicao) return atualizarAula(id, dados, questaoIds)
-      return criarAula(dados, questaoIds)
+      const aula = isEdicao ? await atualizarAula(id, dados, questaoIds) : await criarAula(dados, questaoIds)
+      await setTurmasDaAula(aula.id, [...turmaIds])
+      return aula
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['aulas'] })
       queryClient.invalidateQueries({ queryKey: ['aula', data.id] })
+      queryClient.invalidateQueries({ queryKey: ['turmas-da-aula', data.id] })
       toast.success(isEdicao ? 'Aula atualizada!' : 'Aula criada!')
       navigate(`/aulas/${data.id}`)
     },
@@ -173,13 +182,19 @@ export default function AulaForm() {
           </div>
         </div>
         <div className={styles.field}>
-          <label className={styles.label}>Turma (opcional — restringe aos matriculados)</label>
-          <select className={styles.input}
-            value={form.turma_id}
-            onChange={e => setForm(f => ({ ...f, turma_id: e.target.value }))}>
-            <option value="">Pública (todos os alunos)</option>
-            {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
-          </select>
+          <label className={styles.label}>Turmas (opcional — sem nenhuma marcada, a aula é pública)</label>
+          {turmas.length === 0 ? (
+            <p className={styles.turmaDica}>Nenhuma turma criada. A aula fica pública.</p>
+          ) : (
+            <div className={styles.turmaChips}>
+              {turmas.map(t => (
+                <label key={t.id} className={`${styles.turmaChip} ${turmaIds.has(t.id) ? styles.turmaChipOn : ''}`}>
+                  <input type="checkbox" checked={turmaIds.has(t.id)} onChange={() => toggleTurma(t.id)} />
+                  {t.nome}
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

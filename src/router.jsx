@@ -26,6 +26,7 @@ import Acompanhamento from './pages/acompanhamento/Acompanhamento'
 import Comunicacao from './pages/comunicacao/Comunicacao'
 import CentralMatriculas from './pages/matriculas/CentralMatriculas'
 import MinhasTurmas from './pages/turmas/MinhasTurmas'
+import TurmaDetalhe from './pages/turmas/TurmaDetalhe'
 import Alunos from './pages/alunos/Alunos'
 import Destaques from './pages/destaques/Destaques'
 import DestaqueForm from './pages/destaques/DestaqueForm'
@@ -68,6 +69,7 @@ const router = createBrowserRouter([
       { path: 'comunicacao',         element: <RotaProtegida somenteAdmin><Comunicacao /></RotaProtegida> },
       { path: 'matriculas',          element: <RotaProtegida somenteAdmin><CentralMatriculas /></RotaProtegida> },
       { path: 'turmas',              element: <MinhasTurmas /> },
+      { path: 'turmas/:id',          element: <TurmaDetalhe /> },
       { path: 'alunos',              element: <RotaProtegida somenteAdmin><Alunos /></RotaProtegida> },
       { path: 'destaques',           element: <RotaProtegida somenteAdmin><Destaques /></RotaProtegida> },
       { path: 'destaques/novo',      element: <RotaProtegida somenteAdmin><DestaqueForm /></RotaProtegida> },

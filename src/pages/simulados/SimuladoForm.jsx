@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { criarSimulado, atualizarSimulado, buscarSimulado } from '../../services/simulados'
-import { listarTurmas } from '../../services/turmas'
+import { listarTurmas, turmasDoSimulado, setTurmasDoSimulado } from '../../services/turmas'
 import {
   listarQuestoes, listarDisciplinas, resumoEnunciado, rotuloQuestao,
   listarFacetas, listarProvas, opcoesDisponiveis,
@@ -18,7 +18,9 @@ export default function SimuladoForm() {
   const queryClient = useQueryClient()
   const isEdicao = !!id
 
-  const [form, setForm] = useState({ titulo: '', descricao: '', instrucoes: '', turma_id: '' })
+  const [form, setForm] = useState({ titulo: '', descricao: '', instrucoes: '' })
+  const [turmaIds, setTurmaIds] = useState(new Set())
+  const toggleTurma = (tid) => setTurmaIds(s => { const n = new Set(s); n.has(tid) ? n.delete(tid) : n.add(tid); return n })
   const [cabecalho, setCabecalho] = useState(CABECALHO_PADRAO)
   const [cabecalhoAberto, setCabecalhoAberto] = useState(false)
   const [cfgImpressao, setCfgImpressao] = useState({
@@ -40,6 +42,12 @@ export default function SimuladoForm() {
     queryFn: () => buscarSimulado(id),
     enabled: isEdicao,
   })
+  const { data: turmasDoSimAtual } = useQuery({
+    queryKey: ['turmas-do-simulado', id],
+    queryFn: () => turmasDoSimulado(id),
+    enabled: isEdicao,
+  })
+  useEffect(() => { if (turmasDoSimAtual) setTurmaIds(new Set(turmasDoSimAtual)) }, [turmasDoSimAtual])
 
   useEffect(() => {
     if (simuladoExistente) {
@@ -47,7 +55,6 @@ export default function SimuladoForm() {
         titulo: simuladoExistente.titulo,
         descricao: simuladoExistente.descricao || '',
         instrucoes: simuladoExistente.instrucoes || '',
-        turma_id: simuladoExistente.turma_id || '',
       })
       setQuestoes(simuladoExistente.questoes?.map(q => q.id) || [])
       setCabecalho(simuladoExistente.cabecalho || CABECALHO_PADRAO)
@@ -121,15 +128,13 @@ export default function SimuladoForm() {
       if (!form.titulo.trim()) throw new Error('Título é obrigatório')
 
       const dados = { ...form, cabecalho, cfg_impressao: cfgImpressao }
-
-      if (isEdicao) {
-        return atualizarSimulado(id, dados, questoes)
-      } else {
-        return criarSimulado(dados, questoes)
-      }
+      const sim = isEdicao ? await atualizarSimulado(id, dados, questoes) : await criarSimulado(dados, questoes)
+      await setTurmasDoSimulado(sim.id, [...turmaIds])
+      return sim
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['simulado', data.id] })
+      queryClient.invalidateQueries({ queryKey: ['turmas-do-simulado', data.id] })
       queryClient.invalidateQueries({ queryKey: ['simulados'] })
       toast.success(isEdicao ? 'Simulado atualizado!' : 'Simulado criado!')
       navigate(`/simulados/${data.id}`)
@@ -211,13 +216,28 @@ export default function SimuladoForm() {
               onChange={e => setForm(f => ({...f, instrucoes: e.target.value}))}
               rows={2}
             />
-            <label className={styles.label} style={{ marginTop: 12 }}>Turma (opcional — só matriculados veem este simulado proposto)</label>
-            <select className={styles.input}
-              value={form.turma_id}
-              onChange={e => setForm(f => ({ ...f, turma_id: e.target.value }))}>
-              <option value="">Pública (todos os alunos, se proposto)</option>
-              {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
-            </select>
+            <label className={styles.label} style={{ marginTop: 12 }}>Turmas (opcional — sem nenhuma, o simulado proposto é público)</label>
+            {turmas.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: 0 }}>Nenhuma turma criada.</p>
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {turmas.map(t => {
+                  const on = turmaIds.has(t.id)
+                  return (
+                    <label key={t.id} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13,
+                      padding: '6px 12px', borderRadius: 'var(--radius-full)',
+                      border: `1px solid ${on ? 'var(--color-primary)' : 'var(--border-subtle)'}`,
+                      color: on ? 'var(--color-primary)' : 'var(--text-secondary)',
+                      background: on ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)' : 'var(--bg-surface)',
+                    }}>
+                      <input type="checkbox" checked={on} onChange={() => toggleTurma(t.id)} style={{ margin: 0 }} />
+                      {t.nome}
+                    </label>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           <div className={styles.card}>

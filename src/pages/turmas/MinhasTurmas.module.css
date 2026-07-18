@@ -39,3 +39,4 @@
 .cancelar:hover { color: #b91c1c; }
 
 .vazio { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 56px 20px; color: var(--text-secondary); text-align: center; }
+.verConteudo { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--color-primary); font-size: 12.5px; font-weight: 600; cursor: pointer; }
