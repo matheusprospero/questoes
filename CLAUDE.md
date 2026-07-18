@@ -33,7 +33,7 @@ Helpers RLS: `is_admin()`, `eh_assinante()`.
 
 ## Rotas / páginas (`src/router.jsx`, `src/pages/`)
 Aluno: `/` Início · `/plano` PlanoEstudos · `/aulas` · `/estudo` Estudo (resolver) · `/calendario` heatmap · `/estatisticas` · `/boletim` (PDF via print) · `/questoes` banco · `/favoritos` · `/cadernos` · `/simulados` · `/perfil`.
-Admin (`RotaProtegida somenteAdmin`): `/acompanhamento` (por aluno) · `/questoes/nova|:id/editar` · `/revisao` · `/simulados/:id/relatorio` · `/aulas/nova|editar` · `/alunos` · `/destaques` · `/reports` · `/engajamento`.
+Admin (`RotaProtegida somenteAdmin`): `/acompanhamento` (por aluno) · `/comunicacao` (histórico de e-mails + envio manual, service `comunicacao.js`) · `/questoes/nova|:id/editar` · `/revisao` · `/simulados/:id/relatorio` · `/aulas/nova|editar` · `/alunos` · `/destaques` · `/reports` · `/engajamento`.
 Menu em `src/components/layout/AppLayout.jsx` (NAV_ITEMS + bloco admin "Gestão").
 
 ## Serviços (`src/services/`)
