@@ -4,17 +4,33 @@ import toast from 'react-hot-toast'
 import {
   listarTurmas, criarTurma, atualizarTurma, excluirTurma, definirDisciplinas,
   listarMatriculas, matricular, decidirMatricula, removerMatricula, disciplinasDaTurma, precosDaTurma,
+  atualizarPeriodoMatricula,
 } from '../../services/turmas'
 import { listarDisciplinas } from '../../services/questoes'
 import { listarAlunosComEmail } from '../../services/comunicacao'
 import { useNavigate } from 'react-router-dom'
 import {
   GraduationCap, Plus, Pencil, Trash2, Check, X, Users, Search,
-  UserPlus, Power, Clock, Eye,
+  UserPlus, Power, Clock, Eye, CalendarClock,
 } from 'lucide-react'
 import styles from './CentralMatriculas.module.css'
 
 const fmt = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+
+// ISO → 'AAAA-MM-DD' no fuso local (para <input type="date">)
+const toDateInput = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+}
+// Texto do período de acesso de uma matrícula
+function acessoLabel(m) {
+  if (!m.acesso_ate) return { txt: 'Vitalício', tone: 'vital' }
+  const fim = new Date(m.acesso_ate)
+  const expirado = fim.getTime() <= Date.now()
+  const ini = m.acesso_desde ? fmt(m.acesso_desde) + ' → ' : 'até '
+  return { txt: ini + fmt(m.acesso_ate), tone: expirado ? 'exp' : 'ok' }
+}
 
 // número de um input de preço: '' → null, senão Number (aceita vírgula)
 const numOuNull = (v) => {
@@ -210,12 +226,56 @@ function ModalMatricular({ turmas, turmaInicial, alunos, onFechar, onConfirmar, 
   )
 }
 
+// ── Modal editar período de acesso ────────────────────────────
+function ModalPeriodo({ matricula, onFechar, onSalvar, salvando }) {
+  const [desde, setDesde] = useState(toDateInput(matricula.acesso_desde))
+  const [ate, setAte] = useState(toDateInput(matricula.acesso_ate))
+
+  const salvar = () => onSalvar(matricula.id, {
+    acesso_desde: desde ? `${desde}T00:00:00` : null,
+    acesso_ate: ate ? `${ate}T23:59:59` : null,
+  })
+
+  return (
+    <div className={styles.overlay} onClick={onFechar}>
+      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalTopo}>
+          <p className={styles.modalTitulo}><CalendarClock size={16} /> Período de acesso</p>
+          <button className={styles.iconBtn} onClick={onFechar}><X size={18} /></button>
+        </div>
+        <div className={styles.modalCorpo}>
+          <p className={styles.semDados} style={{ margin: 0 }}>
+            {matricula.aluno?.nome || matricula.aluno?.email} · {matricula.turmas?.nome} · {matricula.disciplinas?.nome}
+          </p>
+          <label className={styles.campo}>
+            <span className={styles.campoLabel}>Início do acesso</span>
+            <input type="date" className={styles.input} value={desde} onChange={e => setDesde(e.target.value)} />
+            <span className={styles.dica} style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Em branco = vale desde já.</span>
+          </label>
+          <label className={styles.campo}>
+            <span className={styles.campoLabel}>Fim do acesso (vencimento)</span>
+            <input type="date" className={styles.input} value={ate} onChange={e => setAte(e.target.value)} />
+            <span className={styles.dica} style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Em branco = sem vencimento (vitalício).</span>
+          </label>
+        </div>
+        <div className={styles.modalRodape}>
+          <button className={styles.btnGhost} onClick={onFechar}>Cancelar</button>
+          <button className={styles.btnPrimary} disabled={salvando} onClick={salvar}>
+            <Check size={14} /> {salvando ? 'Salvando…' : 'Salvar período'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Página ────────────────────────────────────────────────────
 export default function CentralMatriculas() {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const [modalTurma, setModalTurma] = useState(null)     // {turma}|{novo:true}
   const [modalMatricular, setModalMatricular] = useState(null) // turmaId|true
+  const [modalPeriodo, setModalPeriodo] = useState(null) // matricula
   const [fTurma, setFTurma] = useState('')
   const [fStatus, setFStatus] = useState('')
   const [busca, setBusca] = useState('')
@@ -272,6 +332,11 @@ export default function CentralMatriculas() {
   const mRemover = useMutation({
     mutationFn: removerMatricula,
     onSuccess: () => { invalidar(); toast.success('Matrícula removida.') },
+    onError: (e) => toast.error('Erro: ' + e.message),
+  })
+  const mPeriodo = useMutation({
+    mutationFn: ({ id, periodo }) => atualizarPeriodoMatricula(id, periodo),
+    onSuccess: () => { invalidar(); setModalPeriodo(null); toast.success('Período atualizado.') },
     onError: (e) => toast.error('Erro: ' + e.message),
   })
 
@@ -388,23 +453,29 @@ export default function CentralMatriculas() {
         listaFiltrada.length === 0 ? <div className={styles.vazio}><p>Nenhuma matrícula com esses filtros.</p></div> : (
           <div className={styles.tabelaScroll}>
             <table className={styles.tabela}>
-              <thead><tr><th>Aluno</th><th>Turma</th><th>Disciplina</th><th>Status</th><th>Data</th><th></th></tr></thead>
+              <thead><tr><th>Aluno</th><th>Turma</th><th>Disciplina</th><th>Status</th><th>Acesso</th><th>Data</th><th></th></tr></thead>
               <tbody>
-                {listaFiltrada.map(m => (
+                {listaFiltrada.map(m => {
+                  const ac = acessoLabel(m)
+                  return (
                   <tr key={m.id}>
                     <td><strong>{m.aluno?.nome || '—'}</strong><br /><span className={styles.tdEmail}>{m.aluno?.email}</span></td>
                     <td>{m.turmas?.nome}</td>
                     <td><span className={styles.discChip} style={{ borderColor: m.disciplinas?.cor, color: m.disciplinas?.cor }}>{m.disciplinas?.nome}</span></td>
                     <td><span className={chipStatus(m.status)}>{labelStatus(m.status)}</span></td>
+                    <td className={styles.tdData}>
+                      <span className={ac.tone === 'exp' ? styles.acessoExp : ac.tone === 'vital' ? styles.acessoVital : ''}>{ac.txt}</span>
+                    </td>
                     <td className={styles.tdData}>{fmt(m.criado_em)}</td>
                     <td className={styles.tdAcoes}>
                       {m.status === 'recusada' && (
                         <button className={styles.linkAcao} onClick={() => mDecidir.mutate({ id: m.id, aprovar: true })}>Reativar</button>
                       )}
+                      <button className={styles.iconBtn} title="Editar período de acesso" onClick={() => setModalPeriodo(m)}><CalendarClock size={14} /></button>
                       <button className={styles.iconBtn} title="Remover" onClick={() => mRemover.mutate(m.id)}><Trash2 size={14} /></button>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
@@ -429,6 +500,14 @@ export default function CentralMatriculas() {
           salvando={mMatricular.isPending}
           onFechar={() => setModalMatricular(null)}
           onConfirmar={(turmaId, alunoIds, discIds) => mMatricular.mutate({ turmaId, alunoIds, discIds })}
+        />
+      )}
+      {modalPeriodo && (
+        <ModalPeriodo
+          matricula={modalPeriodo}
+          salvando={mPeriodo.isPending}
+          onFechar={() => setModalPeriodo(null)}
+          onSalvar={(id, periodo) => mPeriodo.mutate({ id, periodo })}
         />
       )}
     </div>

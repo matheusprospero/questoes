@@ -10,6 +10,8 @@ import { comprar, precoFmt } from '../../services/pagamentos'
 import { GraduationCap, Check, Clock, X, BookOpen, ArrowRight, CreditCard } from 'lucide-react'
 import styles from './MinhasTurmas.module.css'
 
+const fmtData = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+
 export default function MinhasTurmas() {
   const qc = useQueryClient()
   const navigate = useNavigate()
@@ -28,6 +30,12 @@ export default function MinhasTurmas() {
     ativas: matriculas.filter(m => m.status === 'ativa').length,
     pendentes: matriculas.filter(m => m.status === 'pendente').length,
   }), [matriculas])
+
+  // Cursos que o aluno já comprou (tem matrícula ativa) × cursos ainda disponíveis
+  const { meus, disponiveis } = useMemo(() => {
+    const temAtiva = (t) => matriculas.some(m => m.turma_id === t.id && m.status === 'ativa')
+    return { meus: turmas.filter(temAtiva), disponiveis: turmas.filter(t => !temAtiva(t)) }
+  }, [turmas, matriculas])
 
   const invalidar = () => qc.invalidateQueries({ queryKey: ['minhas-matriculas'] })
 
@@ -54,15 +62,109 @@ export default function MinhasTurmas() {
     }
   }
 
-  if (isLoading) return <div className={styles.loading}>Carregando turmas…</div>
+  function renderTurma(t) {
+    const discs = disciplinasDaTurma(t)
+    const precos = precosDaTurma(t)
+    const temAtiva = matriculas.some(m => m.turma_id === t.id && m.status === 'ativa')
+    const vendeCompleto = t.preco_mensal != null || t.preco_vitalicio != null
+    const jaTemTudo = discs.length > 0 && discs.every(d => porChave.get(`${t.id}:${d.id}`)?.status === 'ativa')
+    return (
+      <div key={t.id} className={styles.turmaCard}>
+        <div className={styles.turmaTopo}>
+          <span className={styles.turmaNome}>{t.nome}</span>
+          {temAtiva && (
+            <button className={styles.verConteudo} onClick={() => navigate(`/turmas/${t.id}`)}>
+              Ver conteúdo <ArrowRight size={13} />
+            </button>
+          )}
+        </div>
+        {t.descricao && <p className={styles.turmaDesc}>{t.descricao}</p>}
+
+        {/* Acesso completo (todas as disciplinas) */}
+        {vendeCompleto && !jaTemTudo && (
+          <div className={styles.completoBox}>
+            <span className={styles.completoTitulo}><GraduationCap size={14} /> Acesso completo à turma</span>
+            <div className={styles.planos}>
+              {t.preco_mensal != null && (
+                <button className={styles.btnComprar} disabled={!!comprando}
+                  onClick={() => iniciarCompra({ turmaId: t.id, tipo: 'completo', plano: 'mensal' }, `c:${t.id}:m`)}>
+                  <CreditCard size={13} /> {comprando === `c:${t.id}:m` ? 'Abrindo…' : `${precoFmt(t.preco_mensal)}/mês`}
+                </button>
+              )}
+              {t.preco_vitalicio != null && (
+                <button className={styles.btnComprarVital} disabled={!!comprando}
+                  onClick={() => iniciarCompra({ turmaId: t.id, tipo: 'completo', plano: 'vitalicio' }, `c:${t.id}:v`)}>
+                  <CreditCard size={13} /> {comprando === `c:${t.id}:v` ? 'Abrindo…' : `${precoFmt(t.preco_vitalicio)} vitalício`}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className={styles.discLista}>
+          {discs.length === 0 && <span className={styles.semDisc}>Esta turma ainda não tem disciplinas.</span>}
+          {discs.map(d => {
+            const mt = porChave.get(`${t.id}:${d.id}`)
+            const st = mt?.status
+            const pr = precos.get(d.id) || {}
+            const vendeAvulsa = pr.preco_mensal != null || pr.preco_vitalicio != null
+            return (
+              <div key={d.id} className={styles.discLinha}>
+                <span className={styles.discNome}>
+                  <span className={styles.dot} style={{ background: d.cor || 'var(--color-primary)' }} />
+                  <BookOpen size={14} /> {d.nome}
+                </span>
+                {st === 'ativa' ? (
+                  <span className={styles.matriculadoBox}>
+                    <span className={styles.chipOk}><Check size={12} /> Matriculado</span>
+                    {mt.acesso_ate && <span className={styles.validade}>acesso até {fmtData(mt.acesso_ate)}</span>}
+                  </span>
+                ) : st === 'pendente' ? (
+                  <span className={styles.pendGrupo}>
+                    <span className={styles.chipPend}><Clock size={12} /> Aguardando</span>
+                    <button className={styles.cancelar} onClick={() => mCancelar.mutate(mt.id)}><X size={12} /> Cancelar</button>
+                  </span>
+                ) : vendeAvulsa ? (
+                  <span className={styles.planos}>
+                    {pr.preco_mensal != null && (
+                      <button className={styles.btnComprar} disabled={!!comprando}
+                        onClick={() => iniciarCompra({ turmaId: t.id, tipo: 'disciplina', plano: 'mensal', disciplinaIds: [d.id] }, `d:${d.id}:m`)}>
+                        {comprando === `d:${d.id}:m` ? 'Abrindo…' : `${precoFmt(pr.preco_mensal)}/mês`}
+                      </button>
+                    )}
+                    {pr.preco_vitalicio != null && (
+                      <button className={styles.btnComprarVital} disabled={!!comprando}
+                        onClick={() => iniciarCompra({ turmaId: t.id, tipo: 'disciplina', plano: 'vitalicio', disciplinaIds: [d.id] }, `d:${d.id}:v`)}>
+                        {comprando === `d:${d.id}:v` ? 'Abrindo…' : `${precoFmt(pr.preco_vitalicio)} vitalício`}
+                      </button>
+                    )}
+                  </span>
+                ) : st === 'recusada' ? (
+                  <span className={styles.chipErr}>Não aprovada</span>
+                ) : (
+                  <button className={styles.btnSolicitar}
+                    disabled={mSolicitar.isPending}
+                    onClick={() => mSolicitar.mutate({ turmaId: t.id, discId: d.id })}>
+                    Solicitar matrícula
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  if (isLoading) return <div className={styles.loading}>Carregando cursos…</div>
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.titulo}><GraduationCap size={20} /> Minhas Turmas</h1>
+        <h1 className={styles.titulo}><GraduationCap size={20} /> Cursos</h1>
         <p className={styles.subtitulo}>
-          As turmas dão acesso a aulas e simulados exclusivos. Compre o acesso à turma
-          completa ou a disciplinas avulsas — a liberação é automática após o pagamento.
+          Compre o acesso a um curso completo ou a disciplinas avulsas — a liberação é
+          automática após o pagamento. Os cursos que você já tem aparecem em “Meus cursos”.
         </p>
       </div>
 
@@ -74,100 +176,25 @@ export default function MinhasTurmas() {
       )}
 
       {turmas.length === 0 ? (
-        <div className={styles.vazio}><GraduationCap size={32} strokeWidth={1.5} /><p>Nenhuma turma disponível no momento.</p></div>
+        <div className={styles.vazio}><GraduationCap size={32} strokeWidth={1.5} /><p>Nenhum curso disponível no momento.</p></div>
       ) : (
-        <div className={styles.turmas}>
-          {turmas.map(t => {
-            const discs = disciplinasDaTurma(t)
-            const precos = precosDaTurma(t)
-            const temAtiva = matriculas.some(m => m.turma_id === t.id && m.status === 'ativa')
-            const vendeCompleto = t.preco_mensal != null || t.preco_vitalicio != null
-            const jaTemTudo = discs.length > 0 && discs.every(d => porChave.get(`${t.id}:${d.id}`)?.status === 'ativa')
-            return (
-              <div key={t.id} className={styles.turmaCard}>
-                <div className={styles.turmaTopo}>
-                  <span className={styles.turmaNome}>{t.nome}</span>
-                  {temAtiva && (
-                    <button className={styles.verConteudo} onClick={() => navigate(`/turmas/${t.id}`)}>
-                      Ver conteúdo <ArrowRight size={13} />
-                    </button>
-                  )}
-                </div>
-                {t.descricao && <p className={styles.turmaDesc}>{t.descricao}</p>}
+        <>
+          {meus.length > 0 && (
+            <section className={styles.secao}>
+              <h2 className={styles.secaoTitulo}>Meus cursos</h2>
+              <div className={styles.turmas}>{meus.map(renderTurma)}</div>
+            </section>
+          )}
 
-                {/* Acesso completo (todas as disciplinas) */}
-                {vendeCompleto && !jaTemTudo && (
-                  <div className={styles.completoBox}>
-                    <span className={styles.completoTitulo}><GraduationCap size={14} /> Acesso completo à turma</span>
-                    <div className={styles.planos}>
-                      {t.preco_mensal != null && (
-                        <button className={styles.btnComprar} disabled={!!comprando}
-                          onClick={() => iniciarCompra({ turmaId: t.id, tipo: 'completo', plano: 'mensal' }, `c:${t.id}:m`)}>
-                          <CreditCard size={13} /> {comprando === `c:${t.id}:m` ? 'Abrindo…' : `${precoFmt(t.preco_mensal)}/mês`}
-                        </button>
-                      )}
-                      {t.preco_vitalicio != null && (
-                        <button className={styles.btnComprarVital} disabled={!!comprando}
-                          onClick={() => iniciarCompra({ turmaId: t.id, tipo: 'completo', plano: 'vitalicio' }, `c:${t.id}:v`)}>
-                          <CreditCard size={13} /> {comprando === `c:${t.id}:v` ? 'Abrindo…' : `${precoFmt(t.preco_vitalicio)} vitalício`}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className={styles.discLista}>
-                  {discs.length === 0 && <span className={styles.semDisc}>Esta turma ainda não tem disciplinas.</span>}
-                  {discs.map(d => {
-                    const mt = porChave.get(`${t.id}:${d.id}`)
-                    const st = mt?.status
-                    const pr = precos.get(d.id) || {}
-                    const vendeAvulsa = pr.preco_mensal != null || pr.preco_vitalicio != null
-                    return (
-                      <div key={d.id} className={styles.discLinha}>
-                        <span className={styles.discNome}>
-                          <span className={styles.dot} style={{ background: d.cor || 'var(--color-primary)' }} />
-                          <BookOpen size={14} /> {d.nome}
-                        </span>
-                        {st === 'ativa' ? (
-                          <span className={styles.chipOk}><Check size={12} /> Matriculado</span>
-                        ) : st === 'pendente' ? (
-                          <span className={styles.pendGrupo}>
-                            <span className={styles.chipPend}><Clock size={12} /> Aguardando</span>
-                            <button className={styles.cancelar} onClick={() => mCancelar.mutate(mt.id)}><X size={12} /> Cancelar</button>
-                          </span>
-                        ) : vendeAvulsa ? (
-                          <span className={styles.planos}>
-                            {pr.preco_mensal != null && (
-                              <button className={styles.btnComprar} disabled={!!comprando}
-                                onClick={() => iniciarCompra({ turmaId: t.id, tipo: 'disciplina', plano: 'mensal', disciplinaIds: [d.id] }, `d:${d.id}:m`)}>
-                                {comprando === `d:${d.id}:m` ? 'Abrindo…' : `${precoFmt(pr.preco_mensal)}/mês`}
-                              </button>
-                            )}
-                            {pr.preco_vitalicio != null && (
-                              <button className={styles.btnComprarVital} disabled={!!comprando}
-                                onClick={() => iniciarCompra({ turmaId: t.id, tipo: 'disciplina', plano: 'vitalicio', disciplinaIds: [d.id] }, `d:${d.id}:v`)}>
-                                {comprando === `d:${d.id}:v` ? 'Abrindo…' : `${precoFmt(pr.preco_vitalicio)} vitalício`}
-                              </button>
-                            )}
-                          </span>
-                        ) : st === 'recusada' ? (
-                          <span className={styles.chipErr}>Não aprovada</span>
-                        ) : (
-                          <button className={styles.btnSolicitar}
-                            disabled={mSolicitar.isPending}
-                            onClick={() => mSolicitar.mutate({ turmaId: t.id, discId: d.id })}>
-                            Solicitar matrícula
-                          </button>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+          <section className={styles.secao}>
+            <h2 className={styles.secaoTitulo}>{meus.length > 0 ? 'Disponíveis' : 'Cursos disponíveis'}</h2>
+            {disponiveis.length === 0 ? (
+              <p className={styles.semDisc}>Você já tem acesso a todos os cursos disponíveis. 🎉</p>
+            ) : (
+              <div className={styles.turmas}>{disponiveis.map(renderTurma)}</div>
+            )}
+          </section>
+        </>
       )}
     </div>
   )

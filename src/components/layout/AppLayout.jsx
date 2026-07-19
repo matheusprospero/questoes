@@ -20,7 +20,7 @@ const NAV_ITEMS = [
       { to: '/',              label: 'Início',            icon: Home, end: true },
       { to: '/plano',         label: 'Plano de Estudos',  icon: Route },
       { to: '/aulas',         label: 'Aulas',             icon: GraduationCap },
-      { to: '/turmas',        label: 'Minhas Turmas',     icon: GradCap },
+      { to: '/turmas',        label: 'Cursos',            icon: GradCap },
       { to: '/estudo',        label: 'Resolver Questões', icon: BookOpen  },
       { to: '/calendario',    label: 'Calendário',        icon: CalendarDays },
       { to: '/estatisticas',  label: 'Estatísticas',      icon: BarChart2 },

@@ -7,6 +7,12 @@
 .resumo { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
 .resumoItem { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
 
+.secao { margin-top: 24px; }
+.secao:first-of-type { margin-top: 8px; }
+.secaoTitulo { font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle); }
+.matriculadoBox { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.validade { font-size: 11.5px; color: var(--text-tertiary); white-space: nowrap; }
+
 .turmas { display: flex; flex-direction: column; gap: 14px; }
 .turmaCard { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 16px; }
 .turmaTopo { display: flex; align-items: center; justify-content: space-between; }
