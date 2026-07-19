@@ -335,6 +335,8 @@ function ModalConteudo({ turma, onFechar }) {
 
   const carregando = selAulas === null || selSims === null
   const propostos = simulados.filter(s => s.proposto)
+  const discsTurma = disciplinasDaTurma(turma)
+  const discIds = new Set(discsTurma.map(d => d.id))
   const toggle = (setFn) => (id) => setFn(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n })
   const q = (t) => (v) => (v || '').toLowerCase().includes(t.toLowerCase())
 
@@ -367,20 +369,49 @@ function ModalConteudo({ turma, onFechar }) {
           {carregando ? <p className={styles.semDados}>Carregando…</p> : (
             <>
               <div className={styles.campo}>
-                <span className={styles.campoLabel}><BookOpen size={13} /> Aulas ({selAulas.size} na turma)</span>
-                <div className={styles.buscaBox}><Search size={13} />
-                  <input className={styles.buscaInput} placeholder="Buscar aula…" value={buscaA} onChange={e => setBuscaA(e.target.value)} />
-                </div>
-                <div className={styles.alunoLista}>
-                  {aulasFiltradas.map(a => (
-                    <label key={a.id} className={styles.alunoItem}>
-                      <input type="checkbox" checked={selAulas.has(a.id)} onChange={() => toggle(setSelAulas)(a.id)} />
-                      <span className={styles.alunoNome}>{a.titulo}</span>
-                      {a.disciplinas?.nome && <span className={styles.alunoEmail}>{a.disciplinas.nome}</span>}
-                    </label>
-                  ))}
-                  {aulasFiltradas.length === 0 && <p className={styles.semDados}>Nenhuma aula.</p>}
-                </div>
+                <span className={styles.campoLabel}><BookOpen size={13} /> Aulas por disciplina ({selAulas.size} na turma)</span>
+                {discsTurma.length === 0 ? (
+                  <p className={styles.semDados}>Defina as disciplinas da turma primeiro (editar turma).</p>
+                ) : (
+                  <>
+                    <div className={styles.buscaBox}><Search size={13} />
+                      <input className={styles.buscaInput} placeholder="Buscar aula…" value={buscaA} onChange={e => setBuscaA(e.target.value)} />
+                    </div>
+                    {discsTurma.map(d => {
+                      const doDisc = aulasFiltradas.filter(a => a.disciplina_id === d.id)
+                      return (
+                        <div key={d.id} style={{ marginTop: 4 }}>
+                          <span className={styles.grupoDisc}>
+                            <span className={styles.dot} style={{ background: d.cor || 'var(--color-primary)' }} /> {d.nome}
+                          </span>
+                          <div className={styles.alunoLista}>
+                            {doDisc.map(a => (
+                              <label key={a.id} className={styles.alunoItem}>
+                                <input type="checkbox" checked={selAulas.has(a.id)} onChange={() => toggle(setSelAulas)(a.id)} />
+                                <span className={styles.alunoNome}>{a.titulo}</span>
+                              </label>
+                            ))}
+                            {doDisc.length === 0 && <p className={styles.semDados}>Nenhuma aula desta disciplina.</p>}
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {aulas.filter(a => selAulas.has(a.id) && !discIds.has(a.disciplina_id)).length > 0 && (
+                      <div style={{ marginTop: 4 }}>
+                        <span className={styles.grupoDisc} style={{ color: '#b45309' }}>⚠ Fora das disciplinas do curso (não ficam visíveis)</span>
+                        <div className={styles.alunoLista}>
+                          {aulas.filter(a => selAulas.has(a.id) && !discIds.has(a.disciplina_id)).map(a => (
+                            <label key={a.id} className={styles.alunoItem}>
+                              <input type="checkbox" checked onChange={() => toggle(setSelAulas)(a.id)} />
+                              <span className={styles.alunoNome}>{a.titulo}</span>
+                              <span className={styles.alunoEmail}>{a.disciplinas?.nome || 'sem disciplina'}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
               <div className={styles.campo}>

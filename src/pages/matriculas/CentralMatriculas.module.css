@@ -103,3 +103,6 @@
 /* Origem da matrícula e pagamento previsto */
 .origemTag { display: inline-block; margin-left: 6px; font-size: 10.5px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .03em; cursor: help; }
 .pagPrev { display: block; font-size: 10.5px; color: var(--text-tertiary); margin-top: 2px; }
+
+/* Agrupamento de aulas por disciplina no modal de conteúdo */
+.grupoDisc { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 4px 0; }

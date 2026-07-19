@@ -28,6 +28,16 @@ export default function TurmaDetalhe() {
   const { turma, aulas, simulados } = data
   const discs = disciplinasDaTurma(turma)
 
+  const renderAula = (a) => (
+    <button key={a.id} className={styles.item} onClick={() => navigate(`/aulas/${a.id}`)}>
+      <div className={styles.itemInfo}>
+        <span className={styles.itemNome}>{a.titulo}</span>
+        {a.descricao && <span className={styles.itemDesc}>{a.descricao}</span>}
+      </div>
+      <span className={styles.itemQtd}>{a.aula_questoes?.[0]?.count ?? 0} questões</span>
+    </button>
+  )
+
   return (
     <div className={styles.page}>
       <button className={styles.voltar} onClick={() => navigate(-1)}><ChevronLeft size={16} /> Voltar</button>
@@ -57,20 +67,34 @@ export default function TurmaDetalhe() {
         </div>
       )}
 
-      {/* Aulas */}
+      {/* Aulas — agrupadas por disciplina (curso → disciplina → aula) */}
       <h2 className={styles.secTitulo}><BookOpen size={16} /> Aulas ({aulas.length})</h2>
       {aulas.length === 0 ? <p className={styles.semDados}>Nenhuma aula disponível para você nesta turma.</p> : (
-        <div className={styles.lista}>
-          {aulas.map(a => (
-            <button key={a.id} className={styles.item} onClick={() => navigate(`/aulas/${a.id}`)}>
-              <div className={styles.itemInfo}>
-                <span className={styles.itemNome}>{a.titulo}</span>
-                {a.descricao && <span className={styles.itemDesc}>{a.descricao}</span>}
+        <>
+          {discs.map(d => {
+            const doDisc = aulas.filter(a => a.disciplina_id === d.id)
+            if (doDisc.length === 0) return null
+            return (
+              <div key={d.id} className={styles.discGrupo}>
+                <h3 className={styles.discGrupoTitulo}>
+                  <span className={styles.dot} style={{ background: d.cor || 'var(--color-primary)' }} />
+                  {d.nome} <span className={styles.discGrupoCount}>({doDisc.length})</span>
+                </h3>
+                <div className={styles.lista}>{doDisc.map(renderAula)}</div>
               </div>
-              <span className={styles.itemQtd}>{a.aula_questoes?.[0]?.count ?? 0} questões</span>
-            </button>
-          ))}
-        </div>
+            )
+          })}
+          {(() => {
+            const outras = aulas.filter(a => !discs.some(d => d.id === a.disciplina_id))
+            if (outras.length === 0) return null
+            return (
+              <div className={styles.discGrupo}>
+                <h3 className={styles.discGrupoTitulo}><span className={styles.dot} style={{ background: 'var(--text-tertiary)' }} /> Outras</h3>
+                <div className={styles.lista}>{outras.map(renderAula)}</div>
+              </div>
+            )
+          })()}
+        </>
       )}
 
       {/* Simulados */}
