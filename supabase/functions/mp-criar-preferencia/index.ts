@@ -27,6 +27,14 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
 
+// Garante uma URL absoluta com esquema (as back_urls do MP exigem domínio completo).
+function normalizeSite(u: string): string {
+  let s = (u || '').trim().replace(/\/+$/, '')
+  if (!s) return ''
+  if (!/^https?:\/\//i.test(s)) s = 'https://' + s
+  try { return new URL(s).origin } catch { return '' }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'método não permitido' }, 405)
@@ -52,8 +60,11 @@ Deno.serve(async (req) => {
     const precoCol = plano === 'mensal' ? 'preco_mensal' : 'preco_vitalicio'
     const admin = createClient(SUPABASE_URL, SERVICE_KEY)
 
-    const { token: MP_TOKEN, siteUrl: SITE_URL } = await getMpConfig(admin)
+    const { token: MP_TOKEN, siteUrl: cfgSite } = await getMpConfig(admin)
     if (!MP_TOKEN) return json({ error: 'pagamento não configurado (falta o token do Mercado Pago)' }, 503)
+    // URL de retorno: config da página → senão a origem de quem chamou (o site) → normalizada.
+    const origin = req.headers.get('origin') || req.headers.get('referer') || ''
+    const SITE_URL = normalizeSite(cfgSite || origin)
 
     // ── Calcula preço e descrição no servidor ──────────────────────────────
     const { data: turma } = await admin.from('turmas')
@@ -98,7 +109,7 @@ Deno.serve(async (req) => {
     }).select('id').single()
 
     // ── Cria a preferência no Mercado Pago ─────────────────────────────────
-    const pref = {
+    const pref: Record<string, unknown> = {
       items: [{
         title: titulo.slice(0, 250),
         quantity: 1,
@@ -116,13 +127,16 @@ Deno.serve(async (req) => {
         plano,
         disciplina_ids: (tipo === 'completo' ? [] : discIds).join(','),
       },
-      back_urls: {
-        success: `${SITE_URL}/pagamento/retorno?status=sucesso`,
-        pending: `${SITE_URL}/pagamento/retorno?status=pendente`,
-        failure: `${SITE_URL}/pagamento/retorno?status=erro`,
-      },
-      auto_return: 'approved',
       notification_url: `${SUPABASE_URL}/functions/v1/mp-webhook`,
+    }
+    // Só inclui back_urls/auto_return se tivermos um domínio absoluto válido.
+    if (SITE_URL) {
+      pref.back_urls = {
+        success: `${SITE_URL}/pagamento/retorno?retorno=sucesso`,
+        pending: `${SITE_URL}/pagamento/retorno?retorno=pendente`,
+        failure: `${SITE_URL}/pagamento/retorno?retorno=erro`,
+      }
+      pref.auto_return = 'approved'
     }
 
     const mpRes = await fetch('https://api.mercadopago.com/checkout/preferences', {

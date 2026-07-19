@@ -28,7 +28,8 @@ export default function PagamentoRetorno() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const qc = useQueryClient()
-  const status = params.get('status') || 'pendente'
+  // nosso parâmetro é `retorno` (o MP anexa um `status` próprio que colidia)
+  const status = params.get('retorno') || params.get('status') || 'pendente'
   const c = CONTEUDO[status] || CONTEUDO.pendente
   const { Icone } = c
 
