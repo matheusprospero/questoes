@@ -38,6 +38,40 @@ export async function meusPagamentos() {
 export const precoFmt = (v) =>
   v == null ? null : Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
+// Normaliza o status do MP para exibição. tone: ok | pend | err | neutral
+export function statusVenda(s) {
+  switch (s) {
+    case 'approved':   return { label: 'Aprovado', tone: 'ok' }
+    case 'pending':
+    case 'in_process':
+    case 'authorized':
+    case 'pendente':   return { label: 'Pendente', tone: 'pend' }
+    case 'rejected':
+    case 'cancelled':  return { label: 'Recusado', tone: 'err' }
+    case 'refunded':
+    case 'charged_back':return { label: 'Estornado', tone: 'neutral' }
+    default:           return { label: s || '—', tone: 'neutral' }
+  }
+}
+
+// ── Relatório de vendas (admin) ───────────────────────────────
+// Lista os pagamentos com turma e aluno. RLS libera tudo só para o admin.
+export async function listarVendas() {
+  const { data, error } = await supabase
+    .from('pagamentos')
+    .select('*, turmas(nome)')
+    .order('criado_em', { ascending: false })
+  if (error) throw error
+  const lista = data ?? []
+  const ids = [...new Set(lista.map(p => p.usuario_id))]
+  if (ids.length) {
+    const { data: perfis } = await supabase.from('perfis').select('id, nome, email').in('id', ids)
+    const porId = new Map((perfis ?? []).map(p => [p.id, p]))
+    for (const p of lista) p.aluno = porId.get(p.usuario_id) ?? null
+  }
+  return lista
+}
+
 // ── Config do Mercado Pago (admin) ────────────────────────────
 // Status: token vem MASCARADO do banco (nunca o valor completo).
 export async function lerConfigPagamento() {
