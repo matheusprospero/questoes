@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import {
   listarTurmas, criarTurma, atualizarTurma, excluirTurma, definirDisciplinas,
   listarMatriculas, matricular, decidirMatricula, removerMatricula, disciplinasDaTurma, precosDaTurma,
-  atualizarPeriodoMatricula,
+  atualizarMatricula,
 } from '../../services/turmas'
 import { listarDisciplinas } from '../../services/questoes'
 import { listarAlunosComEmail } from '../../services/comunicacao'
@@ -147,6 +147,17 @@ function PrecoInput({ label, value, onChange }) {
   )
 }
 
+// campo de data compacto
+function DateField({ label, value, onChange }) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: '1 1 130px' }}>
+      <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{label}</span>
+      <input type="date" className={styles.input} value={value}
+        onChange={e => onChange(e.target.value)} style={{ padding: '6px 8px' }} />
+    </label>
+  )
+}
+
 // ── Modal matricular alunos ───────────────────────────────────
 function ModalMatricular({ turmas, turmaInicial, alunos, onFechar, onConfirmar, salvando }) {
   const [turmaId, setTurmaId] = useState(turmaInicial || turmas[0]?.id || '')
@@ -155,6 +166,8 @@ function ModalMatricular({ turmas, turmaInicial, alunos, onFechar, onConfirmar, 
   const [selDisc, setSelDisc] = useState(() => new Set(discs.map(d => d.id)))
   const [selAlunos, setSelAlunos] = useState(new Set())
   const [busca, setBusca] = useState('')
+  const [cfg, setCfg] = useState({ acesso_desde: '', acesso_ate: '', pagamento_previsto: '', motivo: '' })
+  const setC = (k, v) => setCfg(p => ({ ...p, [k]: v }))
 
   // ao trocar de turma, remarca todas as disciplinas dela
   function trocarTurma(id) {
@@ -212,12 +225,31 @@ function ModalMatricular({ turmas, turmaInicial, alunos, onFechar, onConfirmar, 
               {filtrados.length === 0 && <p className={styles.semDados}>Nenhum aluno.</p>}
             </div>
           </div>
+
+          <div className={styles.campo}>
+            <span className={styles.campoLabel}><CalendarClock size={13} /> Acesso e cobrança (opcional)</span>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <DateField label="Início do acesso" value={cfg.acesso_desde} onChange={v => setC('acesso_desde', v)} />
+              <DateField label="Fim do acesso" value={cfg.acesso_ate} onChange={v => setC('acesso_ate', v)} />
+              <DateField label="Pagamento previsto" value={cfg.pagamento_previsto} onChange={v => setC('pagamento_previsto', v)} />
+            </div>
+            <input className={styles.input} placeholder="Motivo da matrícula manual (ex.: cortesia, bolsa, pagamento presencial)"
+              value={cfg.motivo} onChange={e => setC('motivo', e.target.value)} />
+            <span className={styles.dica} style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+              Em branco = acesso imediato e sem vencimento. Use o motivo para registrar matrículas fora do fluxo de compra.
+            </span>
+          </div>
         </div>
         <div className={styles.modalRodape}>
           <button className={styles.btnGhost} onClick={onFechar}>Cancelar</button>
           <button className={styles.btnPrimary}
             disabled={salvando || selAlunos.size === 0 || selDisc.size === 0}
-            onClick={() => onConfirmar(turmaId, [...selAlunos], [...selDisc])}>
+            onClick={() => onConfirmar(turmaId, [...selAlunos], [...selDisc], {
+              acesso_desde: cfg.acesso_desde ? `${cfg.acesso_desde}T00:00:00` : null,
+              acesso_ate: cfg.acesso_ate ? `${cfg.acesso_ate}T23:59:59` : null,
+              pagamento_previsto: cfg.pagamento_previsto || null,
+              motivo: cfg.motivo.trim() || null,
+            })}>
             <Check size={14} /> {salvando ? 'Matriculando…' : `Matricular ${selAlunos.size} aluno(s)`}
           </button>
         </div>
@@ -226,26 +258,31 @@ function ModalMatricular({ turmas, turmaInicial, alunos, onFechar, onConfirmar, 
   )
 }
 
-// ── Modal editar período de acesso ────────────────────────────
+// ── Modal editar matrícula (período + cobrança + motivo) ──────
 function ModalPeriodo({ matricula, onFechar, onSalvar, salvando }) {
   const [desde, setDesde] = useState(toDateInput(matricula.acesso_desde))
   const [ate, setAte] = useState(toDateInput(matricula.acesso_ate))
+  const [pag, setPag] = useState(toDateInput(matricula.pagamento_previsto))
+  const [motivo, setMotivo] = useState(matricula.motivo || '')
 
   const salvar = () => onSalvar(matricula.id, {
     acesso_desde: desde ? `${desde}T00:00:00` : null,
     acesso_ate: ate ? `${ate}T23:59:59` : null,
+    pagamento_previsto: pag || null,
+    motivo: motivo.trim() || null,
   })
 
   return (
     <div className={styles.overlay} onClick={onFechar}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.modalTopo}>
-          <p className={styles.modalTitulo}><CalendarClock size={16} /> Período de acesso</p>
+          <p className={styles.modalTitulo}><CalendarClock size={16} /> Editar matrícula</p>
           <button className={styles.iconBtn} onClick={onFechar}><X size={18} /></button>
         </div>
         <div className={styles.modalCorpo}>
           <p className={styles.semDados} style={{ margin: 0 }}>
             {matricula.aluno?.nome || matricula.aluno?.email} · {matricula.turmas?.nome} · {matricula.disciplinas?.nome}
+            {matricula.origem === 'compra' && <> · <strong>compra</strong></>}
           </p>
           <label className={styles.campo}>
             <span className={styles.campoLabel}>Início do acesso</span>
@@ -257,11 +294,20 @@ function ModalPeriodo({ matricula, onFechar, onSalvar, salvando }) {
             <input type="date" className={styles.input} value={ate} onChange={e => setAte(e.target.value)} />
             <span className={styles.dica} style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Em branco = sem vencimento (vitalício).</span>
           </label>
+          <label className={styles.campo}>
+            <span className={styles.campoLabel}>Data de pagamento prevista</span>
+            <input type="date" className={styles.input} value={pag} onChange={e => setPag(e.target.value)} />
+          </label>
+          <label className={styles.campo}>
+            <span className={styles.campoLabel}>Motivo (matrícula fora do padrão)</span>
+            <input className={styles.input} value={motivo} onChange={e => setMotivo(e.target.value)}
+              placeholder="Ex.: cortesia, bolsa, pagamento presencial" />
+          </label>
         </div>
         <div className={styles.modalRodape}>
           <button className={styles.btnGhost} onClick={onFechar}>Cancelar</button>
           <button className={styles.btnPrimary} disabled={salvando} onClick={salvar}>
-            <Check size={14} /> {salvando ? 'Salvando…' : 'Salvar período'}
+            <Check size={14} /> {salvando ? 'Salvando…' : 'Salvar'}
           </button>
         </div>
       </div>
@@ -317,8 +363,8 @@ export default function CentralMatriculas() {
     onError: (e) => toast.error('Erro: ' + e.message),
   })
   const mMatricular = useMutation({
-    mutationFn: async ({ turmaId, alunoIds, discIds }) => {
-      for (const a of alunoIds) await matricular(a, turmaId, discIds)
+    mutationFn: async ({ turmaId, alunoIds, discIds, extras }) => {
+      for (const a of alunoIds) await matricular(a, turmaId, discIds, extras)
       return alunoIds.length
     },
     onSuccess: (n) => { invalidar(); setModalMatricular(null); toast.success(`${n} aluno(s) matriculado(s)!`) },
@@ -335,8 +381,8 @@ export default function CentralMatriculas() {
     onError: (e) => toast.error('Erro: ' + e.message),
   })
   const mPeriodo = useMutation({
-    mutationFn: ({ id, periodo }) => atualizarPeriodoMatricula(id, periodo),
-    onSuccess: () => { invalidar(); setModalPeriodo(null); toast.success('Período atualizado.') },
+    mutationFn: ({ id, patch }) => atualizarMatricula(id, patch),
+    onSuccess: () => { invalidar(); setModalPeriodo(null); toast.success('Matrícula atualizada.') },
     onError: (e) => toast.error('Erro: ' + e.message),
   })
 
@@ -416,7 +462,10 @@ export default function CentralMatriculas() {
                     discs.map(d => <span key={d.id} className={styles.discChip} style={{ borderColor: d.cor, color: d.cor }}>{d.nome}</span>)}
                 </div>
                 <div className={styles.turmaRodape}>
-                  <span className={styles.turmaMat}><Users size={13} /> {ativasPorTurma.get(t.id) || 0} matriculados</span>
+                  <button className={styles.turmaMat} title="Ver matriculados desta turma"
+                    onClick={() => { setFTurma(t.id); setFStatus('ativa'); setBusca('') }}>
+                    <Users size={13} /> {ativasPorTurma.get(t.id) || 0} matriculados
+                  </button>
                   <div className={styles.turmaAcoes}>
                     <button className={styles.iconBtn} title="Ver conteúdo da turma" onClick={() => navigate(`/turmas/${t.id}`)}><Eye size={15} /></button>
                     <button className={styles.iconBtn} title="Matricular alunos" onClick={() => setModalMatricular(t.id)}><UserPlus size={15} /></button>
@@ -462,9 +511,15 @@ export default function CentralMatriculas() {
                     <td><strong>{m.aluno?.nome || '—'}</strong><br /><span className={styles.tdEmail}>{m.aluno?.email}</span></td>
                     <td>{m.turmas?.nome}</td>
                     <td><span className={styles.discChip} style={{ borderColor: m.disciplinas?.cor, color: m.disciplinas?.cor }}>{m.disciplinas?.nome}</span></td>
-                    <td><span className={chipStatus(m.status)}>{labelStatus(m.status)}</span></td>
+                    <td>
+                      <span className={chipStatus(m.status)}>{labelStatus(m.status)}</span>
+                      <span className={styles.origemTag} title={m.motivo || ''}>
+                        {m.origem === 'compra' ? 'compra' : 'manual'}{m.motivo ? ' ⓘ' : ''}
+                      </span>
+                    </td>
                     <td className={styles.tdData}>
                       <span className={ac.tone === 'exp' ? styles.acessoExp : ac.tone === 'vital' ? styles.acessoVital : ''}>{ac.txt}</span>
+                      {m.pagamento_previsto && <span className={styles.pagPrev}>pgto. {fmt(m.pagamento_previsto)}</span>}
                     </td>
                     <td className={styles.tdData}>{fmt(m.criado_em)}</td>
                     <td className={styles.tdAcoes}>
@@ -499,7 +554,7 @@ export default function CentralMatriculas() {
           alunos={alunos}
           salvando={mMatricular.isPending}
           onFechar={() => setModalMatricular(null)}
-          onConfirmar={(turmaId, alunoIds, discIds) => mMatricular.mutate({ turmaId, alunoIds, discIds })}
+          onConfirmar={(turmaId, alunoIds, discIds, extras) => mMatricular.mutate({ turmaId, alunoIds, discIds, extras })}
         />
       )}
       {modalPeriodo && (
@@ -507,7 +562,7 @@ export default function CentralMatriculas() {
           matricula={modalPeriodo}
           salvando={mPeriodo.isPending}
           onFechar={() => setModalPeriodo(null)}
-          onSalvar={(id, periodo) => mPeriodo.mutate({ id, periodo })}
+          onSalvar={(id, patch) => mPeriodo.mutate({ id, patch })}
         />
       )}
     </div>

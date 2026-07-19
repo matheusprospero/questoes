@@ -90,12 +90,16 @@ export async function listarMatriculas({ turmaId = null, status = null } = {}) {
 }
 
 // Professor matricula direto (status ativa). Upsert cobre re-matricular recusadas.
-export async function matricular(usuarioId, turmaId, disciplinaIds) {
+// extras: { acesso_desde, acesso_ate, motivo, pagamento_previsto } (todos opcionais).
+export async function matricular(usuarioId, turmaId, disciplinaIds, extras = {}) {
+  const { acesso_desde = null, acesso_ate = null, motivo = null, pagamento_previsto = null } = extras
   const linhas = disciplinaIds.map(d => ({
     usuario_id: usuarioId,
     turma_id: turmaId,
     disciplina_id: d,
     status: 'ativa',
+    origem: 'professor',
+    acesso_desde, acesso_ate, motivo, pagamento_previsto,
     decidido_em: new Date().toISOString(),
   }))
   const { error } = await supabase
@@ -117,12 +121,12 @@ export async function removerMatricula(id) {
   if (error) throw error
 }
 
-// Define o período de acesso (início/fim). null = sem início/sem fim (vitalício).
-export async function atualizarPeriodoMatricula(id, { acesso_desde = null, acesso_ate = null }) {
-  const { error } = await supabase
-    .from('matriculas')
-    .update({ acesso_desde, acesso_ate })
-    .eq('id', id)
+// Edita uma matrícula: período (início/fim), motivo e data de pagamento prevista.
+export async function atualizarMatricula(id, patch) {
+  const campos = ['acesso_desde', 'acesso_ate', 'motivo', 'pagamento_previsto']
+  const dados = {}
+  for (const c of campos) if (c in patch) dados[c] = patch[c] || null
+  const { error } = await supabase.from('matriculas').update(dados).eq('id', id)
   if (error) throw error
 }
 

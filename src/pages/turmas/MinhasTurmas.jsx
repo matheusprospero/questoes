@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
-  listarTurmas, minhasMatriculas, solicitarMatricula, cancelarSolicitacao,
+  listarTurmas, minhasMatriculas, cancelarSolicitacao,
   disciplinasDaTurma, precosDaTurma,
 } from '../../services/turmas'
 import { comprar, precoFmt } from '../../services/pagamentos'
-import { GraduationCap, Check, Clock, X, BookOpen, ArrowRight, CreditCard } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
+import { GraduationCap, Check, Clock, X, BookOpen, ArrowRight, CreditCard, Settings2 } from 'lucide-react'
 import styles from './MinhasTurmas.module.css'
 
 const fmtData = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
@@ -15,6 +16,7 @@ const fmtData = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-dig
 export default function MinhasTurmas() {
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const { isAdmin } = useAuth()
   const [comprando, setComprando] = useState('') // chave do item em processamento
   const { data: turmas = [], isLoading } = useQuery({ queryKey: ['turmas'], queryFn: listarTurmas })
   const { data: matriculas = [] } = useQuery({ queryKey: ['minhas-matriculas'], queryFn: minhasMatriculas })
@@ -39,11 +41,6 @@ export default function MinhasTurmas() {
 
   const invalidar = () => qc.invalidateQueries({ queryKey: ['minhas-matriculas'] })
 
-  const mSolicitar = useMutation({
-    mutationFn: ({ turmaId, discId }) => solicitarMatricula(turmaId, discId),
-    onSuccess: () => { invalidar(); toast.success('Solicitação enviada — aguarde a aprovação do professor.') },
-    onError: (e) => toast.error('Erro: ' + e.message),
-  })
   const mCancelar = useMutation({
     mutationFn: (id) => cancelarSolicitacao(id),
     onSuccess: () => { invalidar(); toast.success('Solicitação cancelada.') },
@@ -139,14 +136,8 @@ export default function MinhasTurmas() {
                       </button>
                     )}
                   </span>
-                ) : st === 'recusada' ? (
-                  <span className={styles.chipErr}>Não aprovada</span>
                 ) : (
-                  <button className={styles.btnSolicitar}
-                    disabled={mSolicitar.isPending}
-                    onClick={() => mSolicitar.mutate({ turmaId: t.id, discId: d.id })}>
-                    Solicitar matrícula
-                  </button>
+                  <span className={styles.indisponivel}>Indisponível no momento</span>
                 )}
               </div>
             )
@@ -167,6 +158,13 @@ export default function MinhasTurmas() {
           automática após o pagamento. Os cursos que você já tem aparecem em “Meus cursos”.
         </p>
       </div>
+
+      {isAdmin && (
+        <div className={styles.adminAviso}>
+          <span><Settings2 size={15} /> Esta é a <strong>visão do aluno</strong>. Para ver matriculados, matricular à mão e definir preços, use a Central de Matrículas.</span>
+          <button className={styles.adminBtn} onClick={() => navigate('/matriculas')}>Central de Matrículas <ArrowRight size={13} /></button>
+        </div>
+      )}
 
       {matriculas.length > 0 && (
         <div className={styles.resumo}>
