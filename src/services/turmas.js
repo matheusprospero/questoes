@@ -188,6 +188,32 @@ export async function setTurmasDoSimulado(simuladoId, turmaIds) {
   }
 }
 
+// ── Conteúdo visto pelo lado da TURMA (escolher aulas/simulados dentro dela) ──
+export async function aulasDaTurma(turmaId) {
+  const { data, error } = await supabase.from('turma_aulas').select('aula_id').eq('turma_id', turmaId)
+  if (error) throw error
+  return (data ?? []).map(r => r.aula_id)
+}
+export async function setAulasDaTurma(turmaId, aulaIds) {
+  await supabase.from('turma_aulas').delete().eq('turma_id', turmaId)
+  if (aulaIds.length) {
+    const { error } = await supabase.from('turma_aulas').insert(aulaIds.map(a => ({ turma_id: turmaId, aula_id: a })))
+    if (error) throw error
+  }
+}
+export async function simuladosDaTurma(turmaId) {
+  const { data, error } = await supabase.from('turma_simulados').select('simulado_id').eq('turma_id', turmaId)
+  if (error) throw error
+  return (data ?? []).map(r => r.simulado_id)
+}
+export async function setSimuladosDaTurma(turmaId, simuladoIds) {
+  await supabase.from('turma_simulados').delete().eq('turma_id', turmaId)
+  if (simuladoIds.length) {
+    const { error } = await supabase.from('turma_simulados').insert(simuladoIds.map(s => ({ turma_id: turmaId, simulado_id: s })))
+    if (error) throw error
+  }
+}
+
 // Uma turma + suas disciplinas, aulas e simulados (RLS já filtra o que o aluno vê)
 export async function buscarTurmaComConteudo(turmaId) {
   const { data: turma, error } = await supabase.from('turmas').select(SELECT_TURMA).eq('id', turmaId).single()

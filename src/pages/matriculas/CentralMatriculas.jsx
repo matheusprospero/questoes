@@ -1,17 +1,19 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
   listarTurmas, criarTurma, atualizarTurma, excluirTurma, definirDisciplinas,
   listarMatriculas, matricular, decidirMatricula, removerMatricula, disciplinasDaTurma, precosDaTurma,
-  atualizarMatricula,
+  atualizarMatricula, aulasDaTurma, setAulasDaTurma, simuladosDaTurma, setSimuladosDaTurma,
 } from '../../services/turmas'
 import { listarDisciplinas } from '../../services/questoes'
 import { listarAlunosComEmail } from '../../services/comunicacao'
+import { listarAulas } from '../../services/aulas'
+import { listarSimulados } from '../../services/simulados'
 import { useNavigate } from 'react-router-dom'
 import {
   GraduationCap, Plus, Pencil, Trash2, Check, X, Users, Search,
-  UserPlus, Power, Clock, Eye, CalendarClock,
+  UserPlus, Power, Clock, Eye, CalendarClock, ListChecks, BookOpen,
 } from 'lucide-react'
 import styles from './CentralMatriculas.module.css'
 
@@ -315,6 +317,104 @@ function ModalPeriodo({ matricula, onFechar, onSalvar, salvando }) {
   )
 }
 
+// ── Modal: escolher aulas e simulados da turma ────────────────
+function ModalConteudo({ turma, onFechar }) {
+  const qc = useQueryClient()
+  const { data: aulas = [] } = useQuery({ queryKey: ['aulas'], queryFn: listarAulas })
+  const { data: simulados = [] } = useQuery({ queryKey: ['simulados'], queryFn: listarSimulados })
+  const { data: aulaIdsAtuais } = useQuery({ queryKey: ['turma-aulas', turma.id], queryFn: () => aulasDaTurma(turma.id) })
+  const { data: simIdsAtuais } = useQuery({ queryKey: ['turma-simulados', turma.id], queryFn: () => simuladosDaTurma(turma.id) })
+
+  const [selAulas, setSelAulas] = useState(null)
+  const [selSims, setSelSims] = useState(null)
+  const [buscaA, setBuscaA] = useState('')
+  const [buscaS, setBuscaS] = useState('')
+
+  useEffect(() => { if (aulaIdsAtuais && selAulas === null) setSelAulas(new Set(aulaIdsAtuais)) }, [aulaIdsAtuais, selAulas])
+  useEffect(() => { if (simIdsAtuais && selSims === null) setSelSims(new Set(simIdsAtuais)) }, [simIdsAtuais, selSims])
+
+  const carregando = selAulas === null || selSims === null
+  const propostos = simulados.filter(s => s.proposto)
+  const toggle = (setFn) => (id) => setFn(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const q = (t) => (v) => (v || '').toLowerCase().includes(t.toLowerCase())
+
+  const mSalvar = useMutation({
+    mutationFn: async () => {
+      await setAulasDaTurma(turma.id, [...selAulas])
+      await setSimuladosDaTurma(turma.id, [...selSims])
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['turma-aulas', turma.id] })
+      qc.invalidateQueries({ queryKey: ['turma-simulados', turma.id] })
+      qc.invalidateQueries({ queryKey: ['turma-conteudo'] })
+      toast.success('Conteúdo da turma atualizado.')
+      onFechar()
+    },
+    onError: (e) => toast.error('Erro: ' + e.message),
+  })
+
+  const aulasFiltradas = aulas.filter(a => !buscaA || q(buscaA)(a.titulo))
+  const simsFiltrados = propostos.filter(s => !buscaS || q(buscaS)(s.titulo))
+
+  return (
+    <div className={styles.overlay} onClick={onFechar}>
+      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalTopo}>
+          <p className={styles.modalTitulo}><ListChecks size={16} /> Conteúdo da turma · {turma.nome}</p>
+          <button className={styles.iconBtn} onClick={onFechar}><X size={18} /></button>
+        </div>
+        <div className={styles.modalCorpo}>
+          {carregando ? <p className={styles.semDados}>Carregando…</p> : (
+            <>
+              <div className={styles.campo}>
+                <span className={styles.campoLabel}><BookOpen size={13} /> Aulas ({selAulas.size} na turma)</span>
+                <div className={styles.buscaBox}><Search size={13} />
+                  <input className={styles.buscaInput} placeholder="Buscar aula…" value={buscaA} onChange={e => setBuscaA(e.target.value)} />
+                </div>
+                <div className={styles.alunoLista}>
+                  {aulasFiltradas.map(a => (
+                    <label key={a.id} className={styles.alunoItem}>
+                      <input type="checkbox" checked={selAulas.has(a.id)} onChange={() => toggle(setSelAulas)(a.id)} />
+                      <span className={styles.alunoNome}>{a.titulo}</span>
+                      {a.disciplinas?.nome && <span className={styles.alunoEmail}>{a.disciplinas.nome}</span>}
+                    </label>
+                  ))}
+                  {aulasFiltradas.length === 0 && <p className={styles.semDados}>Nenhuma aula.</p>}
+                </div>
+              </div>
+
+              <div className={styles.campo}>
+                <span className={styles.campoLabel}><GraduationCap size={13} /> Simulados propostos ({selSims.size} na turma)</span>
+                <div className={styles.buscaBox}><Search size={13} />
+                  <input className={styles.buscaInput} placeholder="Buscar simulado…" value={buscaS} onChange={e => setBuscaS(e.target.value)} />
+                </div>
+                <div className={styles.alunoLista}>
+                  {simsFiltrados.map(s => (
+                    <label key={s.id} className={styles.alunoItem}>
+                      <input type="checkbox" checked={selSims.has(s.id)} onChange={() => toggle(setSelSims)(s.id)} />
+                      <span className={styles.alunoNome}>{s.titulo}</span>
+                    </label>
+                  ))}
+                  {simsFiltrados.length === 0 && <p className={styles.semDados}>Nenhum simulado proposto.</p>}
+                </div>
+                <span className={styles.dica} style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+                  Só aparecem simulados marcados como “proposto”. Conteúdo sem turma continua público.
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+        <div className={styles.modalRodape}>
+          <button className={styles.btnGhost} onClick={onFechar}>Cancelar</button>
+          <button className={styles.btnPrimary} disabled={carregando || mSalvar.isPending} onClick={() => mSalvar.mutate()}>
+            <Check size={14} /> {mSalvar.isPending ? 'Salvando…' : 'Salvar conteúdo'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Página ────────────────────────────────────────────────────
 export default function CentralMatriculas() {
   const qc = useQueryClient()
@@ -322,6 +422,7 @@ export default function CentralMatriculas() {
   const [modalTurma, setModalTurma] = useState(null)     // {turma}|{novo:true}
   const [modalMatricular, setModalMatricular] = useState(null) // turmaId|true
   const [modalPeriodo, setModalPeriodo] = useState(null) // matricula
+  const [modalConteudo, setModalConteudo] = useState(null) // turma
   const [fTurma, setFTurma] = useState('')
   const [fStatus, setFStatus] = useState('')
   const [busca, setBusca] = useState('')
@@ -467,6 +568,7 @@ export default function CentralMatriculas() {
                     <Users size={13} /> {ativasPorTurma.get(t.id) || 0} matriculados
                   </button>
                   <div className={styles.turmaAcoes}>
+                    <button className={styles.iconBtn} title="Aulas e simulados da turma" onClick={() => setModalConteudo(t)}><ListChecks size={15} /></button>
                     <button className={styles.iconBtn} title="Ver conteúdo da turma" onClick={() => navigate(`/turmas/${t.id}`)}><Eye size={15} /></button>
                     <button className={styles.iconBtn} title="Matricular alunos" onClick={() => setModalMatricular(t.id)}><UserPlus size={15} /></button>
                     <button className={styles.iconBtn} title="Editar" onClick={() => setModalTurma({ turma: t })}><Pencil size={15} /></button>
@@ -564,6 +666,9 @@ export default function CentralMatriculas() {
           onFechar={() => setModalPeriodo(null)}
           onSalvar={(id, patch) => mPeriodo.mutate({ id, patch })}
         />
+      )}
+      {modalConteudo && (
+        <ModalConteudo turma={modalConteudo} onFechar={() => setModalConteudo(null)} />
       )}
     </div>
   )
