@@ -117,6 +117,15 @@ export async function removerMatricula(id) {
   if (error) throw error
 }
 
+// Define o período de acesso (início/fim). null = sem início/sem fim (vitalício).
+export async function atualizarPeriodoMatricula(id, { acesso_desde = null, acesso_ate = null }) {
+  const { error } = await supabase
+    .from('matriculas')
+    .update({ acesso_desde, acesso_ate })
+    .eq('id', id)
+  if (error) throw error
+}
+
 export async function contarSolicitacoesPendentes() {
   const { count, error } = await supabase
     .from('matriculas')

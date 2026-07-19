@@ -15,7 +15,7 @@ const CONTEUDO = {
   pendente: {
     Icone: Clock, cor: '#b45309',
     titulo: 'Pagamento em processamento',
-    texto: 'Se você pagou por PIX, o acesso é liberado assim que o banco confirmar — normalmente em alguns instantes. Você pode fechar esta página; a matrícula aparece sozinha em "Minhas Turmas".',
+    texto: 'Se você pagou por PIX, o acesso é liberado assim que o banco confirmar — normalmente em alguns instantes. Você pode fechar esta página; a matrícula aparece sozinha em "Meus cursos".',
   },
   erro: {
     Icone: XCircle, cor: '#b91c1c',
@@ -44,7 +44,7 @@ export default function PagamentoRetorno() {
         <h1 className={styles.titulo}>{c.titulo}</h1>
         <p className={styles.texto}>{c.texto}</p>
         <button className={styles.btn} onClick={() => navigate('/turmas')}>
-          Ir para Minhas Turmas <ArrowRight size={15} />
+          Ir para Meus cursos <ArrowRight size={15} />
         </button>
       </div>
     </div>

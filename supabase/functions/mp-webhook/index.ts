@@ -85,7 +85,8 @@ Deno.serve(async (req) => {
     }
     if (disciplinasParaLiberar.length === 0) return new Response('ok', { status: 200 })
 
-    // Mensal: acesso por 30 dias a partir do pagamento. Vitalício: sem vencimento.
+    // Início agora; mensal expira em 30 dias, vitalício não tem fim.
+    const agora = new Date().toISOString()
     const acessoAte = plano === 'mensal'
       ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       : null
@@ -96,8 +97,9 @@ Deno.serve(async (req) => {
       disciplina_id: d,
       status: 'ativa',
       origem: 'compra',
+      acesso_desde: agora,
       acesso_ate: acessoAte,
-      decidido_em: new Date().toISOString(),
+      decidido_em: agora,
     }))
     const { error } = await admin.from('matriculas')
       .upsert(linhas, { onConflict: 'usuario_id,turma_id,disciplina_id' })
