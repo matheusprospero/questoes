@@ -7,6 +7,21 @@
 .resumo { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
 .resumoItem { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
 
+.adminAviso {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  margin: 4px 0 4px; padding: 10px 14px; border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--color-primary); border-radius: var(--radius-md);
+  background: var(--bg-surface); font-size: 12.5px; color: var(--text-secondary);
+}
+.adminAviso span { display: inline-flex; align-items: center; gap: 7px; }
+.adminAviso strong { color: var(--text-primary); }
+.adminBtn {
+  display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+  font-size: 12.5px; font-weight: 700; padding: 6px 12px; border-radius: var(--radius-md);
+  border: 1px solid var(--color-primary); background: transparent; color: var(--color-primary); cursor: pointer;
+}
+.indisponivel { font-size: 12px; color: var(--text-tertiary); font-style: italic; }
+
 .secao { margin-top: 24px; }
 .secao:first-of-type { margin-top: 8px; }
 .secaoTitulo { font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle); }

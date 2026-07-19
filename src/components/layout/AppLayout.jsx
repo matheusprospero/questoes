@@ -111,6 +111,7 @@ export default function AppLayout() {
       </div>
 
       <nav className={styles.nav} aria-label="Navegação principal">
+        {isAdmin && <div className={styles.navArea}>Área do aluno</div>}
         {NAV_ITEMS.map(group => (
           <div key={group.section}>
             <div className={styles.navSection}>{group.section}</div>
@@ -121,7 +122,7 @@ export default function AppLayout() {
         ))}
         {isAdmin && (
           <div>
-            <div className={styles.navSection}>Gestão</div>
+            <div className={styles.navArea} style={{ marginTop: 14 }}>Gestão · Professor</div>
             <NavItem to="/acompanhamento" label="Acompanhamento" Icon={LineChart} />
             <NavItem to="/matriculas" label="Matrículas" Icon={GradCap} badge={matriculasPendentes} />
             <NavItem to="/pagamentos" label="Pagamentos" Icon={CreditCard} />
