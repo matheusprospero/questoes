@@ -7,13 +7,13 @@ import {
   atualizarMatricula, aulasDaTurma, setAulasDaTurma, simuladosDaTurma, setSimuladosDaTurma,
 } from '../../services/turmas'
 import { listarDisciplinas } from '../../services/questoes'
-import { listarAlunosComEmail } from '../../services/comunicacao'
+import { listarAlunosComEmail, lerEmailsAuto, salvarEmailsAuto } from '../../services/comunicacao'
 import { listarAulas } from '../../services/aulas'
 import { listarSimulados } from '../../services/simulados'
 import { useNavigate } from 'react-router-dom'
 import {
   GraduationCap, Plus, Pencil, Trash2, Check, X, Users, Search,
-  UserPlus, Power, Clock, Eye, CalendarClock, ListChecks, BookOpen,
+  UserPlus, Power, Clock, Eye, CalendarClock, ListChecks, BookOpen, Mail, MailX,
 } from 'lucide-react'
 import styles from './CentralMatriculas.module.css'
 
@@ -518,6 +518,21 @@ export default function CentralMatriculas() {
     onError: (e) => toast.error('Erro: ' + e.message),
   })
 
+  // Liga/desliga e-mails automáticos (boas-vindas + lembrete)
+  const { data: emailsAuto = { boas_vindas: true, lembrete: true } } = useQuery({
+    queryKey: ['emails-auto'], queryFn: lerEmailsAuto,
+  })
+  const mEmailsAuto = useMutation({
+    mutationFn: (cfg) => salvarEmailsAuto(cfg),
+    onSuccess: (_d, cfg) => {
+      qc.setQueryData(['emails-auto'], cfg)
+      qc.invalidateQueries({ queryKey: ['emails-auto'] })
+      toast.success('Preferência de e-mails salva.')
+    },
+    onError: (e) => toast.error('Erro: ' + e.message),
+  })
+  const toggleEmail = (chave) => mEmailsAuto.mutate({ ...emailsAuto, [chave]: !emailsAuto[chave] })
+
   const pendentes = useMemo(() => matriculas.filter(m => m.status === 'pendente'), [matriculas])
   const ativasPorTurma = useMemo(() => {
     const m = new Map()
@@ -549,6 +564,25 @@ export default function CentralMatriculas() {
           </button>
           <button className={styles.btnPrimary} onClick={() => setModalTurma({ novo: true })}>
             <Plus size={14} /> Nova turma
+          </button>
+        </div>
+      </div>
+
+      {/* E-mails automáticos: liga/desliga */}
+      <div className={styles.emailsAuto}>
+        <span className={styles.emailsAutoLabel}><Mail size={15} /> E-mails automáticos</span>
+        <div className={styles.emailsAutoBtns}>
+          <button
+            className={`${styles.toggleEmail} ${emailsAuto.boas_vindas ? styles.toggleOn : styles.toggleOff}`}
+            onClick={() => toggleEmail('boas_vindas')} disabled={mEmailsAuto.isPending}>
+            {emailsAuto.boas_vindas ? <Mail size={13} /> : <MailX size={13} />}
+            Boas-vindas: {emailsAuto.boas_vindas ? 'ativado' : 'desativado'}
+          </button>
+          <button
+            className={`${styles.toggleEmail} ${emailsAuto.lembrete ? styles.toggleOn : styles.toggleOff}`}
+            onClick={() => toggleEmail('lembrete')} disabled={mEmailsAuto.isPending}>
+            {emailsAuto.lembrete ? <Mail size={13} /> : <MailX size={13} />}
+            Lembrete de meta: {emailsAuto.lembrete ? 'ativado' : 'desativado'}
           </button>
         </div>
       </div>

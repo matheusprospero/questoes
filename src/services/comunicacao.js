@@ -21,6 +21,23 @@ export async function listarEmails({ limite = 1000 } = {}) {
   return data ?? []
 }
 
+// ── Liga/desliga e-mails automáticos (config_app.emails_auto) ──
+export async function lerEmailsAuto() {
+  const { data, error } = await supabase
+    .from('config_app').select('valor').eq('chave', 'emails_auto').maybeSingle()
+  if (error) return { boas_vindas: true, lembrete: true }
+  return { boas_vindas: true, lembrete: true, ...(data?.valor || {}) }
+}
+
+export async function salvarEmailsAuto(cfg) {
+  const { error } = await supabase.from('config_app').upsert({
+    chave: 'emails_auto',
+    valor: { boas_vindas: !!cfg.boas_vindas, lembrete: !!cfg.lembrete },
+    atualizado_em: new Date().toISOString(),
+  })
+  if (error) throw error
+}
+
 // Alunos com e-mail (para o seletor de destinatários e para nomear o histórico)
 export async function listarAlunosComEmail() {
   const { data, error } = await supabase
