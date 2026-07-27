@@ -110,3 +110,13 @@
   background: var(--color-primary); color: #fff; border: none; border-radius: var(--radius-md); cursor: pointer;
 }
 .btnSalvar:hover { background: var(--color-primary-dark); }
+
+/* Lembrete de meta: dias da semana + preferências */
+.checkLembrete { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text-secondary); cursor: pointer; margin-bottom: 12px; line-height: 1.4; }
+.diasRow { display: flex; gap: 6px; margin: 4px 0 12px; }
+.diaBtn {
+  width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--border-subtle); background: var(--bg-surface);
+  color: var(--text-secondary); font-size: 12.5px; font-weight: 700;
+}
+.diaBtnOn { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 15%, transparent); color: var(--color-primary); }

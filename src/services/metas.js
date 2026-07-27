@@ -8,6 +8,11 @@ import { supabase } from './supabase'
 const CFG_DEFAULT = {
   metaDiaria: 20, metaDias: 7, metaSemanal: null, planoId: null,
   objetivo: { banca_id: null, assuntos: [] }, porDisciplina: {},
+  // Lembrete diário por e-mail (por aluno)
+  lembreteAtivo: true,          // recebe o e-mail de lembrete?
+  diasSemana: [1, 2, 3, 4, 5],  // dias em que a meta vale (0=dom..6=sáb)
+  semanas: 0,                   // por quantas semanas a meta fica ativa (0 = sem prazo)
+  inicioMeta: null,             // data de início da contagem de semanas (YYYY-MM-DD)
 }
 
 // linha do banco -> cfg usado no app
@@ -21,10 +26,16 @@ function linhaParaCfg(row) {
     planoId: row?.plano_id ?? null,
     objetivo: { banca_id: obj.banca_id ?? null, assuntos: obj.assuntos ?? [] },
     porDisciplina: obj.porDisciplina ?? {},
+    lembreteAtivo: row?.lembrete_ativo ?? true,
+    diasSemana: row?.dias_semana ?? CFG_DEFAULT.diasSemana,
+    semanas: row?.semanas ?? 0,
+    inicioMeta: row?.inicio_meta ?? null,
   }
 }
 
 function cfgParaLinha(cfg, usuarioId) {
+  const semanas = Math.max(0, Number(cfg.semanas) || 0)
+  const hoje = new Date().toLocaleDateString('en-CA')
   return {
     usuario_id: usuarioId,
     meta_diaria: Number(cfg.metaDiaria) || 20,
@@ -36,6 +47,11 @@ function cfgParaLinha(cfg, usuarioId) {
       assuntos: cfg.objetivo?.assuntos || [],
       porDisciplina: cfg.porDisciplina || {},
     },
+    lembrete_ativo: cfg.lembreteAtivo !== false,
+    dias_semana: (cfg.diasSemana && cfg.diasSemana.length ? cfg.diasSemana : [1,2,3,4,5]).map(Number),
+    semanas,
+    // início: mantém o existente; se definir prazo e não houver início, começa hoje
+    inicio_meta: semanas > 0 ? (cfg.inicioMeta || hoje) : null,
     atualizado_em: new Date().toISOString(),
   }
 }

@@ -1,8 +1,14 @@
 import { useMemo, useState } from 'react'
-import { Target, Flame, X, Crosshair, ChevronDown, ChevronUp } from 'lucide-react'
+import { Target, Flame, X, Crosshair, ChevronDown, ChevronUp, Bell } from 'lucide-react'
 import styles from './ModalMeta.module.css'
 
-export const CFG_META_DEFAULT = { metaDiaria: 20, metaDias: 7, objetivo: { banca_id: null, assuntos: [] }, porDisciplina: {} }
+export const CFG_META_DEFAULT = {
+  metaDiaria: 20, metaDias: 7, objetivo: { banca_id: null, assuntos: [] }, porDisciplina: {},
+  lembreteAtivo: true, diasSemana: [1, 2, 3, 4, 5], semanas: 0, inicioMeta: null,
+}
+
+const DIAS = [['D', 0], ['S', 1], ['T', 2], ['Q', 3], ['Q', 4], ['S', 5], ['S', 6]]
+const DIAS_NOME = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 export function lerCfgMeta() {
   try {
@@ -36,6 +42,10 @@ export default function ModalMeta({ cfgInicial, facetas = [], onFechar, onSalvar
     const o = {}; for (const [k, v] of Object.entries(cfgInicial.porDisciplina || {})) o[String(k)] = Number(v) || 0; return o
   })
   const [assuntos, setAssuntos] = useState(() => new Set((cfgInicial.objetivo?.assuntos || []).map(String)))
+  const [lembreteAtivo, setLembreteAtivo] = useState(cfgInicial.lembreteAtivo !== false)
+  const [diasSemana, setDiasSemana] = useState(() => new Set((cfgInicial.diasSemana ?? [1,2,3,4,5]).map(Number)))
+  const [semanas, setSemanas] = useState(cfgInicial.semanas ?? 0)
+  const toggleDia = (d) => setDiasSemana(s => { const n = new Set(s); n.has(d) ? n.delete(d) : n.add(d); return n })
   const [abertos, setAbertos] = useState(() => new Set())
   const toggleGrupo = (id) => setAbertos(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
 
@@ -66,6 +76,10 @@ export default function ModalMeta({ cfgInicial, facetas = [], onFechar, onSalvar
       metaDiaria: Number(metaDiaria) || 0, metaDias: Number(metaDias) || 0,
       objetivo: { banca_id: banca || null, assuntos: [...assuntos].filter(a => validos.has(a)) },
       porDisciplina: { ...porDisc },
+      lembreteAtivo,
+      diasSemana: [...diasSemana].sort((a, b) => a - b),
+      semanas: Math.max(0, Number(semanas) || 0),
+      inicioMeta: cfgInicial.inicioMeta ?? null,
     })
   }
 
@@ -171,6 +185,36 @@ export default function ModalMeta({ cfgInicial, facetas = [], onFechar, onSalvar
                     : ` O restante (${Math.max(0, metaEfetiva - somaDisc)}) vem de revisão e pontos fracos.`}
                 </p>
               </div>
+            )}
+          </div>
+
+          <div className={styles.secao}>
+            <p className={styles.secaoTitulo}><Bell size={14} /> Lembrete de meta por e-mail</p>
+            <label className={styles.checkLembrete}>
+              <input type="checkbox" checked={lembreteAtivo} onChange={e => setLembreteAtivo(e.target.checked)} />
+              Receber lembrete por e-mail quando eu não bater a meta do dia
+            </label>
+            {lembreteAtivo && (
+              <>
+                <span className={styles.label}>Em quais dias da semana a meta vale:</span>
+                <div className={styles.diasRow}>
+                  {DIAS.map(([letra, d]) => (
+                    <button key={d} type="button" title={DIAS_NOME[d]}
+                      className={`${styles.diaBtn} ${diasSemana.has(d) ? styles.diaBtnOn : ''}`}
+                      onClick={() => toggleDia(d)}>{letra}</button>
+                  ))}
+                </div>
+                <label className={styles.campoFull}>
+                  <span className={styles.label}>Por quantas semanas manter a meta ativa</span>
+                  <input className={styles.input} type="number" min="0" value={semanas}
+                    onChange={e => setSemanas(e.target.value)} />
+                  <span className={styles.dica}>
+                    {Number(semanas) > 0
+                      ? `A cobrança por e-mail para após ${semanas} semana(s).`
+                      : '0 = sem prazo (a meta fica ativa por tempo indeterminado).'}
+                  </span>
+                </label>
+              </>
             )}
           </div>
         </div>
