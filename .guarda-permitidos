@@ -1,0 +1,59 @@
+# Exceções da guarda anti-vazamento.
+#
+# Um caminho por linha, relativo à raiz do repositório; linha terminada em `/`
+# cobre a pasta. Escreva SEMPRE o porquê — em bloco acima ou depois de `#` na
+# mesma linha. Sem justificativa, a próxima pessoa não tem como julgar se a
+# exceção ainda vale.
+#
+# ⚠️ Só entra aqui arquivo que a guarda barraria pela EXTENSÃO e que foi ABERTO
+# e conferido: sem nome, e-mail, RA, matrícula, CPF, telefone ou endereço. Esta
+# lista é para modelo em branco e definição de esquema — nunca para dado com
+# dono.
+#
+# ⚠️ Liberar o caminho NÃO desliga a checagem de CONTEÚDO. Um arquivo novo
+# dentro de uma pasta liberada continua barrado se trouxer CPF, chave privada,
+# service_role ou lista de e-mails. Conferido.
+#
+# ⚠️ O MESMO arquivo é lido pela guarda local, pelo workflow `guarda-dados.yml`
+# e pela auditoria semanal da rede.
+
+# Migrações do banco, rodadas à mão no SQL Editor do Supabase — é o fluxo
+# documentado no CLAUDE.md deste repositório. Conferido em 2026-08-25:
+# nenhum dado de aluno, nenhum CPF, nenhuma credencial. O único endereço
+# é um marcador de comentário para quem for rodar o script trocar pelo próprio.
+#
+# ⚠️ Migração NOVA não entra sozinha: acrescente a linha aqui, e só depois
+# de abrir o arquivo e conferir que não há dado com dono dentro.
+aulas.sql
+aulas_assinante.sql
+aulas_assunto.sql
+codigo_area.sql
+config_app.sql
+destaque_simulados.sql
+destaques.sql
+destaques_agenda.sql
+emails_auto_toggle.sql
+emails_automaticos.sql
+emails_fila.sql
+feedback.sql
+liberada.sql
+login_google.sql
+matricula_manual.sql
+matricula_periodo.sql
+meta_lembrete_aluno.sql
+pagamento_config.sql
+plano_estudos.sql
+provas.sql
+relatorio_simulados.sql
+revisada.sql
+revisao_espacada.sql
+schema_completo.sql
+simulados_propostos.sql
+turmas.sql
+turmas_conteudo.sql
+venda_acesso.sql
+videos_assinante.sql
+
+# Notas de revisão de questões (código, órgão, ano, cargo, motivo). Conferido
+# em 2026-08-25: não há aluno, e-mail nem identificador de pessoa.
+REVISAO_MATEMATICA.csv
