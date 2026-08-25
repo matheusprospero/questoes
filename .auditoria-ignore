@@ -1,0 +1,8 @@
+# Achados que uma pessoa já olhou e considerou legítimos. Uma linha por
+# caminho, com o motivo depois de `#` — sem motivo, a linha não vale.
+#
+# ⚠️ Isto NÃO esconde o achado: ele continua saindo na issue da auditoria,
+# numa seção própria, com este motivo ao lado. O que muda é que deixa de
+# contar como pendência.
+
+schema_completo.sql # o único endereço é um marcador num comentário (`SEU` arroba `EMAIL.com`), para quem for rodar o script trocar pelo próprio; escrito partido de propósito, senão a guarda barra este arquivo
