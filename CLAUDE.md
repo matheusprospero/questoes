@@ -4,6 +4,10 @@ Banco de questões de concursos (venda de acesso). O **professor/admin** cria qu
 acompanha alunos; o **aluno** resolve questões, monta plano/cadernos/simulados e vê estatísticas.
 Tudo isolado por RLS. Frontend em GitHub Pages, dados no Supabase.
 
+Documentação: `docs/MANUAL-DO-USUARIO.md` (aluno e professor) e
+`docs/DOCUMENTACAO-TECNICA.md` (mapa técnico). Este arquivo é a fonte de
+verdade sobre caminhos e fluxo; os dois de `docs/` explicam o sistema.
+
 ## Comandos
 - `npm run dev` — servidor local (porta 5173). Nunca rodar via Bash; use o preview.
 - `npm run build` — valida a compilação (Vite).
@@ -58,6 +62,44 @@ Menu em `src/components/layout/AppLayout.jsx` (NAV_ITEMS + bloco admin "Gestão"
 - Consultas ao banco: use `python -c` importando `importador/importar.py` (`m.rest_get(tabela, query)` = PostgREST com service_role). Não montar clientes novos.
 - Geração de questões em massa: pipeline pronto descrito em `importador/conteudo/inserir_verificadas.py` (subagentes por assunto → verificação matemática → balancear gabaritos A–E → inserir `liberada=false`).
 - Build ~7s: `npm run build | tail -3` basta como validação; não subir dev server para mudanças não visuais.
+
+## Manutenção da documentação
+
+Todo commit que muda o que a documentação afirma **atualiza a documentação no
+mesmo commit**. Não espere que peçam: documento desatualizado é pior que nenhum
+— induz ao erro com aparência de autoridade, e quem o lê não tem como saber que
+envelheceu.
+
+| Mudou | Atualize |
+|---|---|
+| tela, campo, fluxo do aluno ou do professor, o que um número significa | `docs/MANUAL-DO-USUARIO.md` |
+| serviço, tabela, RPC, Edge Function, policy, variável de ambiente, passo de publicação | `docs/DOCUMENTACAO-TECNICA.md` |
+| um caminho do mapa, um comando, a ordem do fluxo de atualização | este arquivo |
+| uma migration nova | este arquivo (lista de migrations) **e** a ordem em `docs/DOCUMENTACAO-TECNICA.md` §7 |
+
+Antes de fechar o commit:
+
+- [ ] Mudou **tela, campo ou fluxo**? → manual do usuário.
+- [ ] Mudou **dado, serviço, pagamento ou publicação**? → documentação técnica.
+- [ ] O comportamento novo **contradiz** alguma frase já escrita? → corrija a
+      frase; não acrescente a contradição ao lado dela.
+- [ ] **Renomeou ou removeu** rota, serviço, tabela ou coluna citada em algum
+      documento? → acerte os ponteiros (este arquivo é um mapa: ponteiro errado
+      aqui custa mais que em qualquer outro lugar).
+- [ ] Apareceu um **"parece defeito e não é"**? → a tabela do manual existe para
+      isso, e é o que evita a mensagem do aluno.
+
+⚠️ **`*.sql` novo entra na lista de migrations deste arquivo no mesmo commit**,
+com a posição na cadeia de dependência. É a lista que diz ao dono o que rodar
+antes do deploy — faltando uma linha, a tela nova sobe sem a tabela.
+
+⚠️ **Mudança nos pesos da prontidão, nos intervalos da revisão espaçada ou nas
+regras de acesso ao conteúdo altera o que os dois documentos afirmam** — e o
+aluno lê o manual para entender o próprio número.
+
+⚠️ **Descrever a intenção como se fosse o estado é o erro mais caro.** Quando o
+código ainda não faz o que a documentação diz, escreva as duas coisas: o alvo e
+o que o sistema faz **hoje**, com a data.
 
 ## Convenções
 - Textos e nomes de código em pt-BR. Enunciados/comentários de questões em HTML; frações como `<sup>x</sup>&frasl;<sub>y</sub>`.
