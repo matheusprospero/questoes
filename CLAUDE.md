@@ -4,8 +4,8 @@ Banco de questões de concursos (venda de acesso). O **professor/admin** cria qu
 acompanha alunos; o **aluno** resolve questões, monta plano/cadernos/simulados e vê estatísticas.
 Tudo isolado por RLS. Frontend em GitHub Pages, dados no Supabase.
 
-Documentação: `docs/MANUAL-DO-USUARIO.md` (aluno e professor) e
-`docs/DOCUMENTACAO-TECNICA.md` (mapa técnico). Este arquivo é a fonte de
+Documentação: `docs/ajuda/MANUAL-DO-USUARIO.md` (aluno e professor) e
+`docs/ajuda/interno/DOCUMENTACAO-TECNICA.md` (mapa técnico). Este arquivo é a fonte de
 verdade sobre caminhos e fluxo; os dois de `docs/` explicam o sistema.
 
 ## Comandos
@@ -21,6 +21,29 @@ verdade sobre caminhos e fluxo; os dois de `docs/` explicam o sistema.
 4. **Questões e respostas vivem no Supabase, não no git.** "Colocar na main" = commit de código; dados não passam pelo git.
 5. **Deploy usa gh-pages** (push no branch gh-pages do repo `matheusprospero/questoes`) — precisa de conta com acesso de escrita.
 6. Para inserir questões em massa: `importador/importar.py` (por prova) ou os scripts em `importador/conteudo/` (autorais). service_role em `importador/conteudo/service_role.txt` (gitignored).
+
+## Superfícies públicas — lista fechada
+
+| Superfície | Classificação | Por quê |
+|---|---|---|
+| a rota `/login` | **PÚBLICO** | é a porta |
+
+**Todo o resto exige conta.** Dentro dela, o conteúdo é **RESTRITO** em duas
+camadas independentes: `questoes.liberada` decide o que existe para o aluno, e a
+matrícula vigente decide o que ele alcança em cada curso.
+
+⚠️ **Este sistema é um produto de venda, fora da rede SME** — não usa o central
+e não trata dado da rede municipal. A classificação vale pelo mesmo motivo: o
+`anon` do Supabase não pode alcançar `respostas`, `metas`, `planos_estudo`,
+`pagamentos` nem `perfis`.
+
+⚠️ **Questão autoral entra `liberada = false`.** Publicar por engano é mudar a
+classificação de um conteúdo inteiro com um `update` — e o aluno não tem como
+saber que aquilo não estava pronto.
+
+⚠️ **O que não está nesta tabela é INTERNO.** Ao acrescentar uma linha aqui,
+acrescente junto o motivo e quem decidiu — e leia a seção *Público × interno*
+antes, porque abrir uma superfície é irrecuperável.
 
 ## Stack
 React 18 + Vite + React Router 6 + React Query (@tanstack) + CSS Modules + lucide-react + react-hot-toast.
@@ -72,10 +95,33 @@ envelheceu.
 
 | Mudou | Atualize |
 |---|---|
-| tela, campo, fluxo do aluno ou do professor, o que um número significa | `docs/MANUAL-DO-USUARIO.md` |
-| serviço, tabela, RPC, Edge Function, policy, variável de ambiente, passo de publicação | `docs/DOCUMENTACAO-TECNICA.md` |
+| tela, campo, fluxo do aluno ou do professor, o que um número significa | `docs/ajuda/MANUAL-DO-USUARIO.md` |
+| serviço, tabela, RPC, Edge Function, policy, variável de ambiente, passo de publicação | `docs/ajuda/interno/DOCUMENTACAO-TECNICA.md` |
 | um caminho do mapa, um comando, a ordem do fluxo de atualização | este arquivo |
-| uma migration nova | este arquivo (lista de migrations) **e** a ordem em `docs/DOCUMENTACAO-TECNICA.md` §7 |
+| uma migration nova | este arquivo (lista de migrations) **e** a ordem em `docs/ajuda/interno/DOCUMENTACAO-TECNICA.md` §7 |
+
+#### Onde a documentação mora — e por que a pasta importa
+
+A documentação segue a mesma classificação das telas, e o **caminho é a
+declaração**:
+
+| Pasta | Classificação | O que vai nela |
+|---|---|---|
+| `docs/ajuda/` | **aberta a todos** | o manual de quem usa: o que a pessoa vê, faz, e onde reclamar do quê |
+| `docs/ajuda/interno/` | **restrita** | documentação técnica, decisões, especificação, entregas, dívidas |
+
+Documento novo entra numa das duas — **nunca solto na raiz de `docs/`**. Onde o
+repositório tem um documento único (`docs/ajuda/interno/DOCUMENTACAO.md`) ou um
+tutorial (`docs/ajuda/interno/TUTORIAL-*.md`), as duas linhas de baixo da tabela
+anterior valem para ele.
+
+⚠️ **A pasta declara a intenção; ela não faz o recorte.** Nos repositórios que o
+GitHub Pages publica a partir da raiz, `docs/ajuda/interno/` é servido como
+qualquer outro arquivo — o nome não protege nada. Enquanto a exclusão não
+estiver no deploy daquele repositório, escreva o conteúdo interno sabendo disso:
+nada de credencial, nada de dado pessoal, e nada que descreva uma fragilidade
+operacional de forma acionável. Dívida conhecida se registra por **onde
+corrigir**, nunca por **como explorar**.
 
 Antes de fechar o commit:
 
@@ -105,3 +151,71 @@ o que o sistema faz **hoje**, com a data.
 - Textos e nomes de código em pt-BR. Enunciados/comentários de questões em HTML; frações como `<sup>x</sup>&frasl;<sub>y</sub>`.
 - Páginas: React Query (useQuery/useMutation com invalidateQueries), CSS Modules, variáveis `--bg-surface`, `--border-subtle`, `--text-primary/secondary/tertiary`, `--color-primary`, `--radius-lg`.
 - Commits direto na `main` (workflow do dono). Terminar mensagem de commit com o Co-Authored-By do Claude.
+
+
+## Público × interno — toda tela e todo dado declaram o que são
+
+⚠️ **Nenhuma implementação nova entra sem dizer quem pode alcançá-la.** Isso não
+é documentação: é decisão de arquitetura, e vem **antes** do código. A pergunta
+é sempre a mesma — *quem abre isto sem estar logado?* — e tem três respostas
+possíveis:
+
+| Classificação | Quem alcança | O que pode conter |
+|---|---|---|
+| **PÚBLICO** | qualquer visitante, sem login | só o que a SME decidiu publicar. **Nunca** o que identifique uma pessoa |
+| **INTERNO** | quem tem sessão da rede e a tela liberada | dado operacional da rede |
+| **RESTRITO** | interno **e** recortado por unidade/perfil no Postgres | dado pessoal, inclusive de criança |
+
+**Na ausência de declaração, é INTERNO.** Errar para o lado de esconder é
+visível e reclamável; errar para o lado de mostrar é invisível e grave.
+
+#### A declaração aparece em três lugares, sempre
+
+**1. No código**, no topo do arquivo ou da rota:
+
+```html
+<!-- CLASSIFICAÇÃO: PÚBLICO — servida a qualquer visitante, sem login.
+     Só o que está na lista de superfícies públicas do CLAUDE.md entra aqui. -->
+<!-- CLASSIFICAÇÃO: INTERNO — exige sessão da rede e a tela liberada. -->
+<!-- CLASSIFICAÇÃO: RESTRITO — interno + recorte por unidade no Postgres. -->
+```
+
+⚠️ Esse comentário é servido ao visitante junto com a página. Ele diz **o que**
+a página é, nunca **como** ela se protege — fragilidade operacional não entra
+em comentário de arquivo publicado.
+
+**2. Neste `CLAUDE.md`**, na tabela **Superfícies públicas** do sistema. Ela é
+uma **lista fechada**: o que não está nela é interno. É essa lista que torna a
+regra auditável — dá para conferir cada `grant ... to anon` do banco contra ela,
+e o que sobrar é achado.
+
+**3. Na documentação técnica**, objeto a objeto: qual tabela, view ou função o
+`anon` alcança, e por quê.
+
+#### As três perguntas, antes da primeira linha de código
+
+- **Quem abre isto sem login?** Se a resposta não for "ninguém", a página entra
+  na lista fechada — com o motivo e com quem decidiu.
+- **Que dado ela entrega?** Público não entrega nada que identifique pessoa:
+  nem direto, nem por agregação fina, nem por combinação de filtros que isole
+  um indivíduo.
+- **Quem garante o recorte?** O Postgres. Filtro em JavaScript não é
+  classificação — é a aparência dela.
+
+⚠️ **Público não é o oposto de logado: é o oposto de protegido.** Uma superfície
+pública é uma que o `anon` alcança, e o `anon` não tem permissão em nada
+(a invariante nº 1 da segurança do banco). Abri-la significa escrever um `grant` nomeado, para objetos
+nomeados — e isso é irrecuperável: o que esteve público, esteve.
+
+⚠️ **Escrita pública não existe nesta rede.** Nenhuma superfície pública grava
+no banco. Se uma precisar, o caminho é função com portão por dentro, nunca
+`grant insert to anon`.
+
+⚠️ **Mudar a classificação é mudar a arquitetura.** Tornar pública uma tela
+interna não é tirar o gate: é decidir o que o `anon` passa a enxergar, criar a
+view agregada que não aproxima da pessoa, e registrar a decisão aqui. O caminho
+inverso — fechar uma pública — é o fácil, e mesmo ele exige conferir o que já
+saiu.
+
+⚠️ **Tela sem classificação é achado de revisão.** Encontrou uma? Classifique
+antes de mexer em qualquer outra coisa nela.

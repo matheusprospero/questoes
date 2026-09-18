@@ -4,8 +4,8 @@
 > a do **aluno**, que resolve e acompanha o próprio desempenho, e a do
 > **professor**, que cria conteúdo, vende acesso e acompanha a turma.
 > Quem mantém o código deve ler
-> [`DOCUMENTACAO-TECNICA.md`](DOCUMENTACAO-TECNICA.md) e o
-> [`CLAUDE.md`](../CLAUDE.md).
+> [`DOCUMENTACAO-TECNICA.md`](interno/DOCUMENTACAO-TECNICA.md) e o
+> [`CLAUDE.md`](../../CLAUDE.md).
 
 **Onde fica:** `matheusprospero.com.br`
 
