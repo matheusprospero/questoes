@@ -258,6 +258,26 @@ deploy".** Se a conferência acusou, ou falta um arquivo que a página carrega �
 e aí a pasta dele entra em `DIRS_RUNTIME` —, ou a página está pedindo algo que
 não deveria ir ao ar, e aí o defeito é a página.
 
+⚠️ **O passo do workflow NÃO é copiável entre repositórios — o layout do
+checkout muda.** Medido em 18/09/2026, ao publicar os 15: dois deploys morreram
+com `No such file or directory` (exit 127) porque o passo veio de um repositório
+com outra planta. Os três layouts em uso na rede:
+
+| onde as branches caem | a chamada certa |
+|---|---|
+| `_src/main` e `_src/develop` | `bash _src/main/.github/montar-site.sh _src/main _site` |
+| `main/` e `develop/` | `bash main/.github/montar-site.sh main site` |
+| a raiz do workspace | `bash .github/montar-site.sh . _site` |
+
+⚠️ E a pasta do artefato tem de ser a MESMA que a montagem escreveu: o
+`upload-pages-artifact` de um repositório aponta para `site`, o dos outros para
+`_site`. Montar em `_site` e subir `site` publica um site **vazio**, sem erro
+nenhum no log — o pior desfecho possível, porque o deploy fica verde.
+
+Antes de mexer no passo, leia o `path:` de cada `actions/checkout` e o `path:`
+do `upload-pages-artifact` daquele arquivo. E ensaie localmente, como o runner
+faz, antes de publicar.
+
 ⚠️ **Repositório que publica `dist/`** (build de Vite) já é lista de inclusão
 por construção: só o que o build emite vai ao ar. Não acrescente o
 `montar-site.sh` nele.
