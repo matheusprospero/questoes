@@ -104,7 +104,8 @@ envelheceu.
 
 | Onde | O quê | Quem lê |
 |---|---|---|
-| `docs/` **deste repositório** | documentação de quem constrói: técnica, decisões, especificação, entregas, dívidas | a equipe |
+| `docs/` **deste repositório** | como o sistema funciona e como se usa: manual do usuário, tutorial, documentação técnica | a equipe e quem opera |
+| `implementacao/` **deste repositório** | o registro da construção: especificação, entregas, decisões, dívidas, migração, correções | quem constrói |
 | `faq-ia`, em `docs/ajuda/<entidade>/` | a ajuda que o FAQ serve à rede | quem usa o sistema |
 | `faq-ia`, em `docs/ajuda/<entidade>/interno/` | a ajuda restrita | quem tem acesso interno |
 
@@ -112,14 +113,29 @@ envelheceu.
 dos 14** repositórios serviam o próprio `CLAUDE.md` por URL — o Pages publicava
 a raiz. Um `docs/ajuda/interno/` dentro de um repositório de sistema seria
 baixável por qualquer visitante, sem login: o oposto do que "interno" quer
-dizer. O `faq-ia` monta o site por lista e exclui `docs`; é por isso que o
+dizer. O `faq-ia` monta o site por INCLUSÃO, e `docs` fica fora; é por isso que o
 acervo vive lá. O contrato do caminho está em `docs/ajuda/LEIA-ME.md` daquele
 repositório, e o `<entidade>` precisa existir em `faq.entidades` — documento de
 entidade que não existe é pulado, com aviso no log.
 
-⚠️ **`docs/` deste repositório é excluído do deploy**
-(`.github/workflows/deploy-pages.yml`). 🚫 Tirar `docs` ou `CLAUDE.md` daquela
-lista de exclusão publica tudo isto de uma vez, sem que nada acuse.
+⚠️ **`docs/` e `implementacao/` NÃO vão ao ar.** Desde 18/09/2026 o deploy
+publica por lista de INCLUSÃO (`.github/montar-site.sh`): só página e o que a
+página carrega, na raiz e nas pastas declaradas em `DIRS_RUNTIME`. Pasta nova
+nasce **fora** por construção — é por isso que `implementacao/` não precisou de
+nenhuma linha em lugar nenhum para ficar fora do ar. 🚫 Não acrescente `.md`
+nem pasta àquela lista para "destravar" nada: seria publicar tudo isto de uma
+vez, sem que nada acuse.
+
+⚠️ **A separação entre as duas é por LEITOR, não por assunto.** `docs/` responde
+"como isto funciona e como se usa" — é o que faria sentido alguém de fora da
+equipe ler. `implementacao/` é o registro de como foi construído: o que se
+consulta para refazer uma decisão, não para usar o sistema. Na dúvida, o teste
+é: *alguém que só opera o sistema abriria este arquivo?* Se não, é
+`implementacao/`.
+
+🚫 **Nenhuma das duas alimenta o FAQ.** O acervo vem só de `docs/ajuda/` do
+`faq-ia`, e o leitor não olha mais nada — mover um arquivo para `docs/` não o
+põe no FAQ, e nunca pôs.
 
 ⚠️ **Fragilidade operacional não vai para o acervo do FAQ** — que policy protege
 o quê, qual conta importa, o que já vazou. Isso é documentação para quem
