@@ -4,8 +4,8 @@ Banco de questões de concursos (venda de acesso). O **professor/admin** cria qu
 acompanha alunos; o **aluno** resolve questões, monta plano/cadernos/simulados e vê estatísticas.
 Tudo isolado por RLS. Frontend em GitHub Pages, dados no Supabase.
 
-Documentação: `docs/ajuda/MANUAL-DO-USUARIO.md` (aluno e professor) e
-`docs/ajuda/interno/DOCUMENTACAO-TECNICA.md` (mapa técnico). Este arquivo é a fonte de
+Documentação: `docs/MANUAL-DO-USUARIO.md` (aluno e professor) e
+`docs/DOCUMENTACAO-TECNICA.md` (mapa técnico). Este arquivo é a fonte de
 verdade sobre caminhos e fluxo; os dois de `docs/` explicam o sistema.
 
 ## Comandos
@@ -95,33 +95,35 @@ envelheceu.
 
 | Mudou | Atualize |
 |---|---|
-| tela, campo, fluxo do aluno ou do professor, o que um número significa | `docs/ajuda/MANUAL-DO-USUARIO.md` |
-| serviço, tabela, RPC, Edge Function, policy, variável de ambiente, passo de publicação | `docs/ajuda/interno/DOCUMENTACAO-TECNICA.md` |
+| tela, campo, fluxo do aluno ou do professor, o que um número significa | `docs/MANUAL-DO-USUARIO.md` |
+| serviço, tabela, RPC, Edge Function, policy, variável de ambiente, passo de publicação | `docs/DOCUMENTACAO-TECNICA.md` |
 | um caminho do mapa, um comando, a ordem do fluxo de atualização | este arquivo |
-| uma migration nova | este arquivo (lista de migrations) **e** a ordem em `docs/ajuda/interno/DOCUMENTACAO-TECNICA.md` §7 |
+| uma migration nova | este arquivo (lista de migrations) **e** a ordem em `docs/DOCUMENTACAO-TECNICA.md` §7 |
 
-#### Onde a documentação mora — e por que a pasta importa
+#### Onde a documentação mora
 
-A documentação segue a mesma classificação das telas, e o **caminho é a
-declaração**:
-
-| Pasta | Classificação | O que vai nela |
+| Onde | O quê | Quem lê |
 |---|---|---|
-| `docs/ajuda/` | **aberta a todos** | o manual de quem usa: o que a pessoa vê, faz, e onde reclamar do quê |
-| `docs/ajuda/interno/` | **restrita** | documentação técnica, decisões, especificação, entregas, dívidas |
+| `docs/` **deste repositório** | documentação de quem constrói: técnica, decisões, especificação, entregas, dívidas | a equipe |
+| `faq-ia`, em `docs/ajuda/<entidade>/` | a ajuda que o FAQ serve à rede | quem usa o sistema |
+| `faq-ia`, em `docs/ajuda/<entidade>/interno/` | a ajuda restrita | quem tem acesso interno |
 
-Documento novo entra numa das duas — **nunca solto na raiz de `docs/`**. Onde o
-repositório tem um documento único (`docs/ajuda/interno/DOCUMENTACAO.md`) ou um
-tutorial (`docs/ajuda/interno/TUTORIAL-*.md`), as duas linhas de baixo da tabela
-anterior valem para ele.
+⚠️ **A ajuda do FAQ NÃO mora aqui, e o motivo foi medido.** Em 18/09/2026, **9
+dos 14** repositórios serviam o próprio `CLAUDE.md` por URL — o Pages publicava
+a raiz. Um `docs/ajuda/interno/` dentro de um repositório de sistema seria
+baixável por qualquer visitante, sem login: o oposto do que "interno" quer
+dizer. O `faq-ia` monta o site por lista e exclui `docs`; é por isso que o
+acervo vive lá. O contrato do caminho está em `docs/ajuda/LEIA-ME.md` daquele
+repositório, e o `<entidade>` precisa existir em `faq.entidades` — documento de
+entidade que não existe é pulado, com aviso no log.
 
-⚠️ **A pasta declara a intenção; ela não faz o recorte.** Nos repositórios que o
-GitHub Pages publica a partir da raiz, `docs/ajuda/interno/` é servido como
-qualquer outro arquivo — o nome não protege nada. Enquanto a exclusão não
-estiver no deploy daquele repositório, escreva o conteúdo interno sabendo disso:
-nada de credencial, nada de dado pessoal, e nada que descreva uma fragilidade
-operacional de forma acionável. Dívida conhecida se registra por **onde
-corrigir**, nunca por **como explorar**.
+⚠️ **`docs/` deste repositório é excluído do deploy**
+(`.github/workflows/deploy-pages.yml`). 🚫 Tirar `docs` ou `CLAUDE.md` daquela
+lista de exclusão publica tudo isto de uma vez, sem que nada acuse.
+
+⚠️ **Fragilidade operacional não vai para o acervo do FAQ** — que policy protege
+o quê, qual conta importa, o que já vazou. Isso é documentação para quem
+constrói, e fica aqui, fora do ar.
 
 Antes de fechar o commit:
 

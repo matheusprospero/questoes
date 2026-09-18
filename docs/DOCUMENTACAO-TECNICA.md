@@ -1,9 +1,9 @@
 # Banco de Questões — Documentação técnica
 
-> Mapa de navegação. O [`CLAUDE.md`](../../../CLAUDE.md) da raiz é a fonte de verdade
+> Mapa de navegação. O [`CLAUDE.md`](../CLAUDE.md) da raiz é a fonte de verdade
 > sobre caminhos e fluxo de atualização — ele tem precedência sobre este
 > arquivo. O manual de uso está em
-> [`MANUAL-DO-USUARIO.md`](../MANUAL-DO-USUARIO.md).
+> [`MANUAL-DO-USUARIO.md`](MANUAL-DO-USUARIO.md).
 
 ## 1. Stack
 
@@ -167,7 +167,7 @@ alunos ativos nos últimos 30 dias. `semanas = 0` é **sem prazo**.
 
 ## 9. Economia de tokens e de tempo
 
-Do [`CLAUDE.md`](../../../CLAUDE.md), e vale para pessoas também:
+Do [`CLAUDE.md`](../CLAUDE.md), e vale para pessoas também:
 
 - **Confie no mapa do `CLAUDE.md`.** Não releia `schema_completo.sql` (623
   linhas) nem varra `src/` para achar onde algo mora.
