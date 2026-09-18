@@ -221,3 +221,43 @@ saiu.
 
 ⚠️ **Tela sem classificação é achado de revisão.** Encontrou uma? Classifique
 antes de mexer em qualquer outra coisa nela.
+
+#### O deploy publica por INCLUSÃO: só página
+
+⚠️ **Só vai ao ar o que é PÁGINA e o que a página carrega.** O resto do sistema
+— documentação, script de build, código de servidor, migração, legado,
+ferramenta — não tem motivo para responder por URL, e não é publicado.
+
+Quem decide isso é `.github/montar-site.sh`, versionado em cada repositório:
+
+| | |
+|---|---|
+| **Entra** | `.html`, `.css`, `.js`, imagem, fonte e `.pdf` — na raiz e nas pastas de runtime declaradas em `DIRS_RUNTIME` |
+| **Entra também** | `CNAME`, `.nojekyll`, `.htaccess`, e **só** os arquivos de dado listados em `.guarda-permitidos`, um a um, conferidos por gente |
+| **Não entra** | todo o resto — `docs/`, `CLAUDE.md`, `README.md`, qualquer `.md`, `sql/`, `supabase/`, `tools/`, `scripts/`, `legacy/`, `apps-script/`, `old/` |
+
+⚠️ **A lista é de INCLUSÃO, e a diferença não é estilística.** Numa lista de
+exclusão, a pasta nova nasce **pública** e ninguém percebe — foi assim que **9
+dos 14** repositórios da rede passaram a servir o próprio `CLAUDE.md` por URL
+(medido em 18/09/2026). Nesta, a pasta nova nasce **fora**; e se ela for tela, o
+deploy avisa antes de publicar.
+
+Quem avisa é `.github/conferir-referencias.py`, no mesmo passo. Para cada
+`src=`, `href=` e `url()` das páginas montadas:
+
+- falta no site **e existe no repositório** → **erro, o deploy para**. A lista
+  de inclusão deixou de fora algo que a página carrega;
+- falta nos dois → **aviso**. O link já estava quebrado antes do deploy, e isso
+  não é motivo para segurar a publicação.
+
+É essa separação que torna a lista de inclusão segura: o erro que ela poderia
+causar — publicar de menos — é justamente o que a conferência pega.
+
+🚫 **Não acrescente extensão nem pasta ao `montar-site.sh` para "destravar o
+deploy".** Se a conferência acusou, ou falta um arquivo que a página carrega —
+e aí a pasta dele entra em `DIRS_RUNTIME` —, ou a página está pedindo algo que
+não deveria ir ao ar, e aí o defeito é a página.
+
+⚠️ **Repositório que publica `dist/`** (build de Vite) já é lista de inclusão
+por construção: só o que o build emite vai ao ar. Não acrescente o
+`montar-site.sh` nele.
