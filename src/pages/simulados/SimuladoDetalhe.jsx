@@ -92,9 +92,9 @@ export default function SimuladoDetalhe() {
     const blocosInner = (simulado.questoes || []).map((q, idx) => {
       const alts = q.tipo === 'multipla_escolha' && q.alternativas?.length
         ? q.alternativas.map(a =>
-            `<div style="display:flex;gap:8px;margin:3px 0;font-size:${fontSize}">
+            `<div class="alt" style="display:flex;gap:8px;margin:3px 0;font-size:${fontSize};align-items:baseline">
               <span style="font-weight:700;min-width:18px">${a.letra})</span>
-              <span>${a.texto}</span>
+              <span class="altTexto">${a.texto}</span>
             </div>`
           ).join('')
         : q.tipo === 'certo_errado'
@@ -184,6 +184,11 @@ export default function SimuladoDetalhe() {
     * { box-sizing: border-box; }
     body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; color: #000; }
     img { max-width: 100%; height: auto; }
+    /* Alternativas podem vir com <p>/<div> no texto (editor/importação): força inline
+       para a letra e o texto ficarem na mesma linha. */
+    .altTexto p, .altTexto div { display: inline; margin: 0; padding: 0; }
+    .altTexto p + p::before { content: ' '; }
+    .altTexto img { vertical-align: middle; }
     @media print { body { margin: 0; } }
     /* Folhas com N questões: cada uma ocupa a página e divide o espaço de resolução */
     .folha { height: 276mm; display: flex; flex-direction: column; box-sizing: border-box; }

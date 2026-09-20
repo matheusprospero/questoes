@@ -92,6 +92,8 @@
 .enunciado p { margin-bottom: 8px; }
 
 .alternativas { display: flex; flex-direction: column; gap: 8px; }
+/* Texto da alternativa pode vir com <p>/<div> (editor/importação): mantém inline */
+.altHtml p, .altHtml div { display: inline; margin: 0; padding: 0; }
 .altItem {
   display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px;
   border: 1px solid var(--border-subtle); border-radius: var(--radius-md);

@@ -63,7 +63,7 @@ function ItemRevisao({ h, numero }) {
                 return (
                   <div key={alt.id} className={`${styles.revAlt} ${correta ? styles.certa : suaErrada ? styles.errada : ''}`}>
                     <span className={styles.opcaoLetra}>{alt.letra}</span>
-                    <span dangerouslySetInnerHTML={{ __html: alt.texto }} />
+                    <span className={styles.altHtml} dangerouslySetInnerHTML={{ __html: alt.texto }} />
                     {correta && <CheckCircle size={13} className={styles.iconOk} style={{ marginLeft: 'auto' }} />}
                   </div>
                 )
@@ -229,7 +229,7 @@ export default function QuestaoResolver({ questoes, contexto }) {
               <button key={alt.id} className={`${styles.opcao} ${estado}`}
                 onClick={() => !revelado && setSelecionada(alt.letra)} disabled={revelado}>
                 <span className={styles.opcaoLetra}>{alt.letra}</span>
-                <span dangerouslySetInnerHTML={{ __html: alt.texto }} />
+                <span className={styles.altHtml} dangerouslySetInnerHTML={{ __html: alt.texto }} />
               </button>
             )
           })}

@@ -94,6 +94,13 @@ def garantir(table, filtros_iguais, valores):
                  extra_headers={"Prefer": "return=representation"})
     return criado[0]["id"]
 
+def limpar_alt(texto):
+    """Alternativa é conteúdo inline: desembrulha um <p>…</p> único em volta do texto
+    (elemento de bloco desalinha a letra do texto na impressão do simulado)."""
+    t = (texto or "").strip()
+    m = re.fullmatch(r"<p>((?:(?!</?p[\s>]).)*)</p>", t, re.S | re.I)
+    return m.group(1).strip() if m else t
+
 def upload_imagem(caminho_local, caminho_storage):
     with open(caminho_local, "rb") as f:
         dados = f.read()
@@ -205,7 +212,7 @@ def main():
         qid = criada[0]["id"]
 
         if q.get("alternativas"):
-            alts = [{"questao_id": qid, "letra": a[0], "texto": a[1],
+            alts = [{"questao_id": qid, "letra": a[0], "texto": limpar_alt(a[1]),
                      "correta": bool(a[2]), "ordem": i}
                     for i, a in enumerate(q["alternativas"])]
             api("POST", "/rest/v1/questao_alternativas", body=alts)

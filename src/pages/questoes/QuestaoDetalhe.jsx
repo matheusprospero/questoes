@@ -200,7 +200,7 @@ export default function QuestaoDetalhe() {
                     <span className={`${styles.altLetra} ${alt.correta ? styles.altLetraCorreta : ''}`}>
                       {alt.letra}
                     </span>
-                    <span dangerouslySetInnerHTML={{ __html: alt.texto }} />
+                    <span className={styles.altHtml} dangerouslySetInnerHTML={{ __html: alt.texto }} />
                     {alt.correta && <CheckCircle size={14} className={styles.checkIcon} />}
                   </div>
                 ))}

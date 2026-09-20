@@ -19,6 +19,8 @@
 .enunciado :global(img) { max-width: 100%; height: auto; border-radius: var(--radius-md); }
 
 .opcoes { display: flex; flex-direction: column; gap: 8px; }
+/* Texto da alternativa pode vir com <p>/<div> (editor/importação): mantém inline */
+.altHtml p, .altHtml div { display: inline; margin: 0; padding: 0; }
 .opcao {
   display: flex; align-items: center; gap: 10px; text-align: left; width: 100%;
   padding: 11px 13px; font-size: 13.5px; font-family: var(--font-sans);
