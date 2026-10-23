@@ -13,7 +13,7 @@
 //
 // Secrets: MP_ACCESS_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 // ============================================================================
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
 import { getMpConfig } from '../_shared/config.ts'
 
 Deno.serve(async (req) => {

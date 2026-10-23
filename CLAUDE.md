@@ -46,7 +46,7 @@ acrescente junto o motivo e quem decidiu — e leia a seção *Público × inter
 antes, porque abrir uma superfície é irrecuperável.
 
 ## Stack
-React 18 + Vite + React Router 6 + React Query (@tanstack) + CSS Modules + lucide-react + react-hot-toast.
+React 18 + Vite 8 + React Router 7 (API da v6, desde 2026-10-23) + React Query (@tanstack) + CSS Modules + lucide-react + react-hot-toast.
 Backend: Supabase (Postgres + Auth + Storage bucket `midia`). Auth via `AuthContext` (`useAuth`: `usuario`, `perfil`, `isAdmin`, `isAssinante`).
 
 ## Modelo de dados (Postgres) — ver `schema_completo.sql`
@@ -166,6 +166,12 @@ código ainda não faz o que a documentação diz, escreva as duas coisas: o alv
 o que o sistema faz **hoje**, com a data.
 
 ## Convenções
+
+⚠️ **Biblioteca de CDN entra com versão EXATA e `integrity="sha384-…"
+crossorigin="anonymous"`** (varredura de 2026-10-23): `supabase-js@2` sem versão
+resolvia para a última publicação do npm a cada carregamento — uma publicação
+maliciosa rodaria no navegador sem deploy nem commit. Atualizar é trocar versão e
+hash juntos; nunca tirar o `integrity` "para destravar".
 - Textos e nomes de código em pt-BR. Enunciados/comentários de questões em HTML; frações como `<sup>x</sup>&frasl;<sub>y</sub>`.
 - Páginas: React Query (useQuery/useMutation com invalidateQueries), CSS Modules, variáveis `--bg-surface`, `--border-subtle`, `--text-primary/secondary/tertiary`, `--color-primary`, `--radius-lg`.
 - Commits direto na `main` (workflow do dono). Terminar mensagem de commit com o Co-Authored-By do Claude.

@@ -7,7 +7,7 @@
 
 ## 1. Stack
 
-SPA em **React 18 + Vite + React Router 6**, com **React Query** para estado de
+SPA em **React 18 + Vite 8 + React Router 7** (a API usada é a mesma da v6; a troca foi na varredura de segurança de 2026-10-23), com **React Query** para estado de
 servidor, **CSS Modules**, `lucide-react` e `react-hot-toast`. Backend:
 **Supabase** (PostgreSQL + Auth + Storage, bucket `midia`). Publicação:
 **GitHub Pages** via `gh-pages`.

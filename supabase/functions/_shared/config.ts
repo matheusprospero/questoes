@@ -1,7 +1,7 @@
 // Lê as credenciais do Mercado Pago. Prioriza o que o admin salvou pela página
 // (tabela pagamento_config, lida com service_role) e cai para as variáveis de
 // ambiente como fallback. Assim dá para configurar tudo pela interface, sem CLI.
-import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
 
 export async function getMpConfig(admin: SupabaseClient) {
   let token = ''
