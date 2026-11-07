@@ -41,6 +41,8 @@ A URL do projeto é lida automaticamente do `.env` da raiz (`VITE_SUPABASE_URL`)
   "ano": 2025,
   "cargo": "Professor de Educação Básica I",
   "nivel": "superior",                // fundamental | medio | superior
+  "liberada": false,                  // opcional: false = oculta dos alunos até o admin liberar
+                                      // (cada questão pode sobrescrever; sem o campo, o banco usa true)
   "imagens_dir": "imagens",           // pasta das imagens, relativa ao JSON
   "questoes": [
     {

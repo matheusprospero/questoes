@@ -178,6 +178,9 @@ Do [`CLAUDE.md`](../CLAUDE.md), e vale para pessoas também:
   `importador/conteudo/inserir_verificadas.py` (subagentes por assunto →
   verificação matemática → balanceamento de gabaritos A–E → inserir
   `liberada=false`).
+- **Lote de prova (`importador/importar.py`):** o JSON aceita `"liberada": false`
+  no lote ou em cada questão; sem o campo, vale o padrão do banco (`true`,
+  visível aos alunos). Alternativas podem ir até a letra F.
 - **Validação de build:** `npm run build | tail -3` basta (~7 s). Não suba o dev
   server para mudança não visual.
 

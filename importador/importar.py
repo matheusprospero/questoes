@@ -207,6 +207,11 @@ def main():
             "dificuldade": q.get("dificuldade", 3),
             "gabarito_certo": q.get("gabarito_certo"),
         }
+        # Visibilidade: a questão pode definir, senão vale a do lote; sem nenhuma
+        # das duas, fica o padrão do banco (liberada = true).
+        liberada = q.get("liberada", lote.get("liberada"))
+        if liberada is not None:
+            questao["liberada"] = bool(liberada)
         criada = api("POST", "/rest/v1/questoes", body=questao,
                      extra_headers={"Prefer": "return=representation"})
         qid = criada[0]["id"]

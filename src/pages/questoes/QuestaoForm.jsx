@@ -12,7 +12,9 @@ import { Plus, Trash2, ChevronLeft, Save, CheckCircle, XCircle, Youtube, Check, 
 import toast from 'react-hot-toast'
 import styles from './QuestaoForm.module.css'
 
-const LETRAS = ['A','B','C','D','E']
+// Questão nova nasce com A–E; o F existe para questões importadas com uma 6ª
+// alternativa (ex.: a resposta certa que a banca não ofereceu).
+const LETRAS = ['A','B','C','D','E','F']
 const ALTERNATIVA_VAZIA = { letra: '', texto: '', correta: false }
 
 function novasAlternativas() {
