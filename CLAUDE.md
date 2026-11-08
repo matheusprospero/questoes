@@ -106,6 +106,7 @@ envelheceu.
 |---|---|---|
 | `docs/` **deste repositório** | como o sistema funciona e como se usa: manual do usuário, tutorial, documentação técnica | a equipe e quem opera |
 | `implementacao/` **deste repositório** | o registro da construção: especificação, entregas, decisões, dívidas, migração, correções | quem constrói |
+| `planejamento/` **deste repositório** | o planejamento dos cursos: que questões do banco entram em cada aula, em que ordem e por quê | o professor e a sessão que monta os simulados |
 | `faq-ia`, em `docs/ajuda/<entidade>/` | a ajuda que o FAQ serve à rede | quem usa o sistema |
 | `faq-ia`, em `docs/ajuda/<entidade>/interno/` | a ajuda restrita | quem tem acesso interno |
 
