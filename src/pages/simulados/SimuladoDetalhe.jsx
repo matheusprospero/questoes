@@ -23,6 +23,16 @@ function gabaritoLinha(q, idx) {
   return null
 }
 
+// Frações do banco vêm como <sup>x</sup>&frasl;<sub>y</sub> (convenção do projeto).
+// No papel isso sai em fonte de expoente, pequena demais para ler; na impressão
+// vira fração empilhada no tamanho do texto (classes .fr no CSS do buildHtml).
+const RE_FRACAO = /<sup>([\s\S]*?)<\/sup>\s*(?:&frasl;|⁄)\s*<sub>([\s\S]*?)<\/sub>/g
+function empilharFracoes(html) {
+  if (!html) return html
+  return html.replace(RE_FRACAO,
+    '<span class="fr"><span class="frN">$1</span><span class="frD">$2</span></span>')
+}
+
 export default function SimuladoDetalhe() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -94,7 +104,7 @@ export default function SimuladoDetalhe() {
         ? q.alternativas.map(a =>
             `<div class="alt" style="display:flex;gap:8px;margin:3px 0;font-size:${fontSize};align-items:baseline">
               <span style="font-weight:700;min-width:18px">${a.letra})</span>
-              <span class="altTexto">${a.texto}</span>
+              <span class="altTexto">${empilharFracoes(a.texto)}</span>
             </div>`
           ).join('')
         : q.tipo === 'certo_errado'
@@ -107,7 +117,7 @@ export default function SimuladoDetalhe() {
         ? `<span style="font-size:9pt;color:#666;margin-left:8px">(${origem})</span>`
         : ''
       return `<p style="font-weight:700;font-size:${fontSize};margin:0 0 6px">Questão ${idx + 1}${origemHtml}</p>
-        <div style="font-size:${fontSize};margin-bottom:8px;text-align:justify">${q.enunciado}</div>
+        <div style="font-size:${fontSize};margin-bottom:8px;text-align:justify">${empilharFracoes(q.enunciado)}</div>
         ${alts}`
     })
 
@@ -189,6 +199,10 @@ export default function SimuladoDetalhe() {
     .altTexto p, .altTexto div { display: inline; margin: 0; padding: 0; }
     .altTexto p + p::before { content: ' '; }
     .altTexto img { vertical-align: middle; }
+    /* Fração empilhada (ver empilharFracoes) */
+    .fr { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 2px 3px; line-height: 1.15; }
+    .frN { border-bottom: 1px solid #000; padding: 0 3px 1px; }
+    .frD { padding: 1px 3px 0; }
     @media print { body { margin: 0; } }
     /* Folhas com N questões: cada uma ocupa a página e divide o espaço de resolução */
     .folha { height: 276mm; display: flex; flex-direction: column; box-sizing: border-box; }
