@@ -1,0 +1,300 @@
+# AGENTS.md — mapa do projeto (para agilizar e economizar tokens)
+
+Banco de questões de concursos (venda de acesso). O **professor/admin** cria questões e
+acompanha alunos; o **aluno** resolve questões, monta plano/cadernos/simulados e vê estatísticas.
+Tudo isolado por RLS. Frontend em GitHub Pages, dados no Supabase.
+
+Documentação: `docs/MANUAL-DO-USUARIO.md` (aluno e professor) e
+`docs/DOCUMENTACAO-TECNICA.md` (mapa técnico). Este arquivo é a fonte de
+verdade sobre caminhos e fluxo; os dois de `docs/` explicam o sistema.
+
+## Comandos
+- `npm run dev` — servidor local (porta 5173). Nunca rodar via Bash; use o preview.
+- `npm run build` — valida a compilação (Vite).
+- `npm run deploy` — `vite build && gh-pages -d dist`. **Publica em produção** (matheusprospero.com.br). Só rodar com autorização explícita do usuário.
+
+## ⚠️ Fluxo de atualização (ler antes de mexer)
+1. **Migrations de banco são MANUAIS**: cada `*.sql` da raiz é rodado pelo usuário no Supabase → SQL Editor. Eu não consigo rodar DDL pela API (service_role não faz DDL). Sempre entregar o SQL e pedir para rodar.
+2. **Rodar o SQL ANTES do `npm run deploy`** — senão as telas novas quebram por falta de tabela/coluna.
+3. **`.env` precisa de `VITE_SUPABASE_ANON_KEY`** (além da URL). O Vite embute em build time; se faltar, o build sobe com **tela em branco** (supabase.js dá throw). O `.env` é gitignored e **já está completo nesta máquina — não sobrescrever**.
+3b. Após deploy, o navegador do usuário costuma segurar cache — pedir teste em **aba anônima**/Ctrl+Shift+R antes de investigar "não mudou nada".
+4. **Questões e respostas vivem no Supabase, não no git.** "Colocar na main" = commit de código; dados não passam pelo git.
+5. **Deploy usa gh-pages** (push no branch gh-pages do repo `matheusprospero/questoes`) — precisa de conta com acesso de escrita.
+6. Para inserir questões em massa: `importador/importar.py` (por prova) ou os scripts em `importador/conteudo/` (autorais). service_role em `importador/conteudo/service_role.txt` (gitignored).
+
+## Superfícies públicas — lista fechada
+
+| Superfície | Classificação | Por quê |
+|---|---|---|
+| a rota `/login` | **PÚBLICO** | é a porta |
+
+**Todo o resto exige conta.** Dentro dela, o conteúdo é **RESTRITO** em duas
+camadas independentes: `questoes.liberada` decide o que existe para o aluno, e a
+matrícula vigente decide o que ele alcança em cada curso.
+
+⚠️ **Este sistema é um produto de venda, fora da rede SME** — não usa o central
+e não trata dado da rede municipal. A classificação vale pelo mesmo motivo: o
+`anon` do Supabase não pode alcançar `respostas`, `metas`, `planos_estudo`,
+`pagamentos` nem `perfis`.
+
+⚠️ **Questão autoral entra `liberada = false`.** Publicar por engano é mudar a
+classificação de um conteúdo inteiro com um `update` — e o aluno não tem como
+saber que aquilo não estava pronto.
+
+⚠️ **O que não está nesta tabela é INTERNO.** Ao acrescentar uma linha aqui,
+acrescente junto o motivo e quem decidiu — e leia a seção *Público × interno*
+antes, porque abrir uma superfície é irrecuperável.
+
+## Stack
+React 18 + Vite + React Router 6 + React Query (@tanstack) + CSS Modules + lucide-react + react-hot-toast.
+Backend: Supabase (Postgres + Auth + Storage bucket `midia`). Auth via `AuthContext` (`useAuth`: `usuario`, `perfil`, `isAdmin`, `isAssinante`).
+
+## Modelo de dados (Postgres) — ver `schema_completo.sql`
+Conteúdo (admin escreve, todos leem): `disciplinas`, `assuntos`, `bancas`, `orgaos`, `questoes`, `questao_alternativas`, `questao_videos` (URL só admin/assinante).
+- `questoes.liberada` (bool): aluno só vê `liberada or is_admin()`. Autorais entram `false` até o admin liberar. `questoes.revisada`: fila de conferência do admin (≠ liberada).
+- Questões autorais: banca **"Prof. Matheus Próspero"** (~713, geradas por IA e verificadas). `questoes.codigo` (ex.: `TJSP-2010-MAT-32`) ordena a lista do banco (natural sort em Questoes.jsx).
+Por usuário (isolado por RLS `usuario_id = auth.uid()`): `respostas` (append-only, `acertou`, `origem` estudo/simulado, `respondido_em`, `tempo_seg`), `revisoes` (SRS 1/3/7/15/30/60), `cadernos`/`caderno_questoes`, `simulados`/`simulado_questoes`, `favoritos`, `metas`, `planos_estudo`/`plano_itens`.
+- Professor (admin) LÊ respostas/metas/planos/revisoes dos alunos (policies `*_admin_le`) para o acompanhamento.
+- View `v_estudo_dia` (security_invoker): agregação por dia (heatmap, dia/semana/mês).
+- Turmas (= "Cursos" na UI): `turmas`, `turma_disciplinas`, `matriculas` (ativa/pendente/recusada, uma por aluno×turma×disciplina; campos de venda: `acesso_desde`/`acesso_ate` período — null/null=vitalício, `origem` professor|compra, `motivo`, `pagamento_previsto`). Hierarquia **curso → disciplina → aula**: a aula pertence à disciplina (`aulas.disciplina_id`); a UI monta/exibe o conteúdo agrupado por disciplina do curso. Conteúdo é **N-N**: `turma_aulas`/`turma_simulados`. Conteúdo sem vínculo = público. RLS de leitura via `pode_ver_aula(aula, disc)` e `pode_ver_simulado(sim)` (admin, ou sem turma, ou matrícula ativa+vigente na turma respeitando a disciplina da aula). `matriculado_em(turma, disc)` gate as próprias tabelas. Após `venda_acesso.sql`, aulas **não exigem mais `assinante`** — só matrícula ativa. Rodar `turmas.sql` → `turmas_conteudo.sql` → `venda_acesso.sql` → `matricula_periodo.sql` → `matricula_manual.sql`.
+Helpers RLS: `is_admin()`, `eh_assinante()` (só vídeos de resolução do banco).
+
+## Rotas / páginas (`src/router.jsx`, `src/pages/`)
+Aluno: `/` Início · `/plano` PlanoEstudos · `/turmas` MinhasTurmas (menu "Cursos": seções "Meus cursos" comprados + "Disponíveis"; aluno **só compra** acesso cartão/PIX — não há mais "solicitar"; aviso p/ admin de que é a visão do aluno) · `/turmas/:id` TurmaDetalhe (entra na turma: aulas agrupadas por disciplina + simulados + barra de progresso) · `/pagamento/retorno` (volta do checkout MP, param `retorno`) · `/aulas` · `/estudo` Estudo (resolver) · `/calendario` heatmap · `/estatisticas` · `/boletim` (PDF via print) · `/questoes` banco · `/favoritos` · `/cadernos` · `/simulados` · `/perfil`.
+Admin (`RotaProtegida somenteAdmin`): `/acompanhamento` (por aluno) · `/matriculas` CentralMatriculas (turmas + matrículas + preços de venda, service `turmas.js`) · `/pagamentos` PagamentosConfig (credenciais Mercado Pago editáveis na página, service `pagamentos.js`) · `/vendas` Vendas (relatório de vendas: resumo/receita, gráfico por mês, filtros, CSV — `listarVendas` em `pagamentos.js`) · `/comunicacao` (histórico de e-mails + envio manual, service `comunicacao.js`) · `/questoes/nova|:id/editar` · `/revisao` · `/simulados/:id/relatorio` · `/aulas/nova|editar` · `/alunos` · `/destaques` · `/reports` · `/engajamento`.
+Menu em `src/components/layout/AppLayout.jsx` (NAV_ITEMS + bloco admin "Gestão").
+
+## Serviços (`src/services/`)
+- `estudo.js` — núcleo: registrarResposta (com tempo_seg + dispara SRS), listarRespostas(usuarioId?), estudoPorDia, somarPeriodo, calcularProntidao (45% acerto/35% cobertura/20% recência), calcularMarcos, montarMetaDoDia, e análises (maestriaPorAssunto, evolucaoMensal, agruparDesempenho, calcularOfensiva, montarRecomendadas...).
+- `metas.js` — lerMetas/salvarMetas (banco) + cache localStorage `config-meta` (o código síncrono lê do cache). lerMetasDe(id) para o professor. Preferências de lembrete por aluno: `metas.lembrete_ativo`, `dias_semana` (int[] 0=dom..6=sáb), `semanas` (0=sem prazo) + `inicio_meta` — editadas no ModalMeta (Início → ajustar metas).
+- `plano.js` — CRUD planos_estudo + plano_itens (edital verticalizado).
+- `acompanhamento.js` — listarAlunosComResumo, resumoAluno(id) (admin).
+- `turmas.js` — CRUD turmas/turma_disciplinas (com preços: `definirDisciplinas(turmaId, linhas)`, `precosDaTurma`), matrículas (admin: `matricular(usuarioId,turmaId,discIds,extras)` com período/motivo/pagamento, `atualizarMatricula(id,patch)`, decidir/remover; aluno: cancelar — solicitar existe mas não é mais exposto no front). Vínculo N-N do conteúdo pelos dois lados: aula→turma (setTurmasDaAula/DoSimulado, turmasDaAula/DoSimulado) e turma→aulas (aulasDaTurma/setAulasDaTurma, simuladosDaTurma/setSimuladosDaTurma — modal "Conteúdo da turma" na CentralMatriculas, escolha de aulas agrupada por disciplina do curso). buscarTurmaComConteudo(id), progressoTurma(id), contarSolicitacoesPendentes.
+- `comunicacao.js` — histórico da fila (listarEmails), listarAlunosComEmail, enviarEmailManual (categoria `manual`), lerEmailsAuto/salvarEmailsAuto (flag global config_app `emails_auto` {boas_vindas,lembrete} — toggle na Central de Matrículas). Feedback/e-mails de report ficam em `feedback.js` (enfileirarEmailReport, lerModeloEmail/salvarModeloEmail, MODELOS_EMAIL: report/boas_vindas/lembrete).
+- `pagamentos.js` — venda de acesso via Mercado Pago. `comprar({turmaId,tipo,plano,disciplinaIds})` invoca a Edge Function `mp-criar-preferencia` e redireciona pro checkout (cartão+PIX); `meusPagamentos()` histórico; `listarVendas`/`statusVenda` (relatório /vendas); config admin `lerConfigPagamento`/`salvarConfigPagamento`/`urlWebhook`. tipo: completo|disciplina; plano: mensal|vitalicio. Liberação automática pelo webhook (ativa matrícula com período). Preço é sempre calculado no servidor. Backend Deno em `supabase/functions/` (mp-criar-preferencia, mp-webhook; ver README): token vem de `pagamento_config` (service_role) com fallback env; back_urls usam config `site_url` ou o header Origin do site. Implantadas via Supabase CLI (NÃO pelo `npm run deploy`).
+- `questoes.js` — listagem/facetas/favoritos + marcarLiberada/marcarRevisada.
+- `simulados.js` (relatorioSimulado), `cadernos.js`, `aulas.js`, `destaques.js`, `feedback.js`.
+- PDF do simulado: `SimuladoDetalhe.jsx → buildHtml()` monta HTML e chama window.print. `cfg_impressao` (jsonb): tamanhoFonte, separadorQuestoes, quebrarPagina, rodapes, **questoesPorFolha** (0=todas/1/2/3 → classe `.folha` flex 276mm, quebra por página) e **espacoResolucao** (área "Resolução" que preenche o restante da folha, dividida igualmente — uso: gravação de aulas). Config no SimuladoForm.jsx.
+
+## Migrations SQL (raiz) — rodar no Supabase SQL Editor
+`schema_completo.sql` (do zero, fonte de verdade) · e incrementais já consolidadas nele: `liberada.sql`, `revisada.sql`, `revisao_espacada.sql`, `relatorio_simulados.sql`, `feedback.sql`, `plano_estudos.sql` (acompanhamento de estudos), `codigo_area.sql`, `simulados_propostos.sql`, `destaque_simulados.sql`, `destaques_agenda.sql`, `login_google.sql`, `aulas*.sql`, `emails_fila.sql` (fila de e-mails; envio via `google-script/enviar_emails.gs` no Apps Script do professor, acionador de 10 min — Reportados enfileira em "Resolver + avisar") · `config_app.sql` (config chave/valor; modelos de e-mail editáveis em Reportados → Personalizar e-mails) · `emails_automaticos.sql` (boas-vindas via trigger em perfis + lembrete diário de meta via RPC `enfileirar_lembretes_metas`, chamada pelo Apps Script; hora em config `lembrete_config`, dedup 1x/dia por aluno, só alunos ativos <30d) · `emails_auto_toggle.sql` (flag global `config_app.emails_auto` {boas_vindas,lembrete}; as funções checam antes de enfileirar — toggle na Central de Matrículas) · `meta_lembrete_aluno.sql` (colunas `metas.lembrete_ativo`/`dias_semana`/`semanas`/`inicio_meta`; a RPC de lembrete respeita as preferências do aluno: recebe/dias/janela de semanas) · `turmas.sql` (turmas + matrículas) · `turmas_conteudo.sql` (conteúdo N-N `turma_aulas`/`turma_simulados` + funções `pode_ver_aula`/`pode_ver_simulado`; rodar DEPOIS de turmas.sql) · `venda_acesso.sql` (venda de acesso Mercado Pago — preços em `turmas` (completo) e `turma_disciplinas` (avulsa), `matriculas.acesso_ate` (null=vitalício / data=mensal) + `.origem`, tabela `pagamentos`; **desacopla o conteúdo de turma do booleano `assinante`** — aulas passam a exigir só matrícula ativa, `assinante` fica só p/ vídeos do banco; rodar DEPOIS de turmas_conteudo.sql) · `matricula_periodo.sql` (`matriculas.acesso_desde` início do acesso — funções `matriculado_em`/`pode_ver_aula`/`pode_ver_simulado` passam a exigir início≤now E fim>now; admin edita início/fim na Central de Matrículas; rodar DEPOIS de venda_acesso.sql) · `matricula_manual.sql` (`matriculas.motivo` + `.pagamento_previsto` — matrícula manual do professor com motivo fora do padrão e data de pagamento prevista; `matricular(...,extras)` e `atualizarMatricula(id,patch)` em turmas.js; rodar DEPOIS de matricula_periodo.sql). Backend do pagamento (Edge Functions Deno) em `supabase/functions/` — deploy/secrets no `supabase/functions/README.md` (NÃO passam pelo `npm run deploy`; são implantadas via Supabase CLI) · `pagamento_config.sql` (credenciais MP editáveis na página `/pagamentos`: tabela `pagamento_config` com RLS fechado, funções `salvar_pagamento_config`/`pagamento_config_status` SECURITY DEFINER admin — token só mascarado volta ao cliente; Edge Functions leem via service_role, fallback p/ env; rodar DEPOIS de venda_acesso.sql).
+- O Apps Script de produção vive vinculado à planilha https://docs.google.com/spreadsheets/d/1QJ40pa27u93z3DTsixztXwafxbK3X3-_ggiBqezTo_4/edit (Extensões → Apps Script); o `.gs` do repo é cópia de referência — mudanças precisam ser coladas lá manualmente.
+
+## Economia de tokens (para o Codex)
+- Confie neste mapa: NÃO releia `schema_completo.sql` (623 linhas) nem explore `src/` para achar onde algo mora — os caminhos estão acima. Leia só o trecho do arquivo-alvo (offset/limit).
+- Consultas ao banco: use `python -c` importando `importador/importar.py` (`m.rest_get(tabela, query)` = PostgREST com service_role). Não montar clientes novos.
+- Geração de questões em massa: pipeline pronto descrito em `importador/conteudo/inserir_verificadas.py` (subagentes por assunto → verificação matemática → balancear gabaritos A–E → inserir `liberada=false`).
+- Build ~7s: `npm run build | tail -3` basta como validação; não subir dev server para mudanças não visuais.
+
+## Manutenção da documentação
+
+Todo commit que muda o que a documentação afirma **atualiza a documentação no
+mesmo commit**. Não espere que peçam: documento desatualizado é pior que nenhum
+— induz ao erro com aparência de autoridade, e quem o lê não tem como saber que
+envelheceu.
+
+| Mudou | Atualize |
+|---|---|
+| tela, campo, fluxo do aluno ou do professor, o que um número significa | `docs/MANUAL-DO-USUARIO.md` |
+| serviço, tabela, RPC, Edge Function, policy, variável de ambiente, passo de publicação | `docs/DOCUMENTACAO-TECNICA.md` |
+| um caminho do mapa, um comando, a ordem do fluxo de atualização | este arquivo |
+| uma migration nova | este arquivo (lista de migrations) **e** a ordem em `docs/DOCUMENTACAO-TECNICA.md` §7 |
+
+#### Onde a documentação mora
+
+| Onde | O quê | Quem lê |
+|---|---|---|
+| `docs/` **deste repositório** | como o sistema funciona e como se usa: manual do usuário, tutorial, documentação técnica | a equipe e quem opera |
+| `implementacao/` **deste repositório** | o registro da construção: especificação, entregas, decisões, dívidas, migração, correções | quem constrói |
+| `planejamento/` **deste repositório** | o planejamento dos cursos: que questões do banco entram em cada aula, em que ordem e por quê | o professor e a sessão que monta os simulados |
+| `faq-ia`, em `docs/ajuda/<entidade>/` | a ajuda que o FAQ serve à rede | quem usa o sistema |
+| `faq-ia`, em `docs/ajuda/<entidade>/interno/` | a ajuda restrita | quem tem acesso interno |
+
+⚠️ **A ajuda do FAQ NÃO mora aqui, e o motivo foi medido.** Em 18/09/2026, **9
+dos 14** repositórios serviam o próprio `AGENTS.md` por URL — o Pages publicava
+a raiz. Um `docs/ajuda/interno/` dentro de um repositório de sistema seria
+baixável por qualquer visitante, sem login: o oposto do que "interno" quer
+dizer. O `faq-ia` monta o site por INCLUSÃO, e `docs` fica fora; é por isso que o
+acervo vive lá. O contrato do caminho está em `docs/ajuda/LEIA-ME.md` daquele
+repositório, e o `<entidade>` precisa existir em `faq.entidades` — documento de
+entidade que não existe é pulado, com aviso no log.
+
+⚠️ **`docs/` e `implementacao/` NÃO vão ao ar.** Desde 18/09/2026 o deploy
+publica por lista de INCLUSÃO (`.github/montar-site.sh`): só página e o que a
+página carrega, na raiz e nas pastas declaradas em `DIRS_RUNTIME`. Pasta nova
+nasce **fora** por construção — é por isso que `implementacao/` não precisou de
+nenhuma linha em lugar nenhum para ficar fora do ar. 🚫 Não acrescente `.md`
+nem pasta àquela lista para "destravar" nada: seria publicar tudo isto de uma
+vez, sem que nada acuse.
+
+⚠️ **A separação entre as duas é por LEITOR, não por assunto.** `docs/` responde
+"como isto funciona e como se usa" — é o que faria sentido alguém de fora da
+equipe ler. `implementacao/` é o registro de como foi construído: o que se
+consulta para refazer uma decisão, não para usar o sistema. Na dúvida, o teste
+é: *alguém que só opera o sistema abriria este arquivo?* Se não, é
+`implementacao/`.
+
+🚫 **Nenhuma das duas alimenta o FAQ.** O acervo vem só de `docs/ajuda/` do
+`faq-ia`, e o leitor não olha mais nada — mover um arquivo para `docs/` não o
+põe no FAQ, e nunca pôs.
+
+⚠️ **Fragilidade operacional não vai para o acervo do FAQ** — que policy protege
+o quê, qual conta importa, o que já vazou. Isso é documentação para quem
+constrói, e fica aqui, fora do ar.
+
+Antes de fechar o commit:
+
+- [ ] Mudou **tela, campo ou fluxo**? → manual do usuário.
+- [ ] Mudou **dado, serviço, pagamento ou publicação**? → documentação técnica.
+- [ ] O comportamento novo **contradiz** alguma frase já escrita? → corrija a
+      frase; não acrescente a contradição ao lado dela.
+- [ ] **Renomeou ou removeu** rota, serviço, tabela ou coluna citada em algum
+      documento? → acerte os ponteiros (este arquivo é um mapa: ponteiro errado
+      aqui custa mais que em qualquer outro lugar).
+- [ ] Apareceu um **"parece defeito e não é"**? → a tabela do manual existe para
+      isso, e é o que evita a mensagem do aluno.
+
+⚠️ **`*.sql` novo entra na lista de migrations deste arquivo no mesmo commit**,
+com a posição na cadeia de dependência. É a lista que diz ao dono o que rodar
+antes do deploy — faltando uma linha, a tela nova sobe sem a tabela.
+
+⚠️ **Mudança nos pesos da prontidão, nos intervalos da revisão espaçada ou nas
+regras de acesso ao conteúdo altera o que os dois documentos afirmam** — e o
+aluno lê o manual para entender o próprio número.
+
+⚠️ **Descrever a intenção como se fosse o estado é o erro mais caro.** Quando o
+código ainda não faz o que a documentação diz, escreva as duas coisas: o alvo e
+o que o sistema faz **hoje**, com a data.
+
+## Convenções
+- Textos e nomes de código em pt-BR. Enunciados/comentários de questões em HTML; frações como `<sup>x</sup>&frasl;<sub>y</sub>`.
+- Páginas: React Query (useQuery/useMutation com invalidateQueries), CSS Modules, variáveis `--bg-surface`, `--border-subtle`, `--text-primary/secondary/tertiary`, `--color-primary`, `--radius-lg`.
+- Commits direto na `main` (workflow do dono). Terminar mensagem de commit com o Co-Authored-By do Codex.
+
+
+## Público × interno — toda tela e todo dado declaram o que são
+
+⚠️ **Nenhuma implementação nova entra sem dizer quem pode alcançá-la.** Isso não
+é documentação: é decisão de arquitetura, e vem **antes** do código. A pergunta
+é sempre a mesma — *quem abre isto sem estar logado?* — e tem três respostas
+possíveis:
+
+| Classificação | Quem alcança | O que pode conter |
+|---|---|---|
+| **PÚBLICO** | qualquer visitante, sem login | só o que a SME decidiu publicar. **Nunca** o que identifique uma pessoa |
+| **INTERNO** | quem tem sessão da rede e a tela liberada | dado operacional da rede |
+| **RESTRITO** | interno **e** recortado por unidade/perfil no Postgres | dado pessoal, inclusive de criança |
+
+**Na ausência de declaração, é INTERNO.** Errar para o lado de esconder é
+visível e reclamável; errar para o lado de mostrar é invisível e grave.
+
+#### A declaração aparece em três lugares, sempre
+
+**1. No código**, no topo do arquivo ou da rota:
+
+```html
+<!-- CLASSIFICAÇÃO: PÚBLICO — servida a qualquer visitante, sem login.
+     Só o que está na lista de superfícies públicas do AGENTS.md entra aqui. -->
+<!-- CLASSIFICAÇÃO: INTERNO — exige sessão da rede e a tela liberada. -->
+<!-- CLASSIFICAÇÃO: RESTRITO — interno + recorte por unidade no Postgres. -->
+```
+
+⚠️ Esse comentário é servido ao visitante junto com a página. Ele diz **o que**
+a página é, nunca **como** ela se protege — fragilidade operacional não entra
+em comentário de arquivo publicado.
+
+**2. Neste `AGENTS.md`**, na tabela **Superfícies públicas** do sistema. Ela é
+uma **lista fechada**: o que não está nela é interno. É essa lista que torna a
+regra auditável — dá para conferir cada `grant ... to anon` do banco contra ela,
+e o que sobrar é achado.
+
+**3. Na documentação técnica**, objeto a objeto: qual tabela, view ou função o
+`anon` alcança, e por quê.
+
+#### As três perguntas, antes da primeira linha de código
+
+- **Quem abre isto sem login?** Se a resposta não for "ninguém", a página entra
+  na lista fechada — com o motivo e com quem decidiu.
+- **Que dado ela entrega?** Público não entrega nada que identifique pessoa:
+  nem direto, nem por agregação fina, nem por combinação de filtros que isole
+  um indivíduo.
+- **Quem garante o recorte?** O Postgres. Filtro em JavaScript não é
+  classificação — é a aparência dela.
+
+⚠️ **Público não é o oposto de logado: é o oposto de protegido.** Uma superfície
+pública é uma que o `anon` alcança, e o `anon` não tem permissão em nada
+(a invariante nº 1 da segurança do banco). Abri-la significa escrever um `grant` nomeado, para objetos
+nomeados — e isso é irrecuperável: o que esteve público, esteve.
+
+⚠️ **Escrita pública não existe nesta rede.** Nenhuma superfície pública grava
+no banco. Se uma precisar, o caminho é função com portão por dentro, nunca
+`grant insert to anon`.
+
+⚠️ **Mudar a classificação é mudar a arquitetura.** Tornar pública uma tela
+interna não é tirar o gate: é decidir o que o `anon` passa a enxergar, criar a
+view agregada que não aproxima da pessoa, e registrar a decisão aqui. O caminho
+inverso — fechar uma pública — é o fácil, e mesmo ele exige conferir o que já
+saiu.
+
+⚠️ **Tela sem classificação é achado de revisão.** Encontrou uma? Classifique
+antes de mexer em qualquer outra coisa nela.
+
+#### O deploy publica por INCLUSÃO: só página
+
+⚠️ **Só vai ao ar o que é PÁGINA e o que a página carrega.** O resto do sistema
+— documentação, script de build, código de servidor, migração, legado,
+ferramenta — não tem motivo para responder por URL, e não é publicado.
+
+Quem decide isso é `.github/montar-site.sh`, versionado em cada repositório:
+
+| | |
+|---|---|
+| **Entra** | `.html`, `.css`, `.js`, imagem, fonte e `.pdf` — na raiz e nas pastas de runtime declaradas em `DIRS_RUNTIME` |
+| **Entra também** | `CNAME`, `.nojekyll`, `.htaccess`, e **só** os arquivos de dado listados em `.guarda-permitidos`, um a um, conferidos por gente |
+| **Não entra** | todo o resto — `docs/`, `AGENTS.md`, `README.md`, qualquer `.md`, `sql/`, `supabase/`, `tools/`, `scripts/`, `legacy/`, `apps-script/`, `old/` |
+
+⚠️ **A lista é de INCLUSÃO, e a diferença não é estilística.** Numa lista de
+exclusão, a pasta nova nasce **pública** e ninguém percebe — foi assim que **9
+dos 14** repositórios da rede passaram a servir o próprio `AGENTS.md` por URL
+(medido em 18/09/2026). Nesta, a pasta nova nasce **fora**; e se ela for tela, o
+deploy avisa antes de publicar.
+
+Quem avisa é `.github/conferir-referencias.py`, no mesmo passo. Para cada
+`src=`, `href=` e `url()` das páginas montadas:
+
+- falta no site **e existe no repositório** → **erro, o deploy para**. A lista
+  de inclusão deixou de fora algo que a página carrega;
+- falta nos dois → **aviso**. O link já estava quebrado antes do deploy, e isso
+  não é motivo para segurar a publicação.
+
+É essa separação que torna a lista de inclusão segura: o erro que ela poderia
+causar — publicar de menos — é justamente o que a conferência pega.
+
+🚫 **Não acrescente extensão nem pasta ao `montar-site.sh` para "destravar o
+deploy".** Se a conferência acusou, ou falta um arquivo que a página carrega —
+e aí a pasta dele entra em `DIRS_RUNTIME` —, ou a página está pedindo algo que
+não deveria ir ao ar, e aí o defeito é a página.
+
+⚠️ **O passo do workflow NÃO é copiável entre repositórios — o layout do
+checkout muda.** Medido em 18/09/2026, ao publicar os 15: dois deploys morreram
+com `No such file or directory` (exit 127) porque o passo veio de um repositório
+com outra planta. Os três layouts em uso na rede:
+
+| onde as branches caem | a chamada certa |
+|---|---|
+| `_src/main` e `_src/develop` | `bash _src/main/.github/montar-site.sh _src/main _site` |
+| `main/` e `develop/` | `bash main/.github/montar-site.sh main site` |
+| a raiz do workspace | `bash .github/montar-site.sh . _site` |
+
+⚠️ E a pasta do artefato tem de ser a MESMA que a montagem escreveu: o
+`upload-pages-artifact` de um repositório aponta para `site`, o dos outros para
+`_site`. Montar em `_site` e subir `site` publica um site **vazio**, sem erro
+nenhum no log — o pior desfecho possível, porque o deploy fica verde.
+
+Antes de mexer no passo, leia o `path:` de cada `actions/checkout` e o `path:`
+do `upload-pages-artifact` daquele arquivo. E ensaie localmente, como o runner
+faz, antes de publicar.
+
+⚠️ **Repositório que publica `dist/`** (build de Vite) já é lista de inclusão
+por construção: só o que o build emite vai ao ar. Não acrescente o
+`montar-site.sh` nele.
